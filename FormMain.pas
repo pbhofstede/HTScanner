@@ -5414,6 +5414,7 @@ begin
 
   finally
     vBody.Free;
+    vFace.Free;
   end;
 end;
 

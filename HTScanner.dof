@@ -81,11 +81,15 @@ ProductName=
 ProductVersion=1.0.0.0
 Comments=
 [Excluded Packages]
+C:\Program Files\Reliable Software\Code Co-op\borland5.bpl=Reliable Software Code Co-op Wizard
+$(DELPHI)\Projects\Bpl\QLocalDT_D5.bpl=EMS Advanced Localizer Component Suite
+$(DELPHI)\Projects\Bpl\LocalWizard_D5.bpl=EMS Local Wizard
 $(DELPHI)\Projects\Bpl\FRIBX5.bpl=FastReport 2.5 IBX Components
 [HistoryLists\hlConditionals]
-Count=2
-Item0=HARRY
-Item1=05494
+Count=3
+Item0=HARRY;madExcept
+Item1=HARRY
+Item2=05494
 [HistoryLists\hlUnitAliases]
 Count=1
 Item0=WinTypes=Windows;WinProcs=Windows;DbiTypes=BDE;DbiProcs=BDE;DbiErrs=BDE;

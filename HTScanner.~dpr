@@ -1,6 +1,7 @@
 program HTScanner;
 
 uses
+  FastMM4,
   madExcept,
   madLinkDisAsm,
   madListHardware,

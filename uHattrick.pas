@@ -1440,7 +1440,8 @@ begin
 
             ExecQuery;
           finally
-            uBibDb.CommitTransaction(Transaction,FALSE);
+            uBibDb.CommitTransaction(Transaction,TRUE);
+            Free;
           end;
         end;
       end;
