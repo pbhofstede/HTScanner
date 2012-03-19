@@ -39,13 +39,13 @@ MaxStackSize=1048576
 ImageBase=4194304
 ExeDescription=
 [Directories]
-OutputDir=
-UnitOutputDir=
+OutputDir=D:\Projecten\Install
+UnitOutputDir=D:\Projecten\DCU
 PackageDLLOutputDir=
 PackageDCPOutputDir=
 SearchPath=
 Packages=Vcl50;Vclx50;VclSmp50;Vcldb50;vclado50;ibevnt50;Vclbde50;vcldbx50;TeeUI50;TeeDB50;Tee50;Dss50;TeeQR50;VCLIB50;Vclmid50;Inet50;Inetdb50;NMFast50;dclaxserver50;dxGDIPlusD5;cxLibraryVCLD5;dxEdtrD5;dxELibD5;dxNavBarD5;dxLayoutControlD5;dxLayoutControldxEditAdaptersD5;dxorgcd5;dxdbord5;dxFlowChartD5;ECQDBCD5;dxcomnD5;EQTLD5;EQDBTLD5;dxExELD5;EQGridD5;dxGrEdD5;dxPSCoreD5;dxPSTeeChartD5;dxPSdxDBGrLnkD5;dxPSdxDBCtrlLnkD5;dxPSTLLnkD5;dxPSdxOCLnkD5;dxPSdxDBTLLnkD5;dxPSLnksD5;dxPSdxLCLnkD5;dxPSdxDBOCLnkD5;dxPSdxFCLnkD5;dxPSDBTeeChartD5;madBasic_;madDisAsm_;madExcept_;dxBarD5;dxBarDBNavD5;dxBarExtItemsD5;dxBarExtDBItemsD5;dxsbd5;dxPageControlD5;DJcl50;JvAppFrmD5R;JvCoreD5R;JvBandsD5R;JvBDED5R;JvDBD5R;JvDlgsD5R;JvCmpD5R;JvCryptD5R;JvCtrlsD5R;JvCustomD5R;JvDockingD5R;JvDotNetCtrlsD5R;JvEDID5R;vclie50;Qrpt50;JvGlobusD5R;JvHMID5R;JvInspectorD5R;JvInterpreterD5R;JvJansD5R;JvManagedThreadsD5R;JvMMD5R;JvNetD5R;JvStdCtrlsD5R;JvPageCompsD5R;JvPluginD5R;JvPrintPreviewD5R;JvSystemD5R;JvTimeFrameworkD5R;JvUIBD5R;JvValidatorsD5R;JvWizardD5R;JvXPCtrlsD5R;Fr5;PsFRED50;Syntri;dcctd5;dxmdsd5;webmid50;dclocx50;GLScene5;EzBasic_D5;EZPlanIT_D5;A406_D50;A406_R50;fs5;frx5;frxcs5;fsDB5;frxDB5;fsBDE5;frxBDE5;fsADO5;frxADO5;fsIBX5;frxIBX5;frxe5;fsTee5;frxTee5;borland5
-Conditionals=HARRY;madExcept
+Conditionals=
 DebugSourceDirs=
 UsePackages=0
 [Parameters]
@@ -81,18 +81,17 @@ ProductName=
 ProductVersion=1.0.0.0
 Comments=
 [Excluded Packages]
-C:\Program Files\Reliable Software\Code Co-op\borland5.bpl=Reliable Software Code Co-op Wizard
-$(DELPHI)\Projects\Bpl\QLocalDT_D5.bpl=EMS Advanced Localizer Component Suite
-$(DELPHI)\Projects\Bpl\LocalWizard_D5.bpl=EMS Local Wizard
-$(DELPHI)\Projects\Bpl\FRIBX5.bpl=FastReport 2.5 IBX Components
+$(DELPHI)\Projects\Bpl\Scheduler_D5.bpl=Dream Scheduler Package
+D:\Components\PsFRExportFilters 1.24\Lib\D5\DCLPsFRED50.bpl=Pragnaan FastReport Export Filters
 [HistoryLists\hlConditionals]
-Count=3
-Item0=HARRY;madExcept
-Item1=HARRY
-Item2=05494
+Count=1
+Item0=madExcept;
 [HistoryLists\hlUnitAliases]
 Count=1
 Item0=WinTypes=Windows;WinProcs=Windows;DbiTypes=BDE;DbiProcs=BDE;DbiErrs=BDE;
+[HistoryLists\hlUnitOutputDirectory]
+Count=1
+Item0=D:\Projecten\DCU
 [HistoryLists\hlOutputDirectorry]
 Count=1
-Item0=D:\Projecten\Harry\Hattrick Scanner\Release
+Item0=D:\Projecten\Install
