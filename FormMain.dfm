@@ -55,7 +55,6 @@ object frmHTScanner: TfrmHTScanner
         Height = 758
         Align = alClient
         TabOrder = 0
-        Silent = False
         OnDownloadBegin = HTBrowserDownloadBegin
         OnBeforeNavigate2 = HTBrowserBeforeNavigate2
         OnDocumentComplete = HTBrowserDocumentComplete
@@ -975,6 +974,7 @@ object frmHTScanner: TfrmHTScanner
         Height = 758
         Align = alClient
         TabOrder = 0
+        Silent = False
         OnDownloadBegin = TSIBrowserDownloadBegin
         OnBeforeNavigate2 = TSIBrowserBeforeNavigate2
         OnDocumentComplete = TSIBrowserDocumentComplete
@@ -1169,7 +1169,6 @@ object frmHTScanner: TfrmHTScanner
           Height = 423
           Align = alClient
           TabOrder = 1
-          Silent = False
           OnDocumentComplete = HTBrowserDocumentComplete
           DisableCtrlShortcuts = 'N'
           UserInterfaceOptions = [EnablesFormsAutoComplete, EnableThemes]
@@ -1206,7 +1205,6 @@ object frmHTScanner: TfrmHTScanner
           Height = 341
           Align = alClient
           TabOrder = 0
-          Silent = False
           OnDocumentComplete = HTBrowserDocumentComplete
           DisableCtrlShortcuts = 'N'
           UserInterfaceOptions = [EnablesFormsAutoComplete, EnableThemes]
@@ -1235,7 +1233,6 @@ object frmHTScanner: TfrmHTScanner
         Height = 343
         Align = alClient
         TabOrder = 2
-        Silent = False
         OnDocumentComplete = HTBrowserDocumentComplete
         DisableCtrlShortcuts = 'N'
         UserInterfaceOptions = [EnablesFormsAutoComplete, EnableThemes]

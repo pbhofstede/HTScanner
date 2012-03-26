@@ -218,6 +218,7 @@ function SaveKarakterProfiel(aDatabase: TIBDatabase; aTSISet:TTSISet; aForce:boo
 function SaveJeugdKarakterProfiel(aDatabase: TIBDatabase;aSpeler:TJeugdspeler;aForce:boolean):integer;
 function SaveScouting(aDatabase: TIBDatabase; aTSISet:TTSISet; aTalentScouting: boolean): integer;
 function FormatSpecialiteit(aXLSSpec: String): String;
+function SpecToAfkorting(aSpec:String):String;
 function ParsePlayerInfo(vBody: TStringList): TTSISet;
 function GetGeboorteDatum(aLeeftijd,aDagen:integer):TDate;
 function TwinIsPossible(aDatabase:TIBDatabase;aGeboorteDatum:TDate;
@@ -1006,6 +1007,42 @@ begin
     end;
   end;
   result := vID;
+end;
+
+function SpecToAfkorting(aSpec:String):String;
+begin
+  if (aSpec = 'Snel') then
+  begin
+    Result := 'Q';
+  end
+  else if (aSpec = 'Geen') then
+  begin
+    Result := 'N';
+  end
+  else if (aSpec = 'Snel herstel') then
+  begin
+    Result := 'R';
+  end
+  else if (aSpec = 'Onvoorspelbaar') then
+  begin
+    Result := 'U';
+  end
+  else if (aSpec = 'Krachtig') then
+  begin
+    Result := 'P';
+  end
+  else if (aSpec = 'Koppen') then
+  begin
+    Result := 'H';
+  end
+  else if (aSpec = 'Technisch') then
+  begin
+    Result := 'T';
+  end
+  else
+  begin
+    Result := '?';
+  end;
 end;
 
 function FormatSpecialiteit(aXLSSpec: String): String;

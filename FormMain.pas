@@ -3291,7 +3291,7 @@ begin
     4:  ShowMessage(Format('%d nieuwe spelers gescout!',[ScoutU20Internationals]));
     5:  ScanKoopjes;
     6:  ScanJeugdCompetitie;
-    7:  ToonAutoScout;
+    7:  ToonAutoScout;                     
     8:  AddBlackListedTeam;
     9:  ScoutAll17yo(0);
     10: ScoutWrongCharacters;
@@ -3302,13 +3302,13 @@ end;
 
 procedure TfrmHTScanner.GetU20Lijstjes;
 var
-  i:integer;
+  i, vCount:integer;
   vLichting: String;
   vList: TStringList;
 begin
   vList := TStringList.Create;
   try
-    vLichting := InputBox('Geef de lichting...','HTScanner','QWC19');
+    vLichting := InputBox('Geef de lichting...','HTScanner','FWC19');
     for i:=1 to 7 do
     begin
       // 1 = WB
@@ -3316,113 +3316,33 @@ begin
       // 4 = FW
 
       vList.Clear;
-      vList.Add(Format('%s;%s;%s;%s;%s;%s',['Id','Naam','Spec','Promotie','Index','Stats']));
+      vCount := 0;
       with uBibRuntime.CreateSQL(ibdbHTInfo) do
       begin
         try
           with SQL do
           begin
-            Add('SELECT PLAYER_ID,');
-            Add('PLAYER_NAME,');
-            Add('TRAINING_INDEX,');
-            Add('PROMOTIE_DATUM,');
-            Add('POT_VERDEDIGEN,');
-            Add('POT_POSITIESPEL,');
-            Add('POT_SCOREN,');
-            Add('POT_PASSEN,');
-            Add('POT_VLEUGELSPEL,');
-            Add('COALESCE(SPECIALITEIT,'''') SPECIALITEIT');
-            Add('FROM GET_U20_TALENTEN(:LINIE) WHERE LICHTING = :LICHTING ORDER BY TRAINING_INDEX DESC');
+            Add('SELECT *');
+            Add('FROM GET_U20_TALENTEN(:LINIE) WHERE LICHTING = :LICHTING ORDER BY TOTAL_INDEX DESC');
           end;
           ParamByName('LINIE').asInteger := i;
           ParamByName('LICHTING').asString := vLichting;
           ExecQuery;
           while not EOF do
           begin
-            case i of
-              1: {Wingbacks}
-                vList.Add(Format('%d;%s;[%s];%s;%.2f;[%s DEF - %s WING - %s PASS - %s POS]',
-                [ FieldByName('PLAYER_ID').asInteger,
-                  FieldByName('PLAYER_NAME').asString,
-                  FieldByName('SPECIALITEIT').asString,
-                  FormatDateTime('dd-mm-yyyy',FieldByName('PROMOTIE_DATUM').asDateTime),
-                  FieldByName('TRAINING_INDEX').asFloat,
-                  FieldByName('POT_VERDEDIGEN').asString,
-                  FieldByName('POT_VLEUGELSPEL').asString,
-                  FieldByName('POT_PASSEN').asString,
-                  FieldByName('POT_POSITIESPEL').asString]));
-              2: {Middenvelders}
-              begin
-                vList.Add(Format('%d;%s;[%s];%s;%.2f;[%s POS - %s PASS - %s DEF]',
-                [ FieldByName('PLAYER_ID').asInteger,
-                  FieldByName('PLAYER_NAME').asString,
-                  FieldByName('SPECIALITEIT').asString,
-                  FormatDateTime('dd-mm-yyyy',FieldByName('PROMOTIE_DATUM').asDateTime),
-                  FieldByName('TRAINING_INDEX').asFloat,
-                  FieldByName('POT_POSITIESPEL').asString,
-                  FieldByName('POT_PASSEN').asString,
-                  FieldByName('POT_VERDEDIGEN').asString]));
-              end;
-              3: {Vleugelspelers}
-              begin
-                vList.Add(Format('%d;%s;[%s];%s;%.2f;[%s WING - %s POS - %s PASS]',
-                [ FieldByName('PLAYER_ID').asInteger,
-                  FieldByName('PLAYER_NAME').asString,
-                  FieldByName('SPECIALITEIT').asString,
-                  FormatDateTime('dd-mm-yyyy',FieldByName('PROMOTIE_DATUM').asDateTime),
-                  FieldByName('TRAINING_INDEX').asFloat,
-                  FieldByName('POT_VLEUGELSPEL').asString,
-                  FieldByName('POT_POSITIESPEL').asString,
-                  FieldByName('POT_PASSEN').asString]));
-              end;
-              4: {Aanvallers}
-              begin
-                vList.Add(Format('%d;%s;[%s];%s;%.2f;[%s SC - %s PASS - %s WING]',
-                [ FieldByName('PLAYER_ID').asInteger,
-                  FieldByName('PLAYER_NAME').asString,
-                  FieldByName('SPECIALITEIT').asString,
-                  FormatDateTime('dd-mm-yyyy',FieldByName('PROMOTIE_DATUM').asDateTime),
-                  FieldByName('TRAINING_INDEX').asFloat,
-                  FieldByName('POT_SCOREN').asString,
-                  FieldByName('POT_PASSEN').asString,
-                  FieldByName('POT_VLEUGELSPEL').asString]));
-              end;
-              5: {PMDefs}
-              begin
-                vList.Add(Format('%d;%s;[%s];%s;%.2f;[%s DEF - %s PM - %s PASS]',
-                [ FieldByName('PLAYER_ID').asInteger,
-                  FieldByName('PLAYER_NAME').asString,
-                  FieldByName('SPECIALITEIT').asString,
-                  FormatDateTime('dd-mm-yyyy',FieldByName('PROMOTIE_DATUM').asDateTime),
-                  FieldByName('TRAINING_INDEX').asFloat,
-                  FieldByName('POT_VERDEDIGEN').asString,
-                  FieldByName('POT_POSITIESPEL').asString,
-                  FieldByName('POT_PASSEN').asString]));
-              end;
-              6: {Defs}
-              begin
-                vList.Add(Format('%d;%s;[%s];%s;%.2f;[%s DEF - %s PASS - %s PM]',
-                [ FieldByName('PLAYER_ID').asInteger,
-                  FieldByName('PLAYER_NAME').asString,
-                  FieldByName('SPECIALITEIT').asString,
-                  FormatDateTime('dd-mm-yyyy',FieldByName('PROMOTIE_DATUM').asDateTime),
-                  FieldByName('TRAINING_INDEX').asFloat,
-                  FieldByName('POT_VERDEDIGEN').asString,
-                  FieldByName('POT_PASSEN').asString,
-                  FieldByName('POT_POSITIESPEL').asString]));
-              end;
-              7: {DFW}
-              begin
-                vList.Add(Format('%d;%s;[%s];%s;%.2f;[%s SC - %s PASS - %s PM]',
-                [ FieldByName('PLAYER_ID').asInteger,
-                  FieldByName('PLAYER_NAME').asString,
-                  FieldByName('SPECIALITEIT').asString,
-                  FormatDateTime('dd-mm-yyyy',FieldByName('PROMOTIE_DATUM').asDateTime),
-                  FieldByName('TRAINING_INDEX').asFloat,
-                  FieldByName('POT_SCOREN').asString,
-                  FieldByName('POT_PASSEN').asString,
-                  FieldByName('POT_POSITIESPEL').asString]));
-              end;
+            inc(vCount);
+            if (vCount <= 30) then
+            begin
+              vList.Add(Format('%.2d. [youthplayerid=%d] %s %s %d',
+                [vCount,
+                 FieldByName('PLAYER_ID').asInteger,
+                 FieldByName('PLAYER_NAME').asString,
+                 FieldByName('STATS').asString,
+                 FieldByName('U20_AFWIJKING').asInteger]));
+              vList.Add(Format('    [%s] %s %s',[
+                FieldByName('SPECIALITEIT').asString,
+                FieldByName('SCOUT').asString,
+                FieldByName('OPMERKING_SCOUT').asString]));
             end;
             Next;
           end;
@@ -3433,13 +3353,13 @@ begin
       end;
 
       case i of
-        1: vList.SaveToFile(ExtractFilePath(Application.ExeName)+'U20_Wingbacks.csv');
-        2: vList.SaveToFile(ExtractFilePath(Application.ExeName)+'U20_Middenvelders.csv');
-        3: vList.SaveToFile(ExtractFilePath(Application.ExeName)+'U20_Vleugelspelers.csv');
-        4: vList.SaveToFile(ExtractFilePath(Application.ExeName)+'U20_Aanvallers.csv');
-        5: vList.SaveToFile(ExtractFilePath(Application.ExeName)+'U20_PMVerdedigers.csv');
-        6: vList.SaveToFile(ExtractFilePath(Application.ExeName)+'U20_Verdedigers.csv');
-        7: vList.SaveToFile(ExtractFilePath(Application.ExeName)+'U20_DFW.csv');
+        1: vList.SaveToFile(ExtractFilePath(Application.ExeName)+'Scouting\U20_Wingbacks.csv');
+        2: vList.SaveToFile(ExtractFilePath(Application.ExeName)+'Scouting\U20_Middenvelders.csv');
+        3: vList.SaveToFile(ExtractFilePath(Application.ExeName)+'Scouting\U20_Vleugelspelers.csv');
+        4: vList.SaveToFile(ExtractFilePath(Application.ExeName)+'Scouting\U20_Aanvallers.csv');
+        5: vList.SaveToFile(ExtractFilePath(Application.ExeName)+'Scouting\U20_PMVerdedigers.csv');
+        6: vList.SaveToFile(ExtractFilePath(Application.ExeName)+'Scouting\U20_Verdedigers.csv');
+        7: vList.SaveToFile(ExtractFilePath(Application.ExeName)+'Scouting\U20_DFW.csv');
       end;
     end;
   finally
@@ -7189,6 +7109,7 @@ const
   SCOREN_POT = 'AB';
   SPELHERVATTEN = 'AC';
   SPELHERVATTEN_POT = 'AD';
+  OPMERKING_SCOUT = 'AF';
 
 var
   vCount,
@@ -7216,6 +7137,7 @@ var
   vIsSenior: boolean;
   vChanged, vCurChanged, vPlayerChanged: integer;
   vLastUpdate: TDateTime;
+  vOpmerking: String;
 begin
   vChanged := 0;
   vPlayerChanged := 0;
@@ -7325,10 +7247,11 @@ begin
                 'PLAYER_NAME',srtString);
                 
           vScout := GetScout(vExcelFunctions.ExcelApp.ActiveWorkbook.Name, vExcelFunctions.ExcelApp.ActiveSheet.Name, vNaam);
+          vOpmerking := vExcelFunctions.GetCellRange(Format('%s%d', [OPMERKING_SCOUT, vCount]));
 
-          uBibDb.ExecSQL(ibdbHTInfo,'UPDATE JEUGDSPELERS SET EXPORTED = -1, IN_DOCS = -1, GOOGLE_DOC = :DOC, TABSHEET = :SHEET WHERE PLAYER_ID = :PLAYERID',
-            ['PLAYERID','SHEET','DOC'],[vPlayerID,vExcelFunctions.ExcelApp.ActiveSheet.Name,
-              vExcelFunctions.ExcelApp.ActiveWorkbook.Name]);
+          uBibDb.ExecSQL(ibdbHTInfo,'UPDATE JEUGDSPELERS SET EXPORTED = -1, IN_DOCS = -1, GOOGLE_DOC = :DOC, TABSHEET = :SHEET, OPMERKING_SCOUT = :OPMERKING WHERE PLAYER_ID = :PLAYERID',
+            ['PLAYERID','SHEET','DOC','OPMERKING'],[vPlayerID,vExcelFunctions.ExcelApp.ActiveSheet.Name,
+              vExcelFunctions.ExcelApp.ActiveWorkbook.Name, vOpmerking]);
 
           vPotentie := vExcelFunctions.GetCellRange(Format('%s%d', [KEEPEN_POT, vCount]));
           if Pos('*',vPotentie) > 0 then
@@ -8738,6 +8661,7 @@ var
   vDatum16_75, vDatum17: TDate;
   vVoortgang: TfrmVoortgang;
   vTalented: boolean;
+  vValues: TFieldValues;
 begin
   uBibDb.ExecSQL(ibdbHTInfo,'UPDATE JEUGDSPELERS SET INTERESTING = 0 WHERE INTERESTING = -1',[],[]);
 
@@ -8772,6 +8696,7 @@ begin
       Free;
     end;
   end;
+  vValues := nil;
   try
     vVoortgang.Melding := 'TBS-run voorbereiden...';
     with uBibRuntime.CreateSQL(ibdbHTInfo) do
@@ -8798,8 +8723,10 @@ begin
         ExecQuery;
         while not EOF do
         begin
-          vTalented := uBibDb.GetSPValue(ibdbHTInfo,'GET_TALENTED_EX',[FieldByName('PLAYER_ID').asInteger,-1],
-            'TALENTED',srtInteger) = -1;
+          vValues := uBibDb.GetSPValues(ibdbHTInfo,'GET_TALENTED_EX',[FieldByName('PLAYER_ID').asInteger,-1],
+            ['TALENTED','U20_TALENTED'],[srtInteger,srtInteger]);
+
+          vTalented := (vValues[0] = -1) or (vValues[1] = -1);
 
           uBibDb.ExecSQL(ibdbHTInfo,'UPDATE JEUGDSPELERS SET INTERESTING = :INTERESTING WHERE PLAYER_ID = :ID',
             ['ID','INTERESTING'],[FieldByName('PLAYER_ID').asInteger, Ord(vTalented) * -1]);

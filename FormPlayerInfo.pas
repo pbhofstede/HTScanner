@@ -568,8 +568,8 @@ begin
         ExecQuery;
         if (FieldByName('U20_LEEFTIJD').asInteger = -1) then
         begin
-          chckNTTalented.Checked := FALSE;
-          chckU20Talented.Checked := FieldByName('TALENTED').asInteger = -1;
+          chckNTTalented.Checked := FieldByName('TALENTED').asInteger = -1;
+          chckU20Talented.Checked := FieldByName('U20_TALENTED').asInteger = -1;
         end
         else
         begin
