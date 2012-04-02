@@ -333,7 +333,8 @@ begin
       end;
     end;
   end;
-
+  edBigScout.Lines.Clear;
+  
   edResult.Lines.SaveTofile(ExtractFilePath(Application.ExeName)+'NTPlayers.txt');
 
   ShellExecute(Handle,PChar('OPEN'),PChar(ExtractFilePath(Application.ExeName)+'NTPlayers.txt'),

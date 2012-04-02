@@ -691,7 +691,8 @@ begin
   
   vTitle := HTMLDocument(aBrowser.Document).Title;
   vError := vError or (Pos('De webpagina kan niet worden weergegeven',vTitle) > 0)
-    or (Pos('Applicatiefout',vTitle) > 0) or (Pos('Onderhoud',vTitle) > 0);
+    or (Pos('Applicatiefout',vTitle) > 0) or (Pos('Onderhoud',vTitle) > 0) or
+    (Pos('Runtime Error',vTitle) > 0) or (Pos('/Errors/',aBrowser.LocationURL) > 0);
 
   result := not (vError) and (Pos(aUrl, aBrowser.LocationURL) > 0);
 
@@ -3303,12 +3304,35 @@ end;
 procedure TfrmHTScanner.GetU20Lijstjes;
 var
   i, vCount:integer;
-  vLichting: String;
+  vKwalificatie: boolean;
+  vLichting, vKarakter: String;
   vList: TStringList;
 begin
   vList := TStringList.Create;
   try
-    vLichting := InputBox('Geef de lichting...','HTScanner','FWC19');
+    with uBibRuntime.CreateSQL(ibdbHTInfo) do
+    begin
+      try
+        with SQL do
+        begin
+          Add('SELECT FIRST 1 D.* FROM U20_DATA D');
+          Add('WHERE D.DATUM - (4 * 16 * 7) > CURRENT_DATE');
+          Add('ORDER BY D.DATUM');
+        end;
+        ExecQuery;
+        vLichting := FieldByName('OMSCHRIJVING').asString;
+        vKwalificatie := FieldByName('KWALIFICATIE').asInteger = -1;
+      finally
+        uBibDb.CommitTransaction(Transaction,TRUE);
+        Free;
+      end;
+    end;
+
+    if (vLichting = '') then
+    begin
+      vLichting := InputBox('Geef de lichting...','HTScanner','FWC19');
+    end;
+
     for i:=1 to 7 do
     begin
       // 1 = WB
@@ -3333,16 +3357,44 @@ begin
             inc(vCount);
             if (vCount <= 30) then
             begin
+              if (vKwalificatie) then
+              begin
+                vKarakter := FieldByName('KARAKTER').asString;
+              end
+              else
+              begin
+                if FieldByName('LEIDERSCHAP').asString = 'goed' then
+                begin
+                  vKarakter := 'Goed leider';
+                end
+                else
+                begin
+                  vKarakter := '';
+                end;
+              end;
+
               vList.Add(Format('%.2d. [youthplayerid=%d] %s %s %d',
                 [vCount,
                  FieldByName('PLAYER_ID').asInteger,
                  FieldByName('PLAYER_NAME').asString,
                  FieldByName('STATS').asString,
                  FieldByName('U20_AFWIJKING').asInteger]));
-              vList.Add(Format('    [%s] %s %s',[
-                FieldByName('SPECIALITEIT').asString,
-                FieldByName('SCOUT').asString,
-                FieldByName('OPMERKING_SCOUT').asString]));
+
+              if (vKarakter <> '') then
+              begin
+                vList.Add(Format('[%s] %s [b]%s[/b] %s',[
+                  FieldByName('SPECIALITEIT').asString,
+                  vKarakter,
+                  FieldByName('SCOUT').asString,
+                  FieldByName('OPMERKING_SCOUT').asString]));
+              end
+              else
+              begin
+                vList.Add(Format('[%s] [b]%s[/b] %s',[
+                  FieldByName('SPECIALITEIT').asString,
+                  FieldByName('SCOUT').asString,
+                  FieldByName('OPMERKING_SCOUT').asString]));
+              end;
             end;
             Next;
           end;
@@ -4628,16 +4680,9 @@ begin
     end;
   end;
 
-  //if (aYouthPlayerID = 0) then
-  //begin
-    vMin := 0;
-    vMax := 4;
-  {end
-  else
-  begin
-    vMin := 1;
-    vMax := 1;
-  end; }
+
+  vMin := 0;
+  vMax := 4;
 
   result := 0;
   vAantal := 0;
@@ -4663,33 +4708,6 @@ begin
         with vQuery do
         begin
           try
-            {if (vRun = 1) then
-            begin
-              vSubOmschrijving := '';
-            end
-            else if (vRun = 2) then
-            begin
-              if (vLinie = KEEPERS) then
-              begin
-                vSubOmschrijving := 'NT (A / L):';
-              end
-              else
-              begin
-                GetFilter(vRun,vSubOmschrijving);
-              end;
-            end
-            else
-            begin
-              if (vLinie = KEEPERS) then
-              begin
-                vSubOmschrijving := 'NT (M / Z):';
-              end
-              else
-              begin
-                GetFilter(vRun,vSubOmschrijving);
-              end;
-            end;}
-
             if not Active then
               Open
             else
@@ -4707,27 +4725,8 @@ begin
 
               vOK := FieldByName('LINIE').asInteger = vLinie;
 
-              {if (vRun = 1) then
-              begin
-                vOk := vOk and not (FieldByName('U20_AFWIJKING').IsNull);
-              end
-              else
-              begin
-                vOK := vOK and FieldByName('U20_AFWIJKING').IsNull and
-                  LeeftijdIsOK(vRun, FieldByName('GEBOORTEDATUM').AsDateTime);
-              end;}
-
               if (vOK) then
               begin
-
-                {if (vRun = 1) then
-                begin
-                  if (vSubOmschrijving = '') then
-                  begin
-                    vSubOmschrijving := Format('U20 [%s]',[FieldByName('U20_LICHTING').asString]);
-                  end;
-                end;}
-
                 vBlackListed := (uBibDB.GetFieldValue(ibdbHTInfo,'BLACKLIST',
                   ['TEAM_ID'],[FieldByName('TEAM_ID').asInteger],'ID',srtInteger)) > 0;
 
@@ -8066,6 +8065,11 @@ end;
 
 procedure TfrmHTScanner.btnPlayerInfoClick(Sender: TObject);
 begin
+  if not (Quadspeed1.Checked) then
+  begin
+    Quadspeed1Click(nil);
+  end;
+  
   ToonPlayerInfoScreen;
 end;
 
@@ -8254,6 +8258,12 @@ begin
       Open(aDoc);
       try
         vAantalSheets := ExcelApp.ActiveWorkbook.Worksheets.Count;
+
+        if (aIsU20) then
+        begin
+          vAantalSheets := vAantalSheets - 1;
+        end;
+
         for vCount := 1 to vAantalSheets - 1 do
         begin
           ExcelApp.ActiveWorkbook.Worksheets[vCount].Activate;

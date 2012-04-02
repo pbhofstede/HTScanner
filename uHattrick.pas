@@ -447,14 +447,16 @@ begin
     end;
 
     vPos := Pos('Maakt deel uit van het U-20',vBody.Text);
-    if (vPos > 0) then
+    vPos2 := Pos('Wedstrijden voor nationale U-20 team',vBody.Text);
+    if ((vPos > 0) or (vPos2 > 0)) then
     begin
       result.U20 := TRUE;
     end
     else
     begin
       vPos := Pos('Maakt deel uit van het',vBody.Text);
-      if (vPos > 0) then
+      vPos2 := Pos('Wedstrijden voor nationale team',vBody.Text);
+      if ((vPos > 0) or (vPos2 > 0)) then
       begin
         result.NT := TRUE;
       end;

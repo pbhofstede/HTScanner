@@ -1,9 +1,8 @@
 object frmPlayerInfo: TfrmPlayerInfo
-  Left = 55
-  Top = 141
-  Width = 1420
+  Left = 153
+  Top = 127
+  Width = 1364
   Height = 643
-  ActiveControl = edPlayerID
   Caption = 'Player/Managerinfo'
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -23,7 +22,7 @@ object frmPlayerInfo: TfrmPlayerInfo
   object pcgControlInfo: TdxPageControl
     Left = 0
     Top = 0
-    Width = 1404
+    Width = 1348
     Height = 605
     ActivePage = tbPlayerinfo
     Align = alClient
@@ -44,7 +43,7 @@ object frmPlayerInfo: TfrmPlayerInfo
       object Panel1: TPanel
         Left = 0
         Top = 0
-        Width = 1404
+        Width = 1348
         Height = 61
         Align = alTop
         BevelOuter = bvNone
@@ -93,7 +92,7 @@ object frmPlayerInfo: TfrmPlayerInfo
           TabOrder = 1
         end
         object Button1: TButton
-          Left = 1267
+          Left = 1211
           Top = 24
           Width = 115
           Height = 25
@@ -106,7 +105,7 @@ object frmPlayerInfo: TfrmPlayerInfo
       object Panel3: TPanel
         Left = 0
         Top = 61
-        Width = 1404
+        Width = 1348
         Height = 196
         Align = alTop
         BevelOuter = bvNone
@@ -241,7 +240,7 @@ object frmPlayerInfo: TfrmPlayerInfo
           DataSource = dsManagerInfo
         end
         object Button2: TButton
-          Left = 1267
+          Left = 1211
           Top = 80
           Width = 115
           Height = 25
@@ -251,7 +250,7 @@ object frmPlayerInfo: TfrmPlayerInfo
           OnClick = Button2Click
         end
         object btnInfo: TButton
-          Left = 1267
+          Left = 1211
           Top = 24
           Width = 115
           Height = 25
@@ -261,7 +260,7 @@ object frmPlayerInfo: TfrmPlayerInfo
           OnClick = btnInfoClick
         end
         object Button4: TButton
-          Left = 1267
+          Left = 1211
           Top = 166
           Width = 115
           Height = 25
@@ -285,7 +284,7 @@ object frmPlayerInfo: TfrmPlayerInfo
           TabOrder = 4
         end
         object Button3: TButton
-          Left = 1267
+          Left = 1211
           Top = 52
           Width = 115
           Height = 25
@@ -295,7 +294,7 @@ object frmPlayerInfo: TfrmPlayerInfo
           OnClick = Button3Click
         end
         object Button5: TButton
-          Left = 1267
+          Left = 1211
           Top = 108
           Width = 115
           Height = 25
@@ -305,7 +304,7 @@ object frmPlayerInfo: TfrmPlayerInfo
           OnClick = Button5Click
         end
         object Button6: TButton
-          Left = 1267
+          Left = 1211
           Top = 137
           Width = 115
           Height = 25
@@ -315,7 +314,7 @@ object frmPlayerInfo: TfrmPlayerInfo
           OnClick = Button6Click
         end
         object btnScout: TButton
-          Left = 1267
+          Left = 1211
           Top = 0
           Width = 115
           Height = 25
@@ -685,7 +684,7 @@ object frmPlayerInfo: TfrmPlayerInfo
       object Panel2: TPanel
         Left = 0
         Top = 257
-        Width = 1404
+        Width = 1348
         Height = 325
         Align = alClient
         BevelOuter = bvNone
@@ -694,7 +693,7 @@ object frmPlayerInfo: TfrmPlayerInfo
         object dxPageControl1: TdxPageControl
           Left = 0
           Top = 0
-          Width = 1404
+          Width = 1348
           Height = 325
           ActivePage = tbBatchlings
           Align = alClient
@@ -852,7 +851,7 @@ object frmPlayerInfo: TfrmPlayerInfo
             object dxDBGrid2: TdxDBGrid
               Left = 0
               Top = 0
-              Width = 1404
+              Width = 1348
               Height = 302
               Bands = <
                 item
@@ -905,6 +904,26 @@ object frmPlayerInfo: TfrmPlayerInfo
                 BandIndex = 0
                 RowIndex = 0
                 FieldName = 'PROMOTED'
+              end
+              object dxDBGrid2Column7: TdxDBGridCheckColumn
+                Width = 100
+                BandIndex = 0
+                RowIndex = 0
+                FieldName = 'U20'
+                ValueChecked = 'True'
+                ValueUnchecked = 'False'
+                DisplayChecked = '-1'
+                DisplayUnChecked = '0'
+              end
+              object dxDBGrid2Column8: TdxDBGridCheckColumn
+                Width = 100
+                BandIndex = 0
+                RowIndex = 0
+                FieldName = 'NT'
+                ValueChecked = 'True'
+                ValueUnchecked = 'False'
+                DisplayChecked = '-1'
+                DisplayUnChecked = '0'
               end
             end
           end
@@ -1137,53 +1156,18 @@ object frmPlayerInfo: TfrmPlayerInfo
     end
     object tbNTScouting: TdxTabSheet
       Caption = 'NT Scouting'
-      object Label3: TLabel
-        Left = 11
-        Top = 12
-        Width = 41
-        Height = 13
-        Caption = 'PlayerID'
-      end
-      object edNTPlayerID: TEdit
-        Left = 88
-        Top = 7
-        Width = 121
-        Height = 21
-        TabOrder = 0
-        OnChange = edPlayerIDChange
-      end
-      object btnNTScouting: TButton
-        Left = 1253
-        Top = 0
-        Width = 115
-        Height = 25
-        Anchors = [akTop, akRight]
-        Caption = 'Zoek!'
-        TabOrder = 1
-        OnClick = btnNTScoutingClick
-      end
-      object Button8: TButton
-        Left = 1253
-        Top = 24
-        Width = 115
-        Height = 25
-        Anchors = [akTop, akRight]
-        Caption = 'Scout!'
-        TabOrder = 2
-        OnClick = Button8Click
-      end
       object Panel5: TPanel
         Left = 0
         Top = 222
-        Width = 1404
+        Width = 1348
         Height = 360
         Align = alBottom
         Caption = 'Panel5'
-        TabOrder = 3
+        TabOrder = 0
         object dxDBGrid3: TdxDBGrid
           Left = 1
           Top = 1
-          Width = 1402
+          Width = 1346
           Height = 358
           Bands = <
             item
@@ -1246,537 +1230,620 @@ object frmPlayerInfo: TfrmPlayerInfo
           end
         end
       end
-      object Button9: TButton
-        Left = 1253
-        Top = 48
-        Width = 115
-        Height = 25
-        Anchors = [akTop, akRight]
-        Caption = 'Find YouthplayerID!'
-        TabOrder = 4
-        OnClick = Button9Click
-      end
-      object GroupBox1: TGroupBox
-        Left = 216
-        Top = 2
-        Width = 353
-        Height = 207
-        Caption = ' Player Test NT/U20 '
-        TabOrder = 5
-        object Label7: TLabel
-          Left = 16
-          Top = 24
-          Width = 36
-          Height = 13
-          Caption = 'Keepen'
-        end
-        object Label8: TLabel
-          Left = 16
-          Top = 45
-          Width = 54
-          Height = 13
-          Caption = 'Verdedigen'
-        end
-        object Label9: TLabel
-          Left = 16
-          Top = 66
-          Width = 50
-          Height = 13
-          Caption = 'Positiespel'
-        end
-        object Label10: TLabel
-          Left = 16
-          Top = 87
-          Width = 53
-          Height = 13
-          Caption = 'Vleugelspel'
-        end
-        object lblPassen1: TLabel
-          Left = 16
-          Top = 108
-          Width = 34
-          Height = 13
-          Caption = 'Passen'
-        end
-        object Label11: TLabel
-          Left = 16
-          Top = 129
-          Width = 33
-          Height = 13
-          Caption = 'Scoren'
-        end
-        object Label12: TLabel
-          Left = 16
-          Top = 150
-          Width = 68
-          Height = 13
-          Caption = 'Spelhervatten'
-        end
-        object Leeftijd: TLabel
-          Left = 18
-          Top = 180
-          Width = 36
-          Height = 13
-          Caption = 'Leeftijd'
-        end
-        object Label13: TLabel
-          Left = 204
-          Top = 180
-          Width = 23
-          Height = 13
-          Caption = 'days'
-        end
-        object Label14: TLabel
-          Left = 133
-          Top = 180
-          Width = 6
-          Height = 13
-          Caption = 'y'
-        end
-        object lblGK: TLabel
-          Left = 247
-          Top = 24
-          Width = 15
-          Height = 13
-          Caption = 'GK'
-          Font.Charset = DEFAULT_CHARSET
-          Font.Color = clWindowText
-          Font.Height = -11
-          Font.Name = 'Tahoma'
-          Font.Style = [fsBold]
-          ParentFont = False
-          OnClick = lblGKClick
-        end
-        object lblCD: TLabel
-          Tag = 1
-          Left = 247
-          Top = 40
-          Width = 15
-          Height = 13
-          Caption = 'CD'
-          Font.Charset = DEFAULT_CHARSET
-          Font.Color = clWindowText
-          Font.Height = -11
-          Font.Name = 'Tahoma'
-          Font.Style = [fsBold]
-          ParentFont = False
-          OnClick = lblGKClick
-        end
-        object lblOCD: TLabel
-          Tag = 2
-          Left = 247
-          Top = 56
-          Width = 23
-          Height = 13
-          Caption = 'OCD'
-          Font.Charset = DEFAULT_CHARSET
-          Font.Color = clWindowText
-          Font.Height = -11
-          Font.Name = 'Tahoma'
-          Font.Style = [fsBold]
-          ParentFont = False
-          OnClick = lblGKClick
-        end
-        object lblOWB: TLabel
-          Tag = 3
-          Left = 247
-          Top = 71
-          Width = 26
-          Height = 13
-          Caption = 'OWB'
-          Font.Charset = DEFAULT_CHARSET
-          Font.Color = clWindowText
-          Font.Height = -11
-          Font.Name = 'Tahoma'
-          Font.Style = [fsBold]
-          ParentFont = False
-          OnClick = lblGKClick
-        end
-        object lblIM: TLabel
-          Tag = 4
-          Left = 247
-          Top = 87
-          Width = 15
-          Height = 13
-          Caption = 'IM'
-          Font.Charset = DEFAULT_CHARSET
-          Font.Color = clWindowText
-          Font.Height = -11
-          Font.Name = 'Tahoma'
-          Font.Style = [fsBold]
-          ParentFont = False
-          OnClick = lblGKClick
-        end
-        object lblWing: TLabel
-          Tag = 5
-          Left = 247
-          Top = 103
-          Width = 31
-          Height = 13
-          Caption = 'WING'
-          Font.Charset = DEFAULT_CHARSET
-          Font.Color = clWindowText
-          Font.Height = -11
-          Font.Name = 'Tahoma'
-          Font.Style = [fsBold]
-          ParentFont = False
-          OnClick = lblGKClick
-        end
-        object lblFW: TLabel
-          Tag = 6
-          Left = 247
-          Top = 119
-          Width = 17
-          Height = 13
-          Caption = 'FW'
-          Font.Charset = DEFAULT_CHARSET
-          Font.Color = clWindowText
-          Font.Height = -11
-          Font.Name = 'Tahoma'
-          Font.Style = [fsBold]
-          ParentFont = False
-          OnClick = lblGKClick
-        end
-        object lblDFW: TLabel
-          Tag = 7
-          Left = 247
-          Top = 135
-          Width = 25
-          Height = 13
-          Caption = 'DFW'
-          Font.Charset = DEFAULT_CHARSET
-          Font.Color = clWindowText
-          Font.Height = -11
-          Font.Name = 'Tahoma'
-          Font.Style = [fsBold]
-          ParentFont = False
-          OnClick = lblGKClick
-        end
-        object pckEdKeepen: TdxPickEdit
-          Left = 88
-          Top = 21
-          Width = 153
+      object Panel7: TPanel
+        Left = 0
+        Top = 0
+        Width = 1348
+        Height = 222
+        Align = alTop
+        BevelOuter = bvNone
+        TabOrder = 1
+        object Panel8: TPanel
+          Left = 0
+          Top = 0
+          Width = 569
+          Height = 222
+          Align = alLeft
+          BevelOuter = bvNone
           TabOrder = 0
-          DropDownListStyle = True
-          Items.Strings = (
-            'niet-bestaand (non-existent)'
-            'rampzalig (disastrous)'
-            'waardeloos (wretched)'
-            'slecht (poor)'
-            'zwak (weak)'
-            'matig (inadequate)'
-            'redelijk (passable)'
-            'goed (solid)'
-            'uitstekend (excellent)'
-            'formidabel (formidable)'
-            'uitmuntend (outstanding)'
-            'briljant (brilliant)'
-            'wonderbaarlijk (magnificent)'
-            'wereldklasse (world class)'
-            'bovennatuurlijk (supernatural)'
-            'reusachtig (titanic)'
-            'buitenaards (extra-terrestrial)'
-            'mythisch (mythical)'
-            'magisch (magical)'
-            'utopisch (utopian)'
-            'goddelijk (divine)')
-        end
-        object pckEdVerdedigen: TdxPickEdit
-          Left = 88
-          Top = 42
-          Width = 153
-          TabOrder = 1
-          DropDownListStyle = True
-          Items.Strings = (
-            'niet-bestaand (non-existent)'
-            'rampzalig (disastrous)'
-            'waardeloos (wretched)'
-            'slecht (poor)'
-            'zwak (weak)'
-            'matig (inadequate)'
-            'redelijk (passable)'
-            'goed (solid)'
-            'uitstekend (excellent)'
-            'formidabel (formidable)'
-            'uitmuntend (outstanding)'
-            'briljant (brilliant)'
-            'wonderbaarlijk (magnificent)'
-            'wereldklasse (world class)'
-            'bovennatuurlijk (supernatural)'
-            'reusachtig (titanic)'
-            'buitenaards (extra-terrestrial)'
-            'mythisch (mythical)'
-            'magisch (magical)'
-            'utopisch (utopian)'
-            'goddelijk (divine)')
-        end
-        object pckEdPositiespel: TdxPickEdit
-          Left = 88
-          Top = 63
-          Width = 153
-          TabOrder = 2
-          DropDownListStyle = True
-          Items.Strings = (
-            'niet-bestaand (non-existent)'
-            'rampzalig (disastrous)'
-            'waardeloos (wretched)'
-            'slecht (poor)'
-            'zwak (weak)'
-            'matig (inadequate)'
-            'redelijk (passable)'
-            'goed (solid)'
-            'uitstekend (excellent)'
-            'formidabel (formidable)'
-            'uitmuntend (outstanding)'
-            'briljant (brilliant)'
-            'wonderbaarlijk (magnificent)'
-            'wereldklasse (world class)'
-            'bovennatuurlijk (supernatural)'
-            'reusachtig (titanic)'
-            'buitenaards (extra-terrestrial)'
-            'mythisch (mythical)'
-            'magisch (magical)'
-            'utopisch (utopian)'
-            'goddelijk (divine)')
-        end
-        object pckEdVleugelspel: TdxPickEdit
-          Left = 88
-          Top = 84
-          Width = 153
-          TabOrder = 3
-          DropDownListStyle = True
-          Items.Strings = (
-            'niet-bestaand (non-existent)'
-            'rampzalig (disastrous)'
-            'waardeloos (wretched)'
-            'slecht (poor)'
-            'zwak (weak)'
-            'matig (inadequate)'
-            'redelijk (passable)'
-            'goed (solid)'
-            'uitstekend (excellent)'
-            'formidabel (formidable)'
-            'uitmuntend (outstanding)'
-            'briljant (brilliant)'
-            'wonderbaarlijk (magnificent)'
-            'wereldklasse (world class)'
-            'bovennatuurlijk (supernatural)'
-            'reusachtig (titanic)'
-            'buitenaards (extra-terrestrial)'
-            'mythisch (mythical)'
-            'magisch (magical)'
-            'utopisch (utopian)'
-            'goddelijk (divine)')
-        end
-        object pckEdPassen: TdxPickEdit
-          Left = 88
-          Top = 105
-          Width = 153
-          TabOrder = 4
-          DropDownListStyle = True
-          Items.Strings = (
-            'niet-bestaand (non-existent)'
-            'rampzalig (disastrous)'
-            'waardeloos (wretched)'
-            'slecht (poor)'
-            'zwak (weak)'
-            'matig (inadequate)'
-            'redelijk (passable)'
-            'goed (solid)'
-            'uitstekend (excellent)'
-            'formidabel (formidable)'
-            'uitmuntend (outstanding)'
-            'briljant (brilliant)'
-            'wonderbaarlijk (magnificent)'
-            'wereldklasse (world class)'
-            'bovennatuurlijk (supernatural)'
-            'reusachtig (titanic)'
-            'buitenaards (extra-terrestrial)'
-            'mythisch (mythical)'
-            'magisch (magical)'
-            'utopisch (utopian)'
-            'goddelijk (divine)')
-        end
-        object pckEdScoren: TdxPickEdit
-          Left = 88
-          Top = 126
-          Width = 153
-          TabOrder = 5
-          DropDownListStyle = True
-          Items.Strings = (
-            'niet-bestaand (non-existent)'
-            'rampzalig (disastrous)'
-            'waardeloos (wretched)'
-            'slecht (poor)'
-            'zwak (weak)'
-            'matig (inadequate)'
-            'redelijk (passable)'
-            'goed (solid)'
-            'uitstekend (excellent)'
-            'formidabel (formidable)'
-            'uitmuntend (outstanding)'
-            'briljant (brilliant)'
-            'wonderbaarlijk (magnificent)'
-            'wereldklasse (world class)'
-            'bovennatuurlijk (supernatural)'
-            'reusachtig (titanic)'
-            'buitenaards (extra-terrestrial)'
-            'mythisch (mythical)'
-            'magisch (magical)'
-            'utopisch (utopian)'
-            'goddelijk (divine)')
-        end
-        object pckEdSpelhervatten: TdxPickEdit
-          Left = 88
-          Top = 147
-          Width = 153
-          TabOrder = 6
-          DropDownListStyle = True
-          Items.Strings = (
-            'niet-bestaand (non-existent)'
-            'rampzalig (disastrous)'
-            'waardeloos (wretched)'
-            'slecht (poor)'
-            'zwak (weak)'
-            'matig (inadequate)'
-            'redelijk (passable)'
-            'goed (solid)'
-            'uitstekend (excellent)'
-            'formidabel (formidable)'
-            'uitmuntend (outstanding)'
-            'briljant (brilliant)'
-            'wonderbaarlijk (magnificent)'
-            'wereldklasse (world class)'
-            'bovennatuurlijk (supernatural)'
-            'reusachtig (titanic)'
-            'buitenaards (extra-terrestrial)'
-            'mythisch (mythical)'
-            'magisch (magical)'
-            'utopisch (utopian)'
-            'goddelijk (divine)')
-        end
-        object spedJaar: TdxSpinEdit
-          Left = 88
-          Top = 176
-          Width = 41
-          TabOrder = 7
-          Value = 17
-        end
-        object spedDagen: TdxSpinEdit
-          Left = 145
-          Top = 176
-          Width = 57
-          TabOrder = 8
-        end
-        object Button7: TButton
-          Left = 249
-          Top = 173
-          Width = 75
-          Height = 25
-          Caption = 'Show me!'
-          TabOrder = 9
-          OnClick = Button7Click
-        end
-        object chckIsU20: TCheckBox
-          Left = 246
-          Top = 152
-          Width = 50
-          Height = 17
-          Alignment = taLeftJustify
-          Caption = 'U20'
-          Font.Charset = DEFAULT_CHARSET
-          Font.Color = clWindowText
-          Font.Height = -11
-          Font.Name = 'Tahoma'
-          Font.Style = [fsBold]
-          ParentFont = False
-          TabOrder = 10
-        end
-      end
-      object GroupBox2: TGroupBox
-        Left = 576
-        Top = 2
-        Width = 665
-        Height = 206
-        Caption = ' Huidige talenten '
-        TabOrder = 6
-        object dxDBGrid5: TdxDBGrid
-          Left = 2
-          Top = 15
-          Width = 661
-          Height = 189
-          Bands = <
-            item
-            end>
-          DefaultLayout = True
-          HeaderPanelRowCount = 1
-          KeyField = 'PLAYER_ID'
-          SummaryGroups = <>
-          SummarySeparator = ', '
-          Align = alClient
-          TabOrder = 0
-          DataSource = dsTalenten
-          Filter.Criteria = {00000000}
-          LookAndFeel = lfUltraFlat
-          OptionsBehavior = [edgoAutoSort, edgoDragScroll, edgoEditing, edgoEnterShowEditor, edgoImmediateEditor, edgoStoreToRegistry, edgoTabThrough, edgoVertThrough]
-          OptionsDB = [edgoCancelOnExit, edgoCanDelete, edgoCanInsert, edgoCanNavigation, edgoConfirmDelete, edgoLoadAllRecords, edgoUseBookmarks]
-          OptionsView = [edgoAutoWidth, edgoBandHeaderWidth, edgoUseBitmap]
-          RegistryPath = '\Software\HTScanner\NTTalents'
-          object dxDBGrid5PLAYER_ID: TdxDBGridMaskColumn
+          object Label3: TLabel
+            Left = 11
+            Top = 12
+            Width = 41
+            Height = 13
             Caption = 'PlayerID'
-            Width = 70
-            BandIndex = 0
-            RowIndex = 0
-            FieldName = 'PLAYER_ID'
           end
-          object dxDBGrid5PLAYER_NAME: TdxDBGridMaskColumn
-            Caption = 'Naam'
-            Width = 350
-            BandIndex = 0
-            RowIndex = 0
-            FieldName = 'PLAYER_NAME'
+          object edNTPlayerID: TEdit
+            Left = 88
+            Top = 7
+            Width = 121
+            Height = 21
+            TabOrder = 0
+            OnChange = edPlayerIDChange
           end
-          object dxDBGrid5LEEFTIJD: TdxDBGridMaskColumn
-            Caption = 'Leeftijd'
-            Width = 44
-            BandIndex = 0
-            RowIndex = 0
-            FieldName = 'LEEFTIJD'
+          object GroupBox1: TGroupBox
+            Left = 216
+            Top = 2
+            Width = 353
+            Height = 207
+            Caption = ' Player Test NT/U20 '
+            TabOrder = 1
+            object Label7: TLabel
+              Left = 16
+              Top = 24
+              Width = 36
+              Height = 13
+              Caption = 'Keepen'
+            end
+            object Label8: TLabel
+              Left = 16
+              Top = 45
+              Width = 54
+              Height = 13
+              Caption = 'Verdedigen'
+            end
+            object Label9: TLabel
+              Left = 16
+              Top = 66
+              Width = 50
+              Height = 13
+              Caption = 'Positiespel'
+            end
+            object Label10: TLabel
+              Left = 16
+              Top = 87
+              Width = 53
+              Height = 13
+              Caption = 'Vleugelspel'
+            end
+            object lblPassen1: TLabel
+              Left = 16
+              Top = 108
+              Width = 34
+              Height = 13
+              Caption = 'Passen'
+            end
+            object Label11: TLabel
+              Left = 16
+              Top = 129
+              Width = 33
+              Height = 13
+              Caption = 'Scoren'
+            end
+            object Label12: TLabel
+              Left = 16
+              Top = 150
+              Width = 68
+              Height = 13
+              Caption = 'Spelhervatten'
+            end
+            object Leeftijd: TLabel
+              Left = 18
+              Top = 180
+              Width = 36
+              Height = 13
+              Caption = 'Leeftijd'
+            end
+            object Label13: TLabel
+              Left = 204
+              Top = 180
+              Width = 23
+              Height = 13
+              Caption = 'days'
+            end
+            object Label14: TLabel
+              Left = 133
+              Top = 180
+              Width = 6
+              Height = 13
+              Caption = 'y'
+            end
+            object lblGK: TLabel
+              Left = 247
+              Top = 24
+              Width = 15
+              Height = 13
+              Caption = 'GK'
+              Font.Charset = DEFAULT_CHARSET
+              Font.Color = clWindowText
+              Font.Height = -11
+              Font.Name = 'Tahoma'
+              Font.Style = [fsBold]
+              ParentFont = False
+              OnClick = lblGKClick
+            end
+            object lblCD: TLabel
+              Tag = 1
+              Left = 247
+              Top = 40
+              Width = 15
+              Height = 13
+              Caption = 'CD'
+              Font.Charset = DEFAULT_CHARSET
+              Font.Color = clWindowText
+              Font.Height = -11
+              Font.Name = 'Tahoma'
+              Font.Style = [fsBold]
+              ParentFont = False
+              OnClick = lblGKClick
+            end
+            object lblOCD: TLabel
+              Tag = 2
+              Left = 247
+              Top = 56
+              Width = 23
+              Height = 13
+              Caption = 'OCD'
+              Font.Charset = DEFAULT_CHARSET
+              Font.Color = clWindowText
+              Font.Height = -11
+              Font.Name = 'Tahoma'
+              Font.Style = [fsBold]
+              ParentFont = False
+              OnClick = lblGKClick
+            end
+            object lblOWB: TLabel
+              Tag = 3
+              Left = 247
+              Top = 71
+              Width = 26
+              Height = 13
+              Caption = 'OWB'
+              Font.Charset = DEFAULT_CHARSET
+              Font.Color = clWindowText
+              Font.Height = -11
+              Font.Name = 'Tahoma'
+              Font.Style = [fsBold]
+              ParentFont = False
+              OnClick = lblGKClick
+            end
+            object lblIM: TLabel
+              Tag = 4
+              Left = 247
+              Top = 87
+              Width = 15
+              Height = 13
+              Caption = 'IM'
+              Font.Charset = DEFAULT_CHARSET
+              Font.Color = clWindowText
+              Font.Height = -11
+              Font.Name = 'Tahoma'
+              Font.Style = [fsBold]
+              ParentFont = False
+              OnClick = lblGKClick
+            end
+            object lblWing: TLabel
+              Tag = 5
+              Left = 247
+              Top = 103
+              Width = 31
+              Height = 13
+              Caption = 'WING'
+              Font.Charset = DEFAULT_CHARSET
+              Font.Color = clWindowText
+              Font.Height = -11
+              Font.Name = 'Tahoma'
+              Font.Style = [fsBold]
+              ParentFont = False
+              OnClick = lblGKClick
+            end
+            object lblFW: TLabel
+              Tag = 6
+              Left = 247
+              Top = 119
+              Width = 17
+              Height = 13
+              Caption = 'FW'
+              Font.Charset = DEFAULT_CHARSET
+              Font.Color = clWindowText
+              Font.Height = -11
+              Font.Name = 'Tahoma'
+              Font.Style = [fsBold]
+              ParentFont = False
+              OnClick = lblGKClick
+            end
+            object lblDFW: TLabel
+              Tag = 7
+              Left = 247
+              Top = 135
+              Width = 25
+              Height = 13
+              Caption = 'DFW'
+              Font.Charset = DEFAULT_CHARSET
+              Font.Color = clWindowText
+              Font.Height = -11
+              Font.Name = 'Tahoma'
+              Font.Style = [fsBold]
+              ParentFont = False
+              OnClick = lblGKClick
+            end
+            object pckEdKeepen: TdxPickEdit
+              Left = 88
+              Top = 21
+              Width = 153
+              TabOrder = 0
+              DropDownListStyle = True
+              Items.Strings = (
+                'niet-bestaand (non-existent)'
+                'rampzalig (disastrous)'
+                'waardeloos (wretched)'
+                'slecht (poor)'
+                'zwak (weak)'
+                'matig (inadequate)'
+                'redelijk (passable)'
+                'goed (solid)'
+                'uitstekend (excellent)'
+                'formidabel (formidable)'
+                'uitmuntend (outstanding)'
+                'briljant (brilliant)'
+                'wonderbaarlijk (magnificent)'
+                'wereldklasse (world class)'
+                'bovennatuurlijk (supernatural)'
+                'reusachtig (titanic)'
+                'buitenaards (extra-terrestrial)'
+                'mythisch (mythical)'
+                'magisch (magical)'
+                'utopisch (utopian)'
+                'goddelijk (divine)')
+            end
+            object pckEdVerdedigen: TdxPickEdit
+              Left = 88
+              Top = 42
+              Width = 153
+              TabOrder = 1
+              DropDownListStyle = True
+              Items.Strings = (
+                'niet-bestaand (non-existent)'
+                'rampzalig (disastrous)'
+                'waardeloos (wretched)'
+                'slecht (poor)'
+                'zwak (weak)'
+                'matig (inadequate)'
+                'redelijk (passable)'
+                'goed (solid)'
+                'uitstekend (excellent)'
+                'formidabel (formidable)'
+                'uitmuntend (outstanding)'
+                'briljant (brilliant)'
+                'wonderbaarlijk (magnificent)'
+                'wereldklasse (world class)'
+                'bovennatuurlijk (supernatural)'
+                'reusachtig (titanic)'
+                'buitenaards (extra-terrestrial)'
+                'mythisch (mythical)'
+                'magisch (magical)'
+                'utopisch (utopian)'
+                'goddelijk (divine)')
+            end
+            object pckEdPositiespel: TdxPickEdit
+              Left = 88
+              Top = 63
+              Width = 153
+              TabOrder = 2
+              DropDownListStyle = True
+              Items.Strings = (
+                'niet-bestaand (non-existent)'
+                'rampzalig (disastrous)'
+                'waardeloos (wretched)'
+                'slecht (poor)'
+                'zwak (weak)'
+                'matig (inadequate)'
+                'redelijk (passable)'
+                'goed (solid)'
+                'uitstekend (excellent)'
+                'formidabel (formidable)'
+                'uitmuntend (outstanding)'
+                'briljant (brilliant)'
+                'wonderbaarlijk (magnificent)'
+                'wereldklasse (world class)'
+                'bovennatuurlijk (supernatural)'
+                'reusachtig (titanic)'
+                'buitenaards (extra-terrestrial)'
+                'mythisch (mythical)'
+                'magisch (magical)'
+                'utopisch (utopian)'
+                'goddelijk (divine)')
+            end
+            object pckEdVleugelspel: TdxPickEdit
+              Left = 88
+              Top = 84
+              Width = 153
+              TabOrder = 3
+              DropDownListStyle = True
+              Items.Strings = (
+                'niet-bestaand (non-existent)'
+                'rampzalig (disastrous)'
+                'waardeloos (wretched)'
+                'slecht (poor)'
+                'zwak (weak)'
+                'matig (inadequate)'
+                'redelijk (passable)'
+                'goed (solid)'
+                'uitstekend (excellent)'
+                'formidabel (formidable)'
+                'uitmuntend (outstanding)'
+                'briljant (brilliant)'
+                'wonderbaarlijk (magnificent)'
+                'wereldklasse (world class)'
+                'bovennatuurlijk (supernatural)'
+                'reusachtig (titanic)'
+                'buitenaards (extra-terrestrial)'
+                'mythisch (mythical)'
+                'magisch (magical)'
+                'utopisch (utopian)'
+                'goddelijk (divine)')
+            end
+            object pckEdPassen: TdxPickEdit
+              Left = 88
+              Top = 105
+              Width = 153
+              TabOrder = 4
+              DropDownListStyle = True
+              Items.Strings = (
+                'niet-bestaand (non-existent)'
+                'rampzalig (disastrous)'
+                'waardeloos (wretched)'
+                'slecht (poor)'
+                'zwak (weak)'
+                'matig (inadequate)'
+                'redelijk (passable)'
+                'goed (solid)'
+                'uitstekend (excellent)'
+                'formidabel (formidable)'
+                'uitmuntend (outstanding)'
+                'briljant (brilliant)'
+                'wonderbaarlijk (magnificent)'
+                'wereldklasse (world class)'
+                'bovennatuurlijk (supernatural)'
+                'reusachtig (titanic)'
+                'buitenaards (extra-terrestrial)'
+                'mythisch (mythical)'
+                'magisch (magical)'
+                'utopisch (utopian)'
+                'goddelijk (divine)')
+            end
+            object pckEdScoren: TdxPickEdit
+              Left = 88
+              Top = 126
+              Width = 153
+              TabOrder = 5
+              DropDownListStyle = True
+              Items.Strings = (
+                'niet-bestaand (non-existent)'
+                'rampzalig (disastrous)'
+                'waardeloos (wretched)'
+                'slecht (poor)'
+                'zwak (weak)'
+                'matig (inadequate)'
+                'redelijk (passable)'
+                'goed (solid)'
+                'uitstekend (excellent)'
+                'formidabel (formidable)'
+                'uitmuntend (outstanding)'
+                'briljant (brilliant)'
+                'wonderbaarlijk (magnificent)'
+                'wereldklasse (world class)'
+                'bovennatuurlijk (supernatural)'
+                'reusachtig (titanic)'
+                'buitenaards (extra-terrestrial)'
+                'mythisch (mythical)'
+                'magisch (magical)'
+                'utopisch (utopian)'
+                'goddelijk (divine)')
+            end
+            object pckEdSpelhervatten: TdxPickEdit
+              Left = 88
+              Top = 147
+              Width = 153
+              TabOrder = 6
+              DropDownListStyle = True
+              Items.Strings = (
+                'niet-bestaand (non-existent)'
+                'rampzalig (disastrous)'
+                'waardeloos (wretched)'
+                'slecht (poor)'
+                'zwak (weak)'
+                'matig (inadequate)'
+                'redelijk (passable)'
+                'goed (solid)'
+                'uitstekend (excellent)'
+                'formidabel (formidable)'
+                'uitmuntend (outstanding)'
+                'briljant (brilliant)'
+                'wonderbaarlijk (magnificent)'
+                'wereldklasse (world class)'
+                'bovennatuurlijk (supernatural)'
+                'reusachtig (titanic)'
+                'buitenaards (extra-terrestrial)'
+                'mythisch (mythical)'
+                'magisch (magical)'
+                'utopisch (utopian)'
+                'goddelijk (divine)')
+            end
+            object spedJaar: TdxSpinEdit
+              Left = 88
+              Top = 176
+              Width = 41
+              TabOrder = 7
+              Value = 17
+            end
+            object spedDagen: TdxSpinEdit
+              Left = 145
+              Top = 176
+              Width = 57
+              TabOrder = 8
+            end
+            object Button7: TButton
+              Left = 249
+              Top = 173
+              Width = 75
+              Height = 25
+              Caption = 'Show me!'
+              TabOrder = 9
+              OnClick = Button7Click
+            end
+            object chckIsU20: TCheckBox
+              Left = 246
+              Top = 152
+              Width = 50
+              Height = 17
+              Alignment = taLeftJustify
+              Caption = 'U20'
+              Font.Charset = DEFAULT_CHARSET
+              Font.Color = clWindowText
+              Font.Height = -11
+              Font.Name = 'Tahoma'
+              Font.Style = [fsBold]
+              ParentFont = False
+              TabOrder = 10
+            end
           end
-          object dxDBGrid5SPECIALITEIT: TdxDBGridMaskColumn
-            Caption = 'Specialiteit'
-            Width = 129
-            BandIndex = 0
-            RowIndex = 0
-            FieldName = 'SPECIALITEIT'
-          end
-          object dxDBGrid5POS_INDEX: TdxDBGridCurrencyColumn
-            Caption = 'Index'
-            Width = 66
-            BandIndex = 0
-            RowIndex = 0
-            FieldName = 'POS_INDEX'
-            DisplayFormat = '0.00;-0.00'
-            Nullable = False
+          object chckEDKeeper: TdxCheckEdit
+            Left = 8
+            Top = 32
+            Width = 121
+            TabOrder = 2
+            Caption = 'Keeper'
           end
         end
-      end
-      object chckEDKeeper: TdxCheckEdit
-        Left = 8
-        Top = 32
-        Width = 121
-        TabOrder = 7
-        Caption = 'Keeper'
-      end
-      object Button10: TButton
-        Left = 1253
-        Top = 72
-        Width = 115
-        Height = 25
-        Anchors = [akTop, akRight]
-        Caption = 'Get Info!'
-        TabOrder = 8
-        OnClick = Button10Click
+        object Panel9: TPanel
+          Left = 569
+          Top = 0
+          Width = 779
+          Height = 222
+          Align = alClient
+          BevelOuter = bvNone
+          TabOrder = 1
+          object Panel10: TPanel
+            Left = 0
+            Top = 0
+            Width = 648
+            Height = 222
+            Align = alClient
+            BevelOuter = bvNone
+            Caption = 'Panel10'
+            TabOrder = 0
+            object GroupBox2: TGroupBox
+              Left = 0
+              Top = 0
+              Width = 648
+              Height = 222
+              Align = alClient
+              Caption = ' Huidige talenten '
+              TabOrder = 0
+              object dxDBGrid5: TdxDBGrid
+                Left = 2
+                Top = 15
+                Width = 644
+                Height = 205
+                Bands = <
+                  item
+                  end>
+                DefaultLayout = True
+                HeaderPanelRowCount = 1
+                KeyField = 'PLAYER_ID'
+                SummaryGroups = <>
+                SummarySeparator = ', '
+                Align = alClient
+                TabOrder = 0
+                DataSource = dsTalenten
+                Filter.Criteria = {00000000}
+                LookAndFeel = lfUltraFlat
+                OptionsBehavior = [edgoAutoSort, edgoDragScroll, edgoEditing, edgoEnterShowEditor, edgoImmediateEditor, edgoStoreToRegistry, edgoTabThrough, edgoVertThrough]
+                OptionsDB = [edgoCancelOnExit, edgoCanDelete, edgoCanInsert, edgoCanNavigation, edgoConfirmDelete, edgoLoadAllRecords, edgoUseBookmarks]
+                OptionsView = [edgoAutoWidth, edgoBandHeaderWidth, edgoUseBitmap]
+                RegistryPath = '\Software\HTScanner\NTTalents'
+                Anchors = []
+                object dxDBGrid5PLAYER_ID: TdxDBGridMaskColumn
+                  Caption = 'PlayerID'
+                  Width = 70
+                  BandIndex = 0
+                  RowIndex = 0
+                  FieldName = 'PLAYER_ID'
+                end
+                object dxDBGrid5PLAYER_NAME: TdxDBGridMaskColumn
+                  Caption = 'Naam'
+                  Width = 350
+                  BandIndex = 0
+                  RowIndex = 0
+                  FieldName = 'PLAYER_NAME'
+                end
+                object dxDBGrid5LEEFTIJD: TdxDBGridMaskColumn
+                  Caption = 'Leeftijd'
+                  Width = 44
+                  BandIndex = 0
+                  RowIndex = 0
+                  FieldName = 'LEEFTIJD'
+                end
+                object dxDBGrid5SPECIALITEIT: TdxDBGridMaskColumn
+                  Caption = 'Specialiteit'
+                  Width = 129
+                  BandIndex = 0
+                  RowIndex = 0
+                  FieldName = 'SPECIALITEIT'
+                end
+                object dxDBGrid5POS_INDEX: TdxDBGridCurrencyColumn
+                  Caption = 'Index'
+                  Width = 66
+                  BandIndex = 0
+                  RowIndex = 0
+                  FieldName = 'POS_INDEX'
+                  DisplayFormat = '0.00;-0.00'
+                  Nullable = False
+                end
+              end
+            end
+          end
+          object Panel11: TPanel
+            Left = 648
+            Top = 0
+            Width = 131
+            Height = 222
+            Align = alRight
+            BevelOuter = bvNone
+            TabOrder = 1
+            object btnNTScouting: TButton
+              Left = 8
+              Top = 24
+              Width = 115
+              Height = 25
+              Anchors = [akTop, akRight]
+              Caption = 'Zoek!'
+              TabOrder = 0
+              OnClick = btnNTScoutingClick
+            end
+            object Button8: TButton
+              Left = 8
+              Top = 48
+              Width = 115
+              Height = 25
+              Anchors = [akTop, akRight]
+              Caption = 'Scout!'
+              TabOrder = 1
+              OnClick = Button8Click
+            end
+            object btnYouthplayerID: TButton
+              Left = 8
+              Top = 72
+              Width = 115
+              Height = 25
+              Anchors = [akTop, akRight]
+              Caption = 'Find YouthplayerID!'
+              TabOrder = 2
+              OnClick = btnYouthplayerIDClick
+            end
+            object Button10: TButton
+              Left = 8
+              Top = 96
+              Width = 115
+              Height = 25
+              Anchors = [akTop, akRight]
+              Caption = 'Get Info!'
+              TabOrder = 3
+              OnClick = Button10Click
+            end
+          end
+        end
       end
     end
     object tbPotentials: TdxTabSheet
@@ -2254,8 +2321,8 @@ object frmPlayerInfo: TfrmPlayerInfo
       '  IN_NT_DOCS = :IN_NT_DOCS'
       'where'
       '  ID = :OLD_ID')
-    Left = 424
-    Top = 238
+    Left = 416
+    Top = 278
     object ibdtstScoutingID: TIntegerField
       FieldName = 'ID'
       Origin = '"SCOUTING"."ID"'
@@ -2294,8 +2361,8 @@ object frmPlayerInfo: TfrmPlayerInfo
   end
   object dsPotentials: TDataSource
     DataSet = ibqrPotentials
-    Left = 160
-    Top = 119
+    Left = 232
+    Top = 287
   end
   object ibqrPotentials: TIBQuery
     BeforeOpen = ibqrPotentialsBeforeOpen
@@ -2343,8 +2410,8 @@ object frmPlayerInfo: TfrmPlayerInfo
         'TTING >=8))'
       ')'
       'ORDER BY S.DEADLINE')
-    Left = 360
-    Top = 167
+    Left = 568
+    Top = 295
     ParamData = <
       item
         DataType = ftUnknown
@@ -2517,8 +2584,8 @@ object frmPlayerInfo: TfrmPlayerInfo
   end
   object dsTalenten: TDataSource
     DataSet = ibqrNTTalenten
-    Left = 936
-    Top = 113
+    Left = 944
+    Top = 289
   end
   object ibqrNTTalenten: TIBQuery
     BufferChunks = 1000
@@ -2531,8 +2598,8 @@ object frmPlayerInfo: TfrmPlayerInfo
       'SPECIALITEIT,'
       '0 POS_INDEX'
       'FROM NT_SCOUTING')
-    Left = 1024
-    Top = 161
+    Left = 776
+    Top = 289
   end
   object dsPrestaties: TDataSource
     DataSet = ibqrPrestaties

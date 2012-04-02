@@ -94,10 +94,6 @@ type
     dxDBGrid1SCOUT: TdxDBGridColumn;
     lblBlacklist: TLabel;
     tbNTScouting: TdxTabSheet;
-    Label3: TLabel;
-    edNTPlayerID: TEdit;
-    btnNTScouting: TButton;
-    Button8: TButton;
     Panel5: TPanel;
     dxDBGrid3: TdxDBGrid;
     ibdtstScouting: TIBDataSet;
@@ -114,7 +110,6 @@ type
     dxDBGrid3YOUTHPLAYER_ID: TdxDBGridMaskColumn;
     dxDBGrid3SPECIALITEIT: TdxDBGridMaskColumn;
     dxDBGrid3IN_NT_DOCS: TdxDBGridCheckColumn;
-    Button9: TButton;
     chckKeeper: TCheckBox;
     dxDBGrid2Column4: TdxDBGridColumn;
     dxDBGrid1GEBOORTEDATUM: TdxDBGridDateColumn;
@@ -176,49 +171,10 @@ type
     dxDBGrid4DFW_INDEX: TdxDBGridCurrencyColumn;
     dxDBGrid4LEEFTIJD1: TdxDBGridMaskColumn;
     dxDBGrid4YOUTHPLAYER_ID: TdxDBGridMaskColumn;
-    GroupBox1: TGroupBox;
-    Label7: TLabel;
-    pckEdKeepen: TdxPickEdit;
-    Label8: TLabel;
-    pckEdVerdedigen: TdxPickEdit;
-    Label9: TLabel;
-    pckEdPositiespel: TdxPickEdit;
-    Label10: TLabel;
-    pckEdVleugelspel: TdxPickEdit;
-    lblPassen1: TLabel;
-    pckEdPassen: TdxPickEdit;
-    Label11: TLabel;
-    pckEdScoren: TdxPickEdit;
-    Label12: TLabel;
-    pckEdSpelhervatten: TdxPickEdit;
-    spedJaar: TdxSpinEdit;
-    Leeftijd: TLabel;
-    spedDagen: TdxSpinEdit;
-    Label13: TLabel;
-    Label14: TLabel;
-    Button7: TButton;
-    lblGK: TLabel;
-    lblCD: TLabel;
-    lblOCD: TLabel;
-    lblOWB: TLabel;
-    lblIM: TLabel;
-    lblWing: TLabel;
-    lblFW: TLabel;
-    lblDFW: TLabel;
-    chckIsU20: TCheckBox;
-    GroupBox2: TGroupBox;
-    dxDBGrid5: TdxDBGrid;
     dsTalenten: TDataSource;
     ibqrNTTalenten: TIBQuery;
-    dxDBGrid5PLAYER_ID: TdxDBGridMaskColumn;
-    dxDBGrid5PLAYER_NAME: TdxDBGridMaskColumn;
-    dxDBGrid5LEEFTIJD: TdxDBGridMaskColumn;
-    dxDBGrid5SPECIALITEIT: TdxDBGridMaskColumn;
-    dxDBGrid5POS_INDEX: TdxDBGridCurrencyColumn;
     ibqrPotentialsDATUM: TDateField;
     dxDBGrid4DATUM: TdxDBGridColumn;
-    chckEDKeeper: TdxCheckEdit;
-    Button10: TButton;
     ibdtstScoutingKARAKTER_PROFIEL_ID: TIntegerField;
     Panel6: TPanel;
     Label15: TLabel;
@@ -264,6 +220,57 @@ type
     dxDBGrid6Column8: TdxDBGridColumn;
     dxDBGrid6Column9: TdxDBGridDateColumn;
     dxDBGrid6Column10: TdxDBGridColumn;
+    Panel7: TPanel;
+    Panel8: TPanel;
+    Label3: TLabel;
+    edNTPlayerID: TEdit;
+    GroupBox1: TGroupBox;
+    Label7: TLabel;
+    Label8: TLabel;
+    Label9: TLabel;
+    Label10: TLabel;
+    lblPassen1: TLabel;
+    Label11: TLabel;
+    Label12: TLabel;
+    Leeftijd: TLabel;
+    Label13: TLabel;
+    Label14: TLabel;
+    lblGK: TLabel;
+    lblCD: TLabel;
+    lblOCD: TLabel;
+    lblOWB: TLabel;
+    lblIM: TLabel;
+    lblWing: TLabel;
+    lblFW: TLabel;
+    lblDFW: TLabel;
+    pckEdKeepen: TdxPickEdit;
+    pckEdVerdedigen: TdxPickEdit;
+    pckEdPositiespel: TdxPickEdit;
+    pckEdVleugelspel: TdxPickEdit;
+    pckEdPassen: TdxPickEdit;
+    pckEdScoren: TdxPickEdit;
+    pckEdSpelhervatten: TdxPickEdit;
+    spedJaar: TdxSpinEdit;
+    spedDagen: TdxSpinEdit;
+    Button7: TButton;
+    chckIsU20: TCheckBox;
+    chckEDKeeper: TdxCheckEdit;
+    Panel9: TPanel;
+    Panel10: TPanel;
+    GroupBox2: TGroupBox;
+    dxDBGrid5: TdxDBGrid;
+    dxDBGrid5PLAYER_ID: TdxDBGridMaskColumn;
+    dxDBGrid5PLAYER_NAME: TdxDBGridMaskColumn;
+    dxDBGrid5LEEFTIJD: TdxDBGridMaskColumn;
+    dxDBGrid5SPECIALITEIT: TdxDBGridMaskColumn;
+    dxDBGrid5POS_INDEX: TdxDBGridCurrencyColumn;
+    Panel11: TPanel;
+    btnNTScouting: TButton;
+    Button8: TButton;
+    btnYouthplayerID: TButton;
+    Button10: TButton;
+    dxDBGrid2Column7: TdxDBGridCheckColumn;
+    dxDBGrid2Column8: TdxDBGridCheckColumn;
     procedure FormKeyDown(Sender: TObject; var Key: Word;
       Shift: TShiftState);
     procedure FormCreate(Sender: TObject);
@@ -283,7 +290,7 @@ type
     procedure btnScoutClick(Sender: TObject);
     procedure btnNTScoutingClick(Sender: TObject);
     procedure Button8Click(Sender: TObject);
-    procedure Button9Click(Sender: TObject);
+    procedure btnYouthplayerIDClick(Sender: TObject);
     procedure ibdtstScoutingAfterPost(DataSet: TDataSet);
     procedure dxDBGrid1CustomDrawCell(Sender: TObject; ACanvas: TCanvas;
       ARect: TRect; ANode: TdxTreeListNode; AColumn: TdxTreeListColumn;
@@ -1009,7 +1016,12 @@ procedure TfrmPlayerInfo.edPlayerIDChange(Sender: TObject);
 begin
   if (edPlayerID.Text <> '') and (Length(edPlayeriD.Text) >= 8) then
   begin
-    Zoek;
+    try
+      StrToInt(edPlayerID.Text);
+      Zoek;
+    except
+
+    end;
   end;
 end;
 
@@ -1092,7 +1104,8 @@ begin
   finally
     vSenior.Free;
   end;
-
+  btnYouthplayerIDClick(btnYouthplayerID);
+  
   chckEDKeeper.Checked := FALSE;
 end;
 
@@ -1113,9 +1126,9 @@ begin
           Add('SELECT');
           Add('PLAYER_ID, TEAM_ID, PLAYER_NAME');
           Add('FROM JEUGDSPELERS');
-          Add('WHERE PLAYER_NAME CONTAINING :NAAM');
+          Add('WHERE KARAKTER_ID = :ID AND COALESCE(DELETED,0) = 0');
         end;
-        ParamByName('NAAM').asString := ibdtstScouting.FieldByName('PLAYER_NAAM').asString;
+        ParamByName('ID').asInteger := ibdtstScouting.FieldByName('KARAKTER_PROFIEL_ID').asInteger;
         ExecQuery;
         while not EOF do
         begin
@@ -1131,10 +1144,15 @@ begin
   end;
 end;
 
-procedure TfrmPlayerInfo.Button9Click(Sender: TObject);
+procedure TfrmPlayerInfo.btnYouthplayerIDClick(Sender: TObject);
 begin
-  GetYouthPlayerID;
-  btnNTScoutingClick(btnNTScouting);
+  Screen.Cursor := crHourGlass;
+  try
+    GetYouthPlayerID;
+    btnNTScoutingClick(btnNTScouting);
+  finally
+    Screen.Cursor := crDefault;
+  end;
 end;
 
 procedure TfrmPlayerInfo.ibdtstScoutingAfterPost(DataSet: TDataSet);
@@ -1467,7 +1485,8 @@ var
   vInfo: TStringList;
   vPotentie: String;
   vCount, vIndex: integer;
-  vFound: boolean;
+  vFound, vIsKeeper: boolean;
+  vLastUpdate: TDate;
 begin
   vPotentie := '';
   vFound := FALSE;
@@ -1523,7 +1542,8 @@ begin
             end;
             ParamByName('ID').asInteger := vKarakterID;
             ExecQuery;
-
+            vIsKeeper := FieldByName('IS_KEEPER').asInteger = -1;
+            
             vPotentie := AddPotentie(vPotentie,'GK',FieldByName('POT_KEEPEN').asInteger);
             vPotentie := AddPotentie(vPotentie,'DEF',FieldByName('POT_VERDEDIGEN').asInteger);
             vPotentie := AddPotentie(vPotentie,'POS',FieldByName('POT_POSITIESPEL').asInteger);
@@ -1552,31 +1572,49 @@ begin
             begin
               Add('SELECT');
               Add('J.PLAYER_ID JEUGDSPELER_ID,');
+              Add('J.TEAM_ID,');
+              Add('J.PLAYER_NAME,');
               Add('S.*');
               Add('FROM JEUGDSPELERS J');
               Add('LEFT JOIN SCOUTING S ON (J.PLAYER_ID = S.YOUTHPLAYER_ID)');
               Add('WHERE');
               Add('J.KARAKTER_ID = :ID');
+              Add('AND J.PLAYER_ID <> :PLAYERID');
             end;
 
             ParamByName('ID').asInteger := vKarakterID;
+            ParamByname('PLAYERID').asInteger := ibdtstScouting.FieldByName('YOUTHPLAYER_ID').asInteger;
             ExecQuery;
 
             while not EOF do
             begin
-              inc(vCount);
-              vPotentie := '';
+              vLastUpdate := uBibDb.GetFieldValue(frmHTScanner.ibdbHTInfo,'JEUGDSPELERS',['PLAYER_ID'],
+                [FieldByName('JEUGDSPELER_ID').asInteger],'LAST_UPDATE',srtDateTime);
 
-              vPotentie := AddPotentie(vPotentie,'GK',FieldByName('KEEPEN').asInteger);
-              vPotentie := AddPotentie(vPotentie,'DEF',FieldByName('VERDEDIGEN').asInteger);
-              vPotentie := AddPotentie(vPotentie,'POS',FieldByName('POSITIESPEL').asInteger);
-              vPotentie := AddPotentie(vPotentie,'WNG',FieldByName('VLEUGELSPEL').asInteger);
-              vPotentie := AddPotentie(vPotentie,'PAS',FieldByName('PASSEN').asInteger);
-              vPotentie := AddPotentie(vPotentie,'SCO',FieldByName('SCOREN').asInteger);
-              vPotentie := AddPotentie(vPotentie,'SH',FieldByName('SPELHERVATTING').asInteger);
+              if (vLastUpdate < Date) then
+              begin
+                frmHTScanner.GetJeugdspelerInfoByID(FieldByName('JEUGDSPELER_ID').asInteger,
+                  FieldByName('TEAM_ID').asInteger,FieldByName('PLAYER_NAME').asString,
+                  TRUE,vIsKeeper,TRUE);
+              end;
 
-              vInfo.Add(Format('[youthplayerid=%d] %s',[FieldByName('JEUGDSPELER_ID').asInteger, vPotentie]));
+              if ((FieldByName('VERDEDIGEN').asInteger > 0) or
+                (uBibDb.GetFieldValue(frmHTScanner.ibdbHTInfo,'JEUGDSPELERS',['PLAYER_ID'],
+                [FieldByName('JEUGDSPELER_ID').asInteger],'DELETED',srtInteger) = 0)) then
+              begin
+                inc(vCount);
+                vPotentie := '';
 
+                vPotentie := AddPotentie(vPotentie,'GK',FieldByName('KEEPEN').asInteger);
+                vPotentie := AddPotentie(vPotentie,'DEF',FieldByName('VERDEDIGEN').asInteger);
+                vPotentie := AddPotentie(vPotentie,'POS',FieldByName('POSITIESPEL').asInteger);
+                vPotentie := AddPotentie(vPotentie,'WNG',FieldByName('VLEUGELSPEL').asInteger);
+                vPotentie := AddPotentie(vPotentie,'PAS',FieldByName('PASSEN').asInteger);
+                vPotentie := AddPotentie(vPotentie,'SCO',FieldByName('SCOREN').asInteger);
+                vPotentie := AddPotentie(vPotentie,'SH',FieldByName('SPELHERVATTING').asInteger);
+
+                vInfo.Add(Format('[youthplayerid=%d] %s',[FieldByName('JEUGDSPELER_ID').asInteger, vPotentie]));
+              end;
               Next;
             end;
 
