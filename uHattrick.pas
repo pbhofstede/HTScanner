@@ -462,10 +462,10 @@ begin
       end;
     end;
 
-    vPos := Pos('PlayerID=',vBody.Text);
+    vPos := Pos('playerId=',vBody.Text);
     if vPos > 0 then
     begin
-      vBody.Text := Copy(vBody.Text,vPos + Length('PlayerID='),Length(vBody.Text));
+      vBody.Text := Copy(vBody.Text,vPos + Length('playerId='),Length(vBody.Text));
       vPos := Pos('&',vBody.Text);
       vPos2 := Pos('''',vBody.Text);
 

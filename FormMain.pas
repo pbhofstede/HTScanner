@@ -3435,37 +3435,8 @@ end;
 
 procedure TfrmHTScanner.ScoutWrongCharacters;
 begin
-  btnStopScouting.Visible := ivAlways;
-  btnDoubleSpeed.Checked := TRUE;
-  FFullScouting := TRUE;
-
-  InitScanResults;
-  try
-    with uBibRuntime.CreateSQL(ibdbHTInfo) do
-    begin
-      SQL.Add('SELECT J.PLAYER_ID, J.TEAM_ID, J.PLAYER_NAME');
-      SQL.Add('FROM JEUGDSPELERS J');
-      SQL.Add('LEFT JOIN KARAKTER_PROFIEL P ON (J.KARAKTER_ID = P.ID)');
-      SQL.Add('WHERE CAST(J.LAST_UPDATE AS DATE) = CURRENT_DATE -2');
-      SQL.Add('AND J.PROMOTED = -1');
-      SQL.Add('AND P.SPECIALITEIT = ''Geen''');
-
-      ExecQuery;
-
-      while not EOF do
-      begin
-        GetJeugdspelerInfoByID(FieldByName('PLAYER_ID').asInteger,
-            FieldByName('TEAM_ID').asInteger,FieldByName('PLAYER_NAME').asString,
-            TRUE, FALSE, TRUE);
-
-        Next;
-      end;
-
-      ShowMessage('KLAAR!')
-    end;
-  finally
-    FFullScouting := FALSE;
-  end;
+  SendStatusMail('test',TRUE);
+  ShowMessage('klaar');
 end;
 
 procedure TfrmHTScanner.ScoutAll17yo(aTBSReeks:integer);
@@ -3639,6 +3610,11 @@ begin
 
   if (vTBSReeks < 0) then
   begin
+    if (Quadspeed1.Checked) then
+    begin
+      btnTripleSpeedClick(btnTripleSpeed);
+    end;
+
     Wait(10 * 60,18 * 60);
     ScoutJeugdTalents(vTBSReeks);
   end;
@@ -3720,32 +3696,9 @@ begin
         try
           with SQL do
           begin
-            Add('SELECT L.LEEFTIJD, U20.U20 IS_U20, S.PLAYER_ID, S.PLAYER_NAAM, S.HERKOMST, S.DATUM,');
-            Add('  S.SPECIALITEIT, S.TSI, S.DEADLINE, S.HOOGSTE_BOD, S.KEEPEN,');
-            Add('  S.VERDEDIGEN, S.POSITIESPEL, S.VLEUGELSPEL, S.PASSEN, S.SCOREN,');
-            Add('  S.SPELHERVATTING, POT.GK_INDEX, POT.CD_INDEX, POT.OCD_INDEX, POT.OWB_INDEX,');
-            Add('  POT.IM_INDEX, POT.WING_INDEX, POT.FW_INDEX, POT.DFW_INDEX, S.LEEFTIJD,');
-            Add('  S.YOUTHPLAYER_ID, U20.LICHTING');
-            Add('FROM SCOUTING S');
-            Add('LEFT JOIN JEUGDSPELERS J ON (S.YOUTHPLAYER_ID = J.PLAYER_ID)');
-            Add('LEFT JOIN KARAKTER_PROFIEL K ON (J.KARAKTER_ID = K.ID)');
-            Add('LEFT JOIN GET_LEEFTIJD(J.GEBOORTE_DATUM,CURRENT_DATE) L ON (0=0)');
-            Add('LEFT JOIN CALC_NT_POTENTIAL_OVERALL(L.AGE,L.DAYS,S.KEEPEN,S.VERDEDIGEN,S.POSITIESPEL,S.VLEUGELSPEL,S.PASSEN,S.SCOREN,S.SPELHERVATTING) POT');
-            Add('  ON (0=0)');
-            Add('LEFT JOIN GET_IS_U20(J.GEBOORTE_DATUM,CASE WHEN COALESCE(K.IS_KEEPER,0) = -1 THEN 0 ELSE 1 END) U20 ON (0=0)');
-            Add('WHERE');
-            Add('S.DATUM >= :DATUM AND');
-            Add('S.DEADLINE >= CURRENT_TIMESTAMP AND');
-            Add('((POT.GK_INDEX >= :MAX_AWIJKING or POT.CD_INDEX >= :MAX_AWIJKING OR POT.OCD_INDEX >= :MAX_AWIJKING OR');
-            Add('POT.OWB_INDEX >= :MAX_AWIJKING OR POT.IM_INDEX >= :MAX_AWIJKING OR POT.WING_INDEX >= :MAX_AWIJKING OR');
-            Add('POT.FW_INDEX >= :MAX_AWIJKING OR POT.DFW_INDEX > :MAX_AWIJKING)');
-            Add('OR');
-            Add('((U20.U20 = -1) AND (S.KEEPEN >=7 AND S.VERDEDIGEN + S.SPELHERVATTING >=8))');
-            Add(')');
-            Add('ORDER BY S.DEADLINE');
+            Add('SELECT * FROM GET_TRANSFER_LISTED_POTENTIALS(:DATUM)');
           end;
           ParamByName('DATUM').asDate := ScanDate;
-          ParamByName('MAX_AWIJKING').asInteger := -5;
           ExecQuery;
           while not EOF do
           begin
@@ -5783,6 +5736,7 @@ var
   vMax,vCount:integer;
   vMelding:String;
   vStop : boolean;
+  vScanID : integer;
 begin
   vStop := FALSE;
   if (FAutoStart) then
@@ -5796,6 +5750,15 @@ begin
   if not(vStop) then
   begin
     InitScanResults;
+
+    vScanID := uBibDb.GetFieldValue(ibdbHTInfo,'COMPETITIES_SCANNED',
+      ['JEUGD_COMPETITIES_ID'],[aReeks],'ID',srtInteger, svtMax);
+
+    BekendeSpelers := uBiBDb.GetFieldValue(ibdbHTInfo,'COMPETITIES_SCANNED',
+      ['ID'],[vScanID],'BEKEND',srtInteger);
+    OnbekendeSpelers := uBiBDb.GetFieldValue(ibdbHTInfo,'COMPETITIES_SCANNED',
+      ['ID'],[vScanID],'ONBEKEND',srtInteger);
+
     with uBibRuntime.CreateSQL(ibdbHTInfo) do
     begin
       try
@@ -5843,11 +5806,19 @@ begin
           begin
             if (FieldByName('ID').asInteger = 0)  then
             begin
-              if not GetJeugdSpelerInfoByID(
+              if GetJeugdSpelerInfoByID(
                 FieldByName('PLAYER_ID').asInteger,
                 FieldByName('TEAM_ID').asInteger,
                 FieldByName('PLAYER_NAME').asString,
                 TRUE,FALSE,TRUE) then
+              begin
+                if (vScanID > 0) then
+                begin
+                  uBibDb.ExecSQL(ibdbHTInfo,'UPDATE COMPETITIES_SCANNED SET BEKEND = :BEKEND, ONBEKEND = :ONBEKEND WHERE ID = :ID',
+                    ['ID','BEKEND','ONBEKEND'],[vScanID, BekendeSpelers, OnbekendeSpelers]);
+                end;
+              end
+              else
               begin
                 vMelding := 'Speler(s) niet aangetroffen!';
               end;
@@ -7602,9 +7573,38 @@ end;
 
 procedure TfrmHTScanner.btnTestClick(Sender: TObject);
 begin
-  ShellExecute(0,PChar('OPEN'),PChar(Application.ExeName),
-    PChar('-auto'),nil,SW_SHOWMAXIMIZED);
-  Application.Terminate;
+  btnTripleSpeedClick(nil);
+  
+  with uBibRuntime.CreateSQL(ibdbHTInfo) do
+  begin
+    try
+      with SQL do
+      begin
+        Add('SELECT');
+        Add('J.PLAYER_ID,');
+        Add('J.TEAM_ID,');
+        Add('J.PLAYER_NAME');
+        Add('FROM');
+        Add('SCOUTING S');
+        Add('LEFT JOIN JEUGDSPELERS J ON (S.YOUTHPLAYER_ID = J.PLAYER_ID)');
+        Add('WHERE S.PLAYER_NAAM CONTAINING :NAAM');
+      end;
+      ParamByName('NAAM').asString := 'prestatie';
+      ExecQuery;
+      while not EOF do
+      begin
+        GetJeugdspelerInfoByID(FieldByName('PLAYER_ID').asInteger,
+            FieldByName('TEAM_ID').asInteger,FieldByName('PLAYER_NAME').asString,
+            TRUE,FALSE,TRUE);
+        Next;
+      end;
+    finally
+      uBibDb.CommitTransaction(Transaction, TRUE);
+      Free;
+    end;
+  end;
+
+  ShowMessage('KLAAR');
 end;
 
 function TfrmHTScanner.VertaalPositie(aPosition:String):String;
@@ -8539,6 +8539,11 @@ begin
       uBibDb.CommitTransaction(vSQL.Transaction, TRUE);
       vSQL.Free;
     end;
+  end
+  else
+  begin
+    FirstTime := uBibDb.GetFieldValue(ibdbHTInfo,
+        'SCAN_HISTORIE',['ID'],[vID],'NO_SPEC_FOUND',srtInteger) = 0;
   end;
 end;
 

@@ -1,6 +1,6 @@
 object frmHTScanner: TfrmHTScanner
-  Left = 191
-  Top = 0
+  Left = 82
+  Top = 33
   Width = 1440
   Height = 860
   Caption = 'Hattrick scanner'
