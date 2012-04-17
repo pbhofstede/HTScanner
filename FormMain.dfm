@@ -1719,7 +1719,8 @@ object frmHTScanner: TfrmHTScanner
         'Alle 17+ jeugdspelers'
         'Test'
         'Mini-TBS'
-        'U20-lijstjes')
+        'U20-lijstjes'
+        'NT-lijstjes')
     end
     object btnRefreshTalents: TdxBarButton
       Caption = 'Refresh'
@@ -1817,6 +1818,10 @@ object frmHTScanner: TfrmHTScanner
         item
           Visible = True
           ItemName = 'btnNTDoc'
+        end
+        item
+          Visible = True
+          ItemName = 'btnHTCY'
         end>
     end
     object btnNTDoc: TdxBarButton
@@ -1832,6 +1837,14 @@ object frmHTScanner: TfrmHTScanner
       Category = 3
       Hint = 'Status'
       Visible = ivAlways
+    end
+    object btnHTCY: TdxBarButton
+      Caption = 'HTYC Files'
+      Category = 3
+      Hint = 'HTYC Files'
+      Visible = ivAlways
+      ImageIndex = 75
+      OnClick = btnHTCYClick
     end
   end
   object pmScouting: TdxBarPopupMenu

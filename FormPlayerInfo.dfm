@@ -713,7 +713,7 @@ object frmPlayerInfo: TfrmPlayerInfo
             object dxDBGrid1: TdxDBGrid
               Left = 0
               Top = 0
-              Width = 1404
+              Width = 1348
               Height = 302
               Bands = <
                 item
@@ -910,8 +910,8 @@ object frmPlayerInfo: TfrmPlayerInfo
                 BandIndex = 0
                 RowIndex = 0
                 FieldName = 'U20'
-                ValueChecked = 'True'
-                ValueUnchecked = 'False'
+                ValueChecked = '-1'
+                ValueUnchecked = '0'
                 DisplayChecked = '-1'
                 DisplayUnChecked = '0'
               end
@@ -920,8 +920,8 @@ object frmPlayerInfo: TfrmPlayerInfo
                 BandIndex = 0
                 RowIndex = 0
                 FieldName = 'NT'
-                ValueChecked = 'True'
-                ValueUnchecked = 'False'
+                ValueChecked = '-1'
+                ValueUnchecked = '0'
                 DisplayChecked = '-1'
                 DisplayUnChecked = '0'
               end

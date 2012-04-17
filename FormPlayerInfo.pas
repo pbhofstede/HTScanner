@@ -440,7 +440,7 @@ var
   vSQL:TIBSQL;
 
   vKeepen, vVerdedigen, vPositiespel, vPassen, vVleugelspel,
-  vScoren, vSpelhervatten:integer;
+  vScoren, vSpelhervatten, vAfwijking:integer;
 begin
   //LoadPicture(aSQL.FieldByName('KARAKTER_ID').asInteger);
 
@@ -457,6 +457,34 @@ begin
       vVleugelspel := FieldByName('VLEUGELSPEL').asInteger;
       vScoren := FieldByName('SCOREN').asInteger;
       vSpelhervatten:= FieldByName('SPELHERVATTEN').asInteger;
+    finally
+      uBibDb.CommitTransaction(Transaction, TRUE);
+      Free;
+    end;
+  end;
+
+  with uBibRuntime.CreateSQL(frmHTScanner.ibdbHTInfo) do
+  begin
+    try
+      with SQL do
+      begin
+        Add('SELECT');
+        Add('  J.PLAYER_ID,');
+        Add('  J.PLAYER_NAME,');
+        Add('  L.LEEFTIJD,');
+        Add('  U20.AFWIJKING_OPTIMALE_LEEFTIJD,');
+        Add('  U20.SPEELDATUM,');
+        Add('  U20.U20_LICHTING,');
+        Add('  J.GEBOORTE_DATUM + (6 * (16 * 7)) -1 LAATSTE_SPEELDAG,');
+        Add('  U20.SPEELDATUM - (J.GEBOORTE_DATUM + (6 * (16 * 7)) -1) AFWIJKING');
+        Add('FROM JEUGDSPELERS J');
+        Add('LEFT JOIN GET_LEEFTIJD(J.GEBOORTE_DATUM, CURRENT_DATE) L ON (0=0)');
+        Add('LEFT JOIN GET_IS_U20(J.GEBOORTE_DATUM, 1) U20 ON (0=0)');
+        Add('WHERE J.PLAYER_ID = :ID');
+      end;
+      ParamByName('ID').asInteger := aSQL.FieldByName('PLAYER_ID').asInteger;
+      ExecQuery;
+      vAfwijking := FieldByName('AFWIJKING').asInteger;
     finally
       uBibDb.CommitTransaction(Transaction, TRUE);
       Free;
@@ -502,8 +530,8 @@ begin
       else
         lblDatum.Caption := '';
 
-      lblPlayerName.Caption := Format('%s [%s] %s (%d) [%s/%s] (%s)',[FieldByName('PLAYER_NAME').asString,
-        FieldByName('PLAYER_ID').asString,FieldByName('LEEFTIJD').asString,
+      lblPlayerName.Caption := Format('%s [%s] %s [%d] (%d) [%s/%s] (%s)',[FieldByName('PLAYER_NAME').asString,
+        FieldByName('PLAYER_ID').asString,FieldByName('LEEFTIJD').asString, vAfwijking,
         FieldByName('UPDATE_COUNT').asInteger,FieldByName('GOOGLE_DOC').asString,FieldByName('TABSHEET').asString,
         FieldByName('SCOUT').asString]);
 
@@ -1366,7 +1394,8 @@ end;
 
 procedure TfrmPlayerInfo.ShowPotential(aIndex: integer);
 var
-  vKarakterID, vPot:integer;
+  vKarakterID:integer;
+  vPot:double;
   vField,vTop3Field, vResult: String;
 begin
   vKarakterID := FSpelerSQL.FieldByName('KARAKTER_ID').asInteger;
@@ -1412,9 +1441,9 @@ begin
 
     if (vField <> '') then
     begin
-      vPot := uBibDb.GetFieldValue(frmHTScanner.ibdbHTInfo,'KARAKTER_PROFIEL',['ID'],[vKarakterId],vField,srtInteger);
+      vPot := uBibDb.GetFieldValue(frmHTScanner.ibdbHTInfo,'KARAKTER_PROFIEL',['ID'],[vKarakterId],vField,srtFloat);
 
-      vResult := InputBox('KarakterProfiel','Geef de potentie',IntToStr(vPot));
+      vResult := InputBox('KarakterProfiel','Geef de potentie',FloatToStr(vPot));
 
       try
         if Pos('*',vResult) > 0 then
@@ -1422,18 +1451,18 @@ begin
           uBibDb.ExecSQL(frmHTScanner.ibdbHTInfo,Format('UPDATE KARAKTER_PROFIEL SET %s = -1 WHERE ID = :ID',[vTop3Field]),
             ['ID'],[vKarakterId]);
 
-          vPot := uBibConv.AnyStrToInt(vResult);
+          vPot := uBibConv.AnyStrToFloat(vResult);
         end
         else if Pos('#',vResult) > 0 then
         begin
           uBibDb.ExecSQL(frmHTScanner.ibdbHTInfo,Format('UPDATE KARAKTER_PROFIEL SET %s = 0 WHERE ID = :ID',[vTop3Field]),
             ['ID'],[vKarakterId]);
 
-          vPot := uBibConv.AnyStrToInt(vResult);
+          vPot := uBibConv.AnyStrToFloat(vResult);
         end
         else
         begin
-          vPot := StrToInt(vResult);
+          vPot := StrToFloat(vResult);
         end;
 
         if (vPot > 0) then
