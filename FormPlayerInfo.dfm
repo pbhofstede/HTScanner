@@ -3,7 +3,7 @@ object frmPlayerInfo: TfrmPlayerInfo
   Top = 127
   Width = 1364
   Height = 643
-  Caption = 'Player/Managerinfo'
+  Caption = 'Speler/manager informatie'
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -1028,7 +1028,7 @@ object frmPlayerInfo: TfrmPlayerInfo
       object DBNavigator1: TDBNavigator
         Left = 0
         Top = 557
-        Width = 1404
+        Width = 1348
         Height = 25
         DataSource = dsSTDBerichten
         Align = alBottom
@@ -1037,7 +1037,7 @@ object frmPlayerInfo: TfrmPlayerInfo
       object Panel4: TPanel
         Left = 0
         Top = 0
-        Width = 1404
+        Width = 1348
         Height = 105
         Align = alTop
         BevelOuter = bvNone
@@ -1134,7 +1134,7 @@ object frmPlayerInfo: TfrmPlayerInfo
       object dxDBMemo1: TdxDBMemo
         Left = 0
         Top = 105
-        Width = 1404
+        Width = 1348
         Align = alClient
         TabOrder = 2
         DataField = 'BERICHT'
@@ -1147,7 +1147,7 @@ object frmPlayerInfo: TfrmPlayerInfo
       object mBericht: TdxMemo
         Left = 0
         Top = 0
-        Width = 1404
+        Width = 1348
         Align = alClient
         TabOrder = 0
         OnExit = mBerichtExit
@@ -1851,7 +1851,7 @@ object frmPlayerInfo: TfrmPlayerInfo
       object dxDBGrid4: TdxDBGrid
         Left = 0
         Top = 0
-        Width = 1404
+        Width = 1348
         Height = 582
         Bands = <
           item

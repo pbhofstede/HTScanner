@@ -230,6 +230,8 @@ function GetKarakters(aDatabase:TIBDatabase; aNeus, aGezicht, aOgen, aMond,
 function GetVolgNummer(aDatabase:TIBDatabase; aNeus, aGezicht, aOgen, aMond,
   aHaar, aBody: String; aIsKeeper:boolean):integer;
 function GetYouthLineupLink(aMainURL: String;aTeamID, aMatchID:integer):String;
+function GetNewTwins(aDatabase: TIBDatabase; aKarakterID: Integer):integer;
+procedure SyncNewTwins(aDatabase: TIBDatabase; aKarakterID: integer);
 
 implementation
 uses
@@ -1418,6 +1420,8 @@ begin
                aTSISet.Deadline]);
           end;
         end;
+
+        uHattrick.GetNewTwins(aDatabase, vID);
       end
       else
       begin
@@ -1483,6 +1487,8 @@ begin
             Free;
           end;
         end;
+
+        uHattrick.GetNewTwins(aDatabase, result);
       end;
     end;
   except
@@ -1564,6 +1570,178 @@ end;
 function GetYouthLeagueLink(aLeagueID,aMainURL:String):String;
 begin
   result := Format('%shattrick.org/%s%s',[GetHattrickServer(aMainURL),YOUTHLEAGUE_LINK,aLeagueID]);
+end;
+
+{-----------------------------------------------------------------------------
+  Procedure: SyncNewTwins
+  Author:    Harry
+  Date:      27-apr-2012
+  Arguments: aDatabase: TIBDatabase; aKarakterID: integer
+  Result:    None
+-----------------------------------------------------------------------------}
+procedure SyncNewTwins(aDatabase: TIBDatabase; aKarakterID: integer);
+var
+  vKarakterLijst: array of integer;
+  vWhereSQL: String;
+  i: integer;
+  vWaarde: Variant;
+const
+  vVelden: array[0..7] of String = ('ALLROUND','POT_KEEPEN','POT_VERDEDIGEN','POT_POSITIESPEL',
+    'POT_VLEUGELSPEL','POT_PASSEN','POT_SCOREN','POT_SPELHERVATTEN');
+begin
+  SetLength(vKarakterLijst, High(vKarakterLijst) + 2);
+  vKarakterLijst[High(vKarakterLijst)] := aKarakterID;
+
+  // Twins opzoeken
+  with uBibRuntime.CreateSQL(aDatabase,'SELECT KARAKTER_ID FROM TWINS WHERE TWIN_KARAKTER_ID = :ID') do
+  begin
+    try
+      ParamByName('ID').asInteger := aKarakterID;
+      ExecQuery;
+      while not EOF do
+      begin
+        SetLength(vKarakterLijst, High(vKarakterLijst) + 2);
+        vKarakterLijst[High(vKarakterLijst)] := FieldByName('KARAKTER_ID').asInteger;
+        Next;
+      end;
+    finally
+      uBibDb.CommitTransaction(Transaction, TRUE);
+      Free;
+    end;
+  end;
+
+  // En de andere kant
+  with uBibRuntime.CreateSQL(aDatabase,'SELECT TWIN_KARAKTER_ID FROM TWINS WHERE KARAKTER_ID = :ID') do
+  begin
+    try
+      ParamByName('ID').asInteger := aKarakterID;
+      ExecQuery;
+      while not EOF do
+      begin
+        SetLength(vKarakterLijst, High(vKarakterLijst) + 2);
+        vKarakterLijst[High(vKarakterLijst)] := FieldByName('TWIN_KARAKTER_ID').asInteger;
+        Next;
+      end;
+    finally
+      uBibDb.CommitTransaction(Transaction, TRUE);
+      Free;
+    end;
+  end;
+
+  vWhereSQL := 'ID IN (';
+  for i:=low(vKarakterLijst) to High(vKarakterLijst) do
+  begin
+    if i < High(vKarakterLijst) then
+    begin
+      vWhereSQL := Format('%s%d, ',[vWhereSQL,vKarakterLijst[i]]);
+    end
+    else
+    begin
+      vWhereSQL := Format('%s%d',[vWhereSQL,vKarakterLijst[i]]);
+    end;
+  end;
+  vWhereSQL := Format('%s)',[vWhereSQL]);
+
+  for i:=Low(vVelden) to High(vVelden) do
+  begin
+    with uBibRuntime.CreateSQL(aDatabase,
+      Format('SELECT MAX(%s) FROM KARAKTER_PROFIEL WHERE %s',[vVelden[i],vWhereSQL])) do
+    begin
+      try
+        ExecQuery;
+        vWaarde := Fields[0].Value;
+      finally
+        uBibDb.CommitTransaction(Transaction, TRUE);
+        Free;
+      end;
+    end;
+
+    uBibDb.ExecSQL(aDatabase,Format('UPDATE KARAKTER_PROFIEL SET %s = :WAARDE WHERE %s',[vVelden[i], vWhereSQL]),
+      ['WAARDE'],[vWaarde]);
+  end;
+end;
+
+{-----------------------------------------------------------------------------
+  Procedure: GetNewTwins
+  Author:    Harry
+  Date:      27-apr-2012
+  Arguments: aDatabase: TIBDatabase; aKarakterID: Integer
+  Result:    integer
+-----------------------------------------------------------------------------}
+function GetNewTwins(aDatabase: TIBDatabase; aKarakterID: Integer):integer;
+var
+  vLeeftijd, vLeefijd1, vID: integer;
+  vPlayerID:integer;
+begin
+  result := 0;
+  
+  vPlayerID := uBibDb.GetFieldValue(aDatabase,'JEUGDSPELERS',['KARAKTER_ID'],
+    [aKarakterID],'PLAYER_ID',srtInteger, svtMax);
+
+  vLeeftijd := uBibDb.GetFieldValue(aDatabase,'JEUGDSPELERS J LEFT JOIN GET_LEEFTIJD(J.GEBOORTE_DATUM, CURRENT_DATE) L ON (0=0)',
+    ['J.PLAYER_ID'],[vPlayerID],'L.DAYS',srtInteger);
+
+  with uBibRuntime.CreateSQL(aDatabase) do
+  begin
+    try
+      with SQL do
+      begin
+        Add('SELECT');
+        Add('P.ID');
+        Add('FROM KARAKTER_PROFIEL P');
+        Add('WHERE');
+        Add('P.IS_KEEPER = (SELECT IS_KEEPER FROM KARAKTER_PROFIEL WHERE ID = :ID) AND');
+        Add('P.GEZICHT = (SELECT GEZICHT FROM KARAKTER_PROFIEL WHERE ID = :ID) AND');
+        Add('P.NEUS = (SELECT NEUS FROM KARAKTER_PROFIEL WHERE ID = :ID) AND');
+        Add('P.OGEN = (SELECT OGEN FROM KARAKTER_PROFIEL WHERE ID = :ID) AND');
+        Add('P.BODY = (SELECT BODY FROM KARAKTER_PROFIEL WHERE ID = :ID) AND');
+        Add('P.SPECIALITEIT = (SELECT SPECIALITEIT FROM KARAKTER_PROFIEL WHERE ID = :ID) AND');
+        Add('P.KARAKTER = (SELECT KARAKTER FROM KARAKTER_PROFIEL WHERE ID = :ID) AND');
+        Add('P.AGRESSIVITEIT = (SELECT AGRESSIVITEIT FROM KARAKTER_PROFIEL WHERE ID = :ID) AND');
+        Add('P.EERLIJKHEID = (SELECT EERLIJKHEID FROM KARAKTER_PROFIEL WHERE ID = :ID) AND');
+        Add('P.LEIDERSCHAP = (SELECT LEIDERSCHAP FROM KARAKTER_PROFIEL WHERE ID = :ID) AND');
+        Add('P.MOND = (SELECT MOND FROM KARAKTER_PROFIEL WHERE ID = :ID)');
+      end;
+      ParamByName('ID').asInteger := aKarakterID;
+      ExecQuery;
+      while not EOF do
+      begin
+        if (FieldByName('ID').asInteger <> aKarakterID) then
+        begin
+          vPlayerID := uBibDb.GetFieldValue(aDatabase,'JEUGDSPELERS',['KARAKTER_ID'],
+            [FieldByName('ID').asInteger],'PLAYER_ID',srtInteger, svtMax);
+
+          vLeefijd1 := uBibDb.GetFieldValue(aDatabase,'JEUGDSPELERS J LEFT JOIN GET_LEEFTIJD(J.GEBOORTE_DATUM, CURRENT_DATE) L ON (0=0)',
+            ['J.PLAYER_ID'],[vPlayerID],'L.DAYS',srtInteger);
+
+          if (vLeeftijd = vLeefijd1) then
+          begin
+            vID := uBibDb.GetFieldValue(aDatabase,'TWINS',['KARAKTER_ID','TWIN_KARAKTER_ID'],
+              [aKarakterID, FieldByName('ID').asInteger],'ID',srtInteger);
+
+            if (vID = 0) then
+            begin
+              vID := uBibDb.GetFieldValue(aDatabase,'TWINS',['KARAKTER_ID','TWIN_KARAKTER_ID'],
+                [FieldByName('ID').asInteger, aKarakterID],'ID',srtInteger);
+            end;
+
+            if (vID = 0) then
+            begin
+              inc(result);
+              uBibDb.ExecSQL(aDatabase,'INSERT INTO TWINS (ID, KARAKTER_ID, TWIN_KARAKTER_ID) VALUES'+#13+
+                '(GEN_ID(GEN_TWINS_ID,1),:KARAKTER_ID,:TWIN_KARAKTER_ID)',
+                ['KARAKTER_ID','TWIN_KARAKTER_ID'],
+                [aKarakterID, FieldByName('ID').asInteger]);
+            end;
+          end;
+        end;
+        Next;
+      end;
+    finally
+      uBibDb.CommitTransaction(Transaction, TRUE);
+      Free;
+    end;
+  end;
 end;
 
 function ExtractIDFromLink(aURL,aLinkString:String):String;
