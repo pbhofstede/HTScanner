@@ -271,6 +271,32 @@ type
     Button10: TButton;
     dxDBGrid2Column7: TdxDBGridCheckColumn;
     dxDBGrid2Column8: TdxDBGridCheckColumn;
+    tbPosTwins: TdxTabSheet;
+    dxDBGrid7: TdxDBGrid;
+    dxDBGridColumn7: TdxDBGridColumn;
+    dxDBGridColumn8: TdxDBGridColumn;
+    dxDBGridColumn9: TdxDBGridColumn;
+    dxDBGridColumn10: TdxDBGridColumn;
+    dxDBGridColumn11: TdxDBGridColumn;
+    dxDBGridColumn12: TdxDBGridColumn;
+    dxDBGridCheckColumn1: TdxDBGridCheckColumn;
+    dxDBGridCheckColumn2: TdxDBGridCheckColumn;
+    ibqrPosBatchlings: TIBQuery;
+    dsPosBatchlings: TDataSource;
+    dxDBGrid7Column9: TdxDBGridColumn;
+    dxDBGrid2Column9: TdxDBGridColumn;
+    dxDBGrid7Column10: TdxDBGridColumn;
+    dxDBGrid7Column11: TdxDBGridColumn;
+    dxDBGrid7Column12: TdxDBGridColumn;
+    dxDBGrid7Column13: TdxDBGridColumn;
+    dxDBGrid7Column14: TdxDBGridColumn;
+    dxDBGrid7Column15: TdxDBGridColumn;
+    dxDBGrid7Column16: TdxDBGridColumn;
+    dxDBGrid7Column17: TdxDBGridColumn;
+    dxDBGrid7Column18: TdxDBGridColumn;
+    dxDBGrid7Column19: TdxDBGridColumn;
+    dxDBGrid7Column20: TdxDBGridColumn;
+    dxDBGrid7Column21: TdxDBGridColumn;
     procedure FormKeyDown(Sender: TObject; var Key: Word;
       Shift: TShiftState);
     procedure FormCreate(Sender: TObject);
@@ -329,6 +355,7 @@ type
     function AddPotentie(aCurPotentie, aSkill:String; aNewPotentie: Integer): String;
     procedure CalcPotentials(aPlayerID, aKarakterID: integer);
     procedure SetLabel(aLabel: TLabel; isTop3: boolean);
+    procedure GetPossibleBatchlings;
   private
     FSpelerSQL: TIBSQL;
     { Private declarations }
@@ -722,6 +749,43 @@ begin
   end;
 end;
 
+procedure TfrmPlayerInfo.GetPossibleBatchlings;
+var
+  vList: TBatchlingArray;
+  i: integer;
+begin
+  ibqrPosBatchlings.Close;
+  vList := uHattrick.GetPossibleTwins(frmHTScanner.ibdbHTInfo, FSpelerSQL.FieldByName('KARAKTER_ID').asInteger);
+
+  if High(vList) > -1 then
+  begin
+    ibqrPosBatchlings.SQL.Clear;
+    for i:=Low(vList) to High(vList) do
+    begin
+      if (i > 0) then
+      begin
+        ibqrPosBatchlings.SQL.Add('UNION');
+      end;
+      ibqrPosBatchlings.SQL.Add(Format('SELECT * FROM GET_BATCHLINGS_UNLIMITED(%d,0)',[vList[i]]));
+    end;
+    ibqrPosBatchlings.SQL.Add('ORDER BY 4');
+    ibqrPosBatchlings.Open;
+
+    if (ibqrPosBatchlings.RecordCount > 0) then
+    begin
+      tbPosTwins.Caption := Format('Possible batchlings (%d)',[ibqrPosBatchlings.RecordCount]);
+    end
+    else
+    begin
+      tbPosTwins.Caption := 'Possible batchlings';
+    end;
+  end
+  else
+  begin
+    tbPosTwins.Caption := 'Possible batchlings';
+  end;
+end;
+
 procedure TfrmPlayerInfo.Zoek;
 var
   vParam:String;
@@ -774,6 +838,8 @@ begin
           tbBatchlings.Caption := 'Batchlings';
         end;
       end;
+
+      GetPossibleBatchlings;
 
       with ibqrPrestaties do
       begin
@@ -839,6 +905,7 @@ begin
   ibdtstScouting.Database := frmHTScanner.ibdbHTInfo;
   ibqrPotentials.Database := frmHTScanner.ibdbHTInfo;
   ibqrNTTalenten.Database := frmHTScanner.ibdbHTInfo;
+  ibqrPosBatchlings.Database := frmHTScanner.ibdbHTInfo;
 
   IBTransaction1.DefaultDatabase := frmHTScanner.ibdbHTInfo;
   ibqrBatchlings.Transaction := IBTransaction1;
@@ -848,6 +915,7 @@ begin
   ibdtstManagerInfo.Transaction := IBTransaction1;
   ibqrPotentials.Transaction := IBTransaction1;
   ibqrNTTalenten.Transaction := IBTransaction1;
+  ibqrPosBatchlings.Transaction := IBTransaction1;
 
   IBTransaction1.StartTransaction;
   FSpelerSQL := uBibRuntime.CreateSQL(frmHTScanner.ibdbHTInfo,cSQL_PLAYERID);

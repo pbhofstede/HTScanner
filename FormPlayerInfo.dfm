@@ -866,8 +866,10 @@ object frmPlayerInfo: TfrmPlayerInfo
               DataSource = dsBatchlings
               Filter.Criteria = {00000000}
               LookAndFeel = lfUltraFlat
+              OptionsBehavior = [edgoAutoSort, edgoDragScroll, edgoEditing, edgoEnterShowEditor, edgoImmediateEditor, edgoStoreToRegistry, edgoTabThrough, edgoVertThrough]
               OptionsDB = [edgoCancelOnExit, edgoCanDelete, edgoCanInsert, edgoCanNavigation, edgoConfirmDelete, edgoLoadAllRecords, edgoUseBookmarks]
               OptionsView = [edgoAutoWidth, edgoBandHeaderWidth, edgoUseBitmap]
+              RegistryPath = '\Software\HTScanner\Batchlings'
               OnCustomDrawCell = dxDBGrid2CustomDrawCell
               object dxDBGrid2Column1: TdxDBGridColumn
                 Caption = 'ID'
@@ -925,6 +927,173 @@ object frmPlayerInfo: TfrmPlayerInfo
                 DisplayChecked = '-1'
                 DisplayUnChecked = '0'
               end
+              object dxDBGrid2Column9: TdxDBGridColumn
+                Caption = 'KarakterID'
+                BandIndex = 0
+                RowIndex = 0
+                FieldName = 'KARAKTER_ID'
+              end
+            end
+          end
+          object tbPosTwins: TdxTabSheet
+            Caption = 'Possible batchlings'
+            object dxDBGrid7: TdxDBGrid
+              Left = 0
+              Top = 0
+              Width = 1348
+              Height = 302
+              Bands = <
+                item
+                end>
+              DefaultLayout = True
+              HeaderPanelRowCount = 1
+              KeyField = 'PLAYER_ID'
+              SummaryGroups = <>
+              SummarySeparator = ', '
+              Align = alClient
+              TabOrder = 0
+              DataSource = dsPosBatchlings
+              Filter.Criteria = {00000000}
+              LookAndFeel = lfUltraFlat
+              OptionsBehavior = [edgoAutoSort, edgoDragScroll, edgoEditing, edgoEnterShowEditor, edgoImmediateEditor, edgoStoreToRegistry, edgoTabThrough, edgoVertThrough]
+              OptionsDB = [edgoCancelOnExit, edgoCanDelete, edgoCanInsert, edgoCanNavigation, edgoConfirmDelete, edgoLoadAllRecords, edgoUseBookmarks]
+              OptionsView = [edgoAutoWidth, edgoBandHeaderWidth, edgoUseBitmap]
+              RegistryPath = '\Software\HTScanner\PlayerInfo'
+              OnCustomDrawCell = dxDBGrid2CustomDrawCell
+              object dxDBGridColumn7: TdxDBGridColumn
+                Caption = 'ID'
+                BandIndex = 0
+                RowIndex = 0
+                FieldName = 'PLAYER_ID'
+              end
+              object dxDBGridColumn8: TdxDBGridColumn
+                Caption = 'Naam'
+                BandIndex = 0
+                RowIndex = 0
+                FieldName = 'PLAYER_NAME'
+              end
+              object dxDBGrid7Column9: TdxDBGridColumn
+                Caption = 'KarakterID'
+                BandIndex = 0
+                RowIndex = 0
+                FieldName = 'KARAKTER_ID'
+              end
+              object dxDBGridColumn9: TdxDBGridColumn
+                Caption = 'Leeftijd'
+                BandIndex = 0
+                RowIndex = 0
+                FieldName = 'LEEFTIJD'
+              end
+              object dxDBGridColumn10: TdxDBGridColumn
+                Caption = 'Nationaliteit'
+                BandIndex = 0
+                RowIndex = 0
+                FieldName = 'NATIONALITEIT'
+              end
+              object dxDBGridColumn11: TdxDBGridColumn
+                Visible = False
+                BandIndex = 0
+                RowIndex = 0
+                FieldName = 'DELETED'
+              end
+              object dxDBGridColumn12: TdxDBGridColumn
+                Visible = False
+                BandIndex = 0
+                RowIndex = 0
+                FieldName = 'PROMOTED'
+              end
+              object dxDBGridCheckColumn1: TdxDBGridCheckColumn
+                Width = 100
+                BandIndex = 0
+                RowIndex = 0
+                FieldName = 'U20'
+                ValueChecked = '-1'
+                ValueUnchecked = '0'
+                DisplayChecked = '-1'
+                DisplayUnChecked = '0'
+              end
+              object dxDBGridCheckColumn2: TdxDBGridCheckColumn
+                Width = 100
+                BandIndex = 0
+                RowIndex = 0
+                FieldName = 'NT'
+                ValueChecked = '-1'
+                ValueUnchecked = '0'
+                DisplayChecked = '-1'
+                DisplayUnChecked = '0'
+              end
+              object dxDBGrid7Column10: TdxDBGridColumn
+                Caption = 'Specialiteit'
+                BandIndex = 0
+                RowIndex = 0
+                FieldName = 'SPECIALITEIT'
+              end
+              object dxDBGrid7Column11: TdxDBGridColumn
+                Caption = 'Karakter'
+                BandIndex = 0
+                RowIndex = 0
+                FieldName = 'KARAKTER'
+              end
+              object dxDBGrid7Column12: TdxDBGridColumn
+                Caption = 'Eerlijkheid'
+                BandIndex = 0
+                RowIndex = 0
+                FieldName = 'EERLIJKHEID'
+              end
+              object dxDBGrid7Column13: TdxDBGridColumn
+                Caption = 'Agressiviteit'
+                BandIndex = 0
+                RowIndex = 0
+                FieldName = 'AGRESSIVITEIT'
+              end
+              object dxDBGrid7Column14: TdxDBGridColumn
+                Caption = 'Leiderschap'
+                BandIndex = 0
+                RowIndex = 0
+                FieldName = 'LEIDERSCHAP'
+              end
+              object dxDBGrid7Column15: TdxDBGridColumn
+                Caption = 'GK'
+                BandIndex = 0
+                RowIndex = 0
+                FieldName = 'POT_KEEPEN'
+              end
+              object dxDBGrid7Column16: TdxDBGridColumn
+                Caption = 'DEF'
+                BandIndex = 0
+                RowIndex = 0
+                FieldName = 'POT_VERDEDIGEN'
+              end
+              object dxDBGrid7Column17: TdxDBGridColumn
+                Caption = 'POS'
+                BandIndex = 0
+                RowIndex = 0
+                FieldName = 'POT_POSITIESPEL'
+              end
+              object dxDBGrid7Column18: TdxDBGridColumn
+                Caption = 'WNG'
+                BandIndex = 0
+                RowIndex = 0
+                FieldName = 'POT_VLEUGELSPEL'
+              end
+              object dxDBGrid7Column19: TdxDBGridColumn
+                Caption = 'PASS'
+                BandIndex = 0
+                RowIndex = 0
+                FieldName = 'POT_PASSEN'
+              end
+              object dxDBGrid7Column20: TdxDBGridColumn
+                Caption = 'SC'
+                BandIndex = 0
+                RowIndex = 0
+                FieldName = 'POT_SCOREN'
+              end
+              object dxDBGrid7Column21: TdxDBGridColumn
+                Caption = 'SH'
+                BandIndex = 0
+                RowIndex = 0
+                FieldName = 'POT_SPELHERVATTEN'
+              end
             end
           end
           object dxTabSheet2: TdxTabSheet
@@ -932,7 +1101,7 @@ object frmPlayerInfo: TfrmPlayerInfo
             object dxDBGrid6: TdxDBGrid
               Left = 0
               Top = 0
-              Width = 1404
+              Width = 1348
               Height = 302
               Bands = <
                 item
@@ -2115,8 +2284,8 @@ object frmPlayerInfo: TfrmPlayerInfo
         'WHERE J.TEAM_ID = :TEAMID AND J.IN_DOCS = -1 AND (J.PROMOTED = 0' +
         ' OR J.PROMOTED IS NULL) '
       'ORDER BY J.GEBOORTE_DATUM DESC')
-    Left = 208
-    Top = 373
+    Left = 64
+    Top = 421
     ParamData = <
       item
         DataType = ftUnknown
@@ -2231,13 +2400,14 @@ object frmPlayerInfo: TfrmPlayerInfo
     Top = 343
   end
   object ibqrBatchlings: TIBQuery
+    Transaction = IBTransaction1
     BufferChunks = 1000
     CachedUpdates = False
     SQL.Strings = (
-      'SELECT * FROM GET_BATCHLINGS_UNLIMITED(:KARAKTERID)'
+      'SELECT * FROM GET_BATCHLINGS_UNLIMITED(:KARAKTERID,1)'
       'ORDER BY LEEFTIJD')
-    Left = 256
-    Top = 332
+    Left = 64
+    Top = 500
     ParamData = <
       item
         DataType = ftUnknown
@@ -2321,8 +2491,8 @@ object frmPlayerInfo: TfrmPlayerInfo
       '  IN_NT_DOCS = :IN_NT_DOCS'
       'where'
       '  ID = :OLD_ID')
-    Left = 416
-    Top = 278
+    Left = 680
+    Top = 422
     object ibdtstScoutingID: TIntegerField
       FieldName = 'ID'
       Origin = '"SCOUTING"."ID"'
@@ -2361,8 +2531,8 @@ object frmPlayerInfo: TfrmPlayerInfo
   end
   object dsPotentials: TDataSource
     DataSet = ibqrPotentials
-    Left = 232
-    Top = 287
+    Left = 280
+    Top = 463
   end
   object ibqrPotentials: TIBQuery
     BeforeOpen = ibqrPotentialsBeforeOpen
@@ -2410,8 +2580,8 @@ object frmPlayerInfo: TfrmPlayerInfo
         'TTING >=8))'
       ')'
       'ORDER BY S.DEADLINE')
-    Left = 568
-    Top = 295
+    Left = 608
+    Top = 351
     ParamData = <
       item
         DataType = ftUnknown
@@ -2598,8 +2768,8 @@ object frmPlayerInfo: TfrmPlayerInfo
       'SPECIALITEIT,'
       '0 POS_INDEX'
       'FROM NT_SCOUTING')
-    Left = 776
-    Top = 289
+    Left = 696
+    Top = 393
   end
   object dsPrestaties: TDataSource
     DataSet = ibqrPrestaties
@@ -2629,13 +2799,34 @@ object frmPlayerInfo: TfrmPlayerInfo
       
         '  LEFT JOIN GET_LEEFTIJD(J.GEBOORTE_DATUM, CURRENT_DATE) L ON (0' +
         '=0)')
-    Left = 856
-    Top = 367
+    Left = 880
+    Top = 407
     ParamData = <
       item
         DataType = ftUnknown
         Name = 'KARAKTERID'
         ParamType = ptUnknown
       end>
+  end
+  object ibqrPosBatchlings: TIBQuery
+    Transaction = IBTransaction1
+    BufferChunks = 1000
+    CachedUpdates = False
+    SQL.Strings = (
+      'SELECT * FROM GET_BATCHLINGS_UNLIMITED(:KARAKTERID)'
+      'ORDER BY LEEFTIJD')
+    Left = 456
+    Top = 508
+    ParamData = <
+      item
+        DataType = ftUnknown
+        Name = 'KARAKTERID'
+        ParamType = ptUnknown
+      end>
+  end
+  object dsPosBatchlings: TDataSource
+    DataSet = ibqrPosBatchlings
+    Left = 472
+    Top = 463
   end
 end
