@@ -65,10 +65,8 @@ object frmHTScanner: TfrmHTScanner
         PrintOptions.Margins.Right = 19.05
         PrintOptions.Margins.Top = 19.05
         PrintOptions.Margins.Bottom = 19.05
-        PrintOptions.Header = '&w&bpagina &p van &P'
         PrintOptions.HTMLHeader.Strings = (
           '<HTML></HTML>')
-        PrintOptions.Footer = '&u&b&d'
         PrintOptions.Orientation = poPortrait
         ControlData = {
           4C0000001B4A0000A43500000000000000000000000000000000000000000000
@@ -985,10 +983,8 @@ object frmHTScanner: TfrmHTScanner
         PrintOptions.Margins.Right = 19.05
         PrintOptions.Margins.Top = 19.05
         PrintOptions.Margins.Bottom = 19.05
-        PrintOptions.Header = '&w&bpagina &p van &P'
         PrintOptions.HTMLHeader.Strings = (
           '<HTML></HTML>')
-        PrintOptions.Footer = '&u&b&d'
         PrintOptions.Orientation = poPortrait
         ControlData = {
           4C0000001B4A0000A43500000000000000000000000000000000000000000000
@@ -1177,10 +1173,8 @@ object frmHTScanner: TfrmHTScanner
           PrintOptions.Margins.Right = 19.05
           PrintOptions.Margins.Top = 19.05
           PrintOptions.Margins.Bottom = 19.05
-          PrintOptions.Header = '&w&bpagina &p van &P'
           PrintOptions.HTMLHeader.Strings = (
             '<HTML></HTML>')
-          PrintOptions.Footer = '&u&b&d'
           PrintOptions.Orientation = poPortrait
           ControlData = {
             4C0000001B4A0000A43500000000000000000000000000000000000000000000
@@ -1213,10 +1207,8 @@ object frmHTScanner: TfrmHTScanner
           PrintOptions.Margins.Right = 19.05
           PrintOptions.Margins.Top = 19.05
           PrintOptions.Margins.Bottom = 19.05
-          PrintOptions.Header = '&w&bpagina &p van &P'
           PrintOptions.HTMLHeader.Strings = (
             '<HTML></HTML>')
-          PrintOptions.Footer = '&u&b&d'
           PrintOptions.Orientation = poPortrait
           ControlData = {
             4C0000001B4A0000A43500000000000000000000000000000000000000000000
@@ -1241,10 +1233,8 @@ object frmHTScanner: TfrmHTScanner
         PrintOptions.Margins.Right = 19.05
         PrintOptions.Margins.Top = 19.05
         PrintOptions.Margins.Bottom = 19.05
-        PrintOptions.Header = '&w&bpagina &p van &P'
         PrintOptions.HTMLHeader.Strings = (
           '<HTML></HTML>')
-        PrintOptions.Footer = '&u&b&d'
         PrintOptions.Orientation = poPortrait
         ControlData = {
           4C0000001B4A0000A43500000000000000000000000000000000000000000000
