@@ -297,6 +297,15 @@ type
     dxDBGrid7Column19: TdxDBGridColumn;
     dxDBGrid7Column20: TdxDBGridColumn;
     dxDBGrid7Column21: TdxDBGridColumn;
+    lblStatus: TLabel;
+    lblCurGK: TLabel;
+    lblCurCD: TLabel;
+    lblCurOCD: TLabel;
+    lblCurOWB: TLabel;
+    lblCurIM: TLabel;
+    lblCurWNG: TLabel;
+    lblCurFW: TLabel;
+    lblCurdFW: TLabel;
     procedure FormKeyDown(Sender: TObject; var Key: Word;
       Shift: TShiftState);
     procedure FormCreate(Sender: TObject);
@@ -356,6 +365,8 @@ type
     procedure CalcPotentials(aPlayerID, aKarakterID: integer);
     procedure SetLabel(aLabel: TLabel; isTop3: boolean);
     procedure GetPossibleBatchlings;
+    function GetCurU20Index(aPlayerID, aPosition: Integer;
+      var aIndex: double): boolean;
   private
     FSpelerSQL: TIBSQL;
     { Private declarations }
@@ -612,8 +623,31 @@ begin
   end;
 end;
 
-procedure TfrmPlayerInfo.CalcPotentials(aPlayerID, aKarakterID: integer);
+function TfrmPlayerInfo.GetCurU20Index(aPlayerID, aPosition:Integer; var aIndex:double):boolean;
+var
+  vValues: TFieldValues;
 begin
+  vValues := uBibDb.GetSPValues(frmHTScanner.ibdbHTInfo,'GET_U20_TALENT',
+    [aPlayerId, aPosition],
+    ['PLAYER_ID','CURRENT_INDEX'],[srtInteger,srtFloat]);
+
+  result := vValues[1] <> 0;
+  aIndex := vValues[1];
+end;
+
+procedure TfrmPlayerInfo.CalcPotentials(aPlayerID, aKarakterID: integer);
+var
+  vCurIndex: double;
+begin
+  lblCurGK.Caption := '';
+  lblCurCD.Caption := '';
+  lblCurOCD.Caption := '';
+  lblCurOWB.Caption := '';
+  lblCurIM.Caption := '';
+  lblCurWNG.Caption := '';
+  lblCurFW.Caption := '';
+  lblCurdFW.Caption := '';
+
   if (aPlayerID > 0) then
   begin
     uBibDb.ExecSQL(frmHTScanner.ibdbHTInfo,'EXECUTE PROCEDURE SAVE_NT_U20_POTENTIAL(:KARAKTERID)',
@@ -624,7 +658,7 @@ begin
       try
         with SQL do
         begin
-          Add('SELECT * FROM GET_TALENTED_EX(:PLAYERID, 0)');
+          Add('SELECT * FROM GET_TALENTED_EX(:PLAYERID, 0, -1)');
         end;
         ParamByName('PLAYERID').asInteger := aPlayerID;
         ExecQuery;
@@ -689,6 +723,8 @@ begin
       end;
     end;
 
+
+
     // U20
     with uBibRuntime.CreateSQL(frmHTScanner.ibdbHTInfo) do
     begin
@@ -714,13 +750,42 @@ begin
         ParamByName('ID').asInteger := aPlayerID;
         ExecQuery;
 
+
         lblU20GK.Caption := Format('%.2f',[FieldByName('GK_INDEX').asFloat]);
+        if (GetCurU20Index(aPlayerId,6,vCurIndex)) then
+        begin
+          lblCurCD.Caption := Format('[%.2f]',[vCurIndex]);
+        end;
         lblU20CD.Caption := Format('%.2f',[FieldByName('CD_INDEX').asFloat]);
+        if (GetCurU20Index(aPlayerId,5,vCurIndex)) then
+        begin
+          lblCurOCD.Caption := Format('[%.2f]',[vCurIndex]);
+        end;
         lblU20OCD.Caption := Format('%.2f',[FieldByName('OCD_INDEX').asFloat]);
+        if (GetCurU20Index(aPlayerId,1,vCurIndex)) then
+        begin
+          lblCurOWB.Caption := Format('[%.2f]',[vCurIndex]);
+        end;
         lblU20OWB.Caption := Format('%.2f',[FieldByName('OWB_INDEX').asFloat]);
+        if (GetCurU20Index(aPlayerId,2,vCurIndex)) then
+        begin
+          lblCurIM.Caption := Format('[%.2f]',[vCurIndex]);
+        end;
         lblU20IM.Caption := Format('%.2f',[FieldByName('IM_INDEX').asFloat]);
+        if (GetCurU20Index(aPlayerId,3,vCurIndex)) then
+        begin
+          lblCurWNG.Caption := Format('[%.2f]',[vCurIndex]);
+        end;
         lblU20WING.Caption := Format('%.2f',[FieldByName('WING_INDEX').asFloat]);
+        if (GetCurU20Index(aPlayerId,4,vCurIndex)) then
+        begin
+          lblCurFW.Caption := Format('[%.2f]',[vCurIndex]);
+        end;
         lblU20FW.Caption := Format('%.2f',[FieldByName('FW_INDEX').asFloat]);
+        if (GetCurU20Index(aPlayerId,7,vCurIndex)) then
+        begin
+          lblCurdFW.Caption := Format('[%.2f]',[vCurIndex]);
+        end;
         lblU20dFW.Caption := Format('%.2f',[FieldByName('DFW_INDEX').asFloat]);
       finally
         uBibdb.CommitTransaction(Transaction, TRUE);
@@ -886,7 +951,10 @@ begin
     Screen.Cursor := crDefault;
     edPlayerID.Text := '';
     edTeamID.Text := '';
-    edPlayerID.SetFocus;
+    if (edPlayerId.Visible) then
+    begin
+      edPlayerID.SetFocus;
+    end;
   end;
 end;
 
@@ -1144,29 +1212,36 @@ procedure TfrmPlayerInfo.btnScoutClick(Sender: TObject);
 var
   vTeamID: integer;
 begin
-  if (CurPlayerID > 0) then
-  begin
-    // ZOek de speler maar ff op
-    frmHTScanner.GetJeugdspelerInfoByID(CurPlayerID,0,'',TRUE, chckKeeper.Checked, TRUE);
-    edPlayerID.Text := IntToStr(CurPlayerID);
-  end;
-  frmHTScanner.CurScan := '[post=xxx]';
+  lblStatus.Caption := 'Busy...';
+  edPlayerID.Visible := FALSE;
+  try
+    if (CurPlayerID > 0) then
+    begin
+      // ZOek de speler maar ff op
+      frmHTScanner.GetJeugdspelerInfoByID(CurPlayerID,0,'',TRUE, chckKeeper.Checked, TRUE);
+      edPlayerID.Text := IntToStr(CurPlayerID);
+    end;
+    frmHTScanner.CurScan := '[post=xxx]';
 
-  vTeamID := uBibDb.GetFieldValue(frmHTScanner.ibdbHTInfo,'JEUGDSPELERS',['PLAYER_ID'],[CurPlayerID],'TEAM_ID',srtInteger);
-  if (vTeamID <= 0) then
-  begin
-    vTeamID := StrToInt(InputBox('HTScanner','Geef het TeamID...','0'));
+    vTeamID := uBibDb.GetFieldValue(frmHTScanner.ibdbHTInfo,'JEUGDSPELERS',['PLAYER_ID'],[CurPlayerID],'TEAM_ID',srtInteger);
+    if (vTeamID <= 0) then
+    begin
+      vTeamID := StrToInt(InputBox('HTScanner','Geef het TeamID...','0'));
 
-    uBibDb.ExecSQL(frmHTScanner.ibdbHTInfo,'UPDATE JEUGDSPELERS SET TEAM_ID = :TEAMID WHERE PLAYER_ID = :ID',
-      ['ID','TEAMID'],[CurPlayerID, vTeamID]);
-  end;
+      uBibDb.ExecSQL(frmHTScanner.ibdbHTInfo,'UPDATE JEUGDSPELERS SET TEAM_ID = :TEAMID WHERE PLAYER_ID = :ID',
+        ['ID','TEAMID'],[CurPlayerID, vTeamID]);
+    end;
 
-  if frmHTScanner.ExtractPlayersToCSV(0,FALSE,CurPlayerID) > 0 then
-  begin
-    edPlayerID.Text := IntToStr(CurPlayerID);
-    frmHTScanner.ExtractPlayersToCSV(0,FALSE,CurPlayerID);
+    if frmHTScanner.ExtractPlayersToCSV(0,FALSE,CurPlayerID) > 0 then
+    begin
+      edPlayerID.Text := IntToStr(CurPlayerID);
+      frmHTScanner.ExtractPlayersToCSV(0,FALSE,CurPlayerID);
 
-    ShowMessage('Klaar');
+      //ShowMessage('Klaar');
+    end;
+  finally
+    lblStatus.Caption := 'Idle...';
+    edPlayerID.Visible := TRUE;
   end;
 end;
 
@@ -1189,20 +1264,25 @@ procedure TfrmPlayerInfo.Button8Click(Sender: TObject);
 var
   vSenior: TTSISet;
 begin
-  frmHTScanner.BrowseToPlayer(StrToInt(edNTPlayerID.Text));
-
-  vSenior := frmHTScanner.ParsePlayerInfo;
+  Screen.Cursor := crSQLWait;
   try
-    vSenior.IsKeeper := chckEDKeeper.Checked;
-    frmHTScanner.SaveScouting(vSenior, TRUE);
+    frmHTScanner.BrowseToPlayer(StrToInt(edNTPlayerID.Text));
 
-    btnNTScoutingClick(btnNTScouting);
+    vSenior := frmHTScanner.ParsePlayerInfo;
+    try
+      vSenior.IsKeeper := chckEDKeeper.Checked;
+      frmHTScanner.SaveScouting(vSenior, TRUE);
+
+      btnNTScoutingClick(btnNTScouting);
+    finally
+      vSenior.Free;
+    end;
+    btnYouthplayerIDClick(btnYouthplayerID);
+
+    chckEDKeeper.Checked := FALSE;
   finally
-    vSenior.Free;
+    Screen.Cursor := crDefault;
   end;
-  btnYouthplayerIDClick(btnYouthplayerID);
-  
-  chckEDKeeper.Checked := FALSE;
 end;
 
 procedure TfrmPlayerInfo.GetYouthPlayerID;
@@ -1635,7 +1715,7 @@ begin
           try
             with SQL do
             begin
-              Add('SELECT * FROM KARAKTER_PROFIEL WHERE ID = :ID');
+              Add('SELECT * FROM GET_COMBINED_SKILLS(:ID)');
             end;
             ParamByName('ID').asInteger := vKarakterID;
             ExecQuery;
@@ -1669,14 +1749,16 @@ begin
             begin
               Add('SELECT');
               Add('J.PLAYER_ID JEUGDSPELER_ID,');
+              Add('J.KARAKTER_ID,');
               Add('J.TEAM_ID,');
               Add('J.PLAYER_NAME,');
               Add('S.*');
-              Add('FROM JEUGDSPELERS J');
+              Add('FROM');
+              Add('GET_POSSIBLE_TWINS(:ID,-1) T');
+              Add('LEFT JOIN JEUGDSPELERS J ON (T.ID = J.KARAKTER_ID)');
               Add('LEFT JOIN SCOUTING S ON (J.PLAYER_ID = S.YOUTHPLAYER_ID)');
               Add('WHERE');
-              Add('J.KARAKTER_ID = :ID');
-              Add('AND J.PLAYER_ID <> :PLAYERID');
+              Add('J.PLAYER_ID <> :PLAYERID');
             end;
 
             ParamByName('ID').asInteger := vKarakterID;
@@ -1710,7 +1792,14 @@ begin
                 vPotentie := AddPotentie(vPotentie,'SCO',FieldByName('SCOREN').asInteger);
                 vPotentie := AddPotentie(vPotentie,'SH',FieldByName('SPELHERVATTING').asInteger);
 
-                vInfo.Add(Format('[youthplayerid=%d] %s',[FieldByName('JEUGDSPELER_ID').asInteger, vPotentie]));
+                If FieldByName('KARAKTER_ID').asInteger <> vKarakterID then
+                begin
+                  vInfo.Add(Format('[i][youthplayerid=%d] %s[/i]',[FieldByName('JEUGDSPELER_ID').asInteger, vPotentie]));
+                end
+                else
+                begin
+                  vInfo.Add(Format('[youthplayerid=%d] %s',[FieldByName('JEUGDSPELER_ID').asInteger, vPotentie]));
+                end;
               end;
               Next;
             end;

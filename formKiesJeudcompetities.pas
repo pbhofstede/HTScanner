@@ -18,6 +18,8 @@ type
     dxdbgrdSISObjectInfoColumn3: TdxDBGridColumn;
     dxdbgrdSISObjectInfoColumn4: TdxDBGridColumn;
     dxdbgrdSISObjectInfoColumn5: TdxDBGridColumn;
+    dxdbgrdSISObjectInfoPLAYERS_TODO: TdxDBGridColumn;
+    dxdbgrdSISObjectInfoColumn7: TdxDBGridColumn;
     procedure dxdbgrdSISObjectInfoDblClick(Sender: TObject);
     procedure dxdbgrdSISObjectInfoCustomDrawCell(Sender: TObject;
       ACanvas: TCanvas; ARect: TRect; ANode: TdxTreeListNode;
@@ -26,7 +28,6 @@ type
       AFont: TFont; var AAlignment: TAlignment; var ADone: Boolean);
   private
     FGekozenCompetitie: integer;
-    FLastScan: TDateTime;
     FOmschrijving: String;
     { Private declarations }
   public
@@ -72,38 +73,42 @@ begin
   ibqrComps.Database := aDatabase;
   ibtrComp.StartTransaction;
 
-  FLastScan := uBibDb.GetFieldValue(aDatabase,'COMPETITIES_SCANNED',
-    [],[],'SCAN_DATE',srtDateTime,svtMax,nil,'JEUGD_COMPETITIES_ID <> -1');
-
   with ibqrComps.SQL do
   begin
     Clear;
-    Add('SELECT');
-    Add('JC.ID,');
-    Add('JC.OMSCHRIJVING,');
-    Add('JC.TBS_DATUM,');
-    Add('MAX(SC.SCAN_DATE) LAATSTE_SCAN,');
-    Add('(SELECT SUM(NO_COMPETITIES) FROM JEUGD_COMPETITIES_ID WHERE');
-    Add(' JEUGD_COMPETITIES_ID = JC.ID) AANTAL_COMP,');
-    Add('');
-    Add('(SELECT COUNT(ID) FROM COMPETITIES_SCANNED WHERE');
-    Add('JEUGD_COMPETITIES_ID = JC.ID AND SCAN_DATE BETWEEN');
-    Add('MAX(SC.SCAN_DATE) - 6 AND CURRENT_DATE) AANTAL_GESCOUT');
-    Add('');
-    Add('FROM JEUGD_COMPETITIES JC');
-    Add('LEFT JOIN COMPETITIES_SCANNED SC ON (JC.ID = SC.JEUGD_COMPETITIES_ID)');
-    Add('WHERE');
     if (aIsBigScout) then
     begin
-      Add('  JC.ID < 0');
+      Add('SELECT * FROM GET_TBS_INFO');
     end
     else
     begin
-      Add('  JC.ID > 0');
+      Add('SELECT');
+      Add('JC.ID,');
+      Add('JC.OMSCHRIJVING,');
+      Add('JC.TBS_DATUM,');
+      Add('MAX(SC.SCAN_DATE) LAATSTE_SCAN,');
+      Add('(SELECT SUM(NO_COMPETITIES) FROM JEUGD_COMPETITIES_ID WHERE');
+      Add(' JEUGD_COMPETITIES_ID = JC.ID) AANTAL_COMP,');
+      Add('');
+      Add('(SELECT COUNT(ID) FROM COMPETITIES_SCANNED WHERE');
+      Add('JEUGD_COMPETITIES_ID = JC.ID AND SCAN_DATE BETWEEN');
+      Add('MAX(SC.SCAN_DATE) - 6 AND CURRENT_DATE) AANTAL_GESCOUT');
+      Add('');
+      Add('FROM JEUGD_COMPETITIES JC');
+      Add('LEFT JOIN COMPETITIES_SCANNED SC ON (JC.ID = SC.JEUGD_COMPETITIES_ID)');
+      Add('WHERE');
+      if (aIsBigScout) then
+      begin
+        Add('  JC.ID < 0');
+      end
+      else
+      begin
+        Add('  JC.ID > 0');
+      end;
+      Add('GROUP BY');
+      Add('  JC.ID, JC.OMSCHRIJVING, JC.VOLGORDE, JC.TBS_DATUM');
+      Add('ORDER BY VOLGORDE');
     end;
-    Add('GROUP BY');
-    Add('  JC.ID, JC.OMSCHRIJVING, JC.VOLGORDE, JC.TBS_DATUM');
-    Add('ORDER BY VOLGORDE');
   end;
   ibqrComps.Open;
 end;
@@ -123,13 +128,16 @@ procedure TfrmKiesReeks.dxdbgrdSISObjectInfoCustomDrawCell(Sender: TObject;
 var
   vDatum: TDateTime;
   vNextRun:TDate;
-  vTotal,vDone, vDag:integer;
+  vTotal,vDone, vDag, vToDo:integer;
   vJaar,vMaand,vDummy: Word;
 begin
   if (aNode <> nil) then
   begin
     vDatum := uBibGrid.GetNodeValue(aNode,'LAATSTE_SCAN',srtDateTime);
     vDag := uBibGrid.GetNodeValue(aNode,'TBS_DATUM',srtDateTime);
+    vToDo := uBibGrid.GetNodeValue(aNode,'PLAYERS_TODO',srtInteger);
+    vDone := uBibGrid.GetNodeValue(aNode,'PLAYERS_DONE',srtInteger);
+
 
     if (vDag > 0) then
     begin
@@ -146,9 +154,13 @@ begin
       vNextRun := esbDates.AddMonths(vDatum,1);
     end;
 
-    if (vDatum = FLastScan) then
+    if ((vToDO > 0) and (vDone > 0)) then
     begin
       aFont.Color := clBlue;
+    end
+    else if (vToDO > 0) then
+    begin
+      aFont.Color := clPurple;
     end
     else if (vNextRun <= Date) then
     begin

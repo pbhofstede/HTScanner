@@ -260,6 +260,7 @@ type
     N1: TMenuItem;
     Forcesave1: TMenuItem;
     btnHTCY: TdxBarButton;
+    btnAuto: TMenuItem;
     procedure Button1Click(Sender: TObject);
     procedure HTBrowserDocumentComplete(ASender: TObject;
       const pDisp: IDispatch; var URL: OleVariant);
@@ -337,9 +338,10 @@ type
     procedure Quadspeed1Click(Sender: TObject);
     procedure Forcesave1Click(Sender: TObject);
     procedure btnHTCYClick(Sender: TObject);
+    procedure btnAutoClick(Sender: TObject);
   private
     FStartParsing: TDateTime;
-    FISU20: boolean;
+    FISU20, FFullAuto: boolean;
     FAutoStart: boolean;
     FOpnieuw: boolean;
     FDocumentCompleted: boolean;
@@ -468,7 +470,7 @@ type
     procedure AddBatchLings(aPlayerFile, aBatchlings: TStringList);
     function AddPotentie(aCurPotentie, aNewPotentie: String): String;
     function LoadBigScoutPlayers(aSilent:boolean;aFileName: String; var aError: boolean; var
-      aRows: integer): integer;
+      aRows: integer;var aBekend: integer): integer;
     function VertaalSpecialiteit(aSpeciality: String): String;
     function VertaalPositie(aPosition: String): String;
     function VertaalInstructie(aInstruction: String): String;
@@ -494,7 +496,7 @@ type
     procedure AddOHW(aPlayerFile, aOHWList: TStringList);
     procedure RemoveFiles(aDir,aFileMask: String);
     function GetScout(aDoc, aSheet, aPlayerName: String): String;
-    procedure ScoutAll17yo(aTBSReeks:integer);
+    procedure ScoutAll17yo;
     procedure ScoutBigScoutPlayers(aReeks: integer);
     procedure SetBekendeSpelers(const Value: integer);
     procedure SetOnbekendeSpelers(const Value: integer);
@@ -527,6 +529,11 @@ type
     function XLSValueToFloat(aValue: String): double;
     function IsTalented(aPlayerID: Integer): boolean;
     function DoChangeValue(aOldValue, aNewValue: double; aIsHTYC: boolean; aMax: double = 8.1): boolean;
+    procedure SetAutoStart(const Value: boolean);
+    function GetTotalPlayers(aReeks: integer): integer;
+    procedure BubbleSort(aList: TObjectList);
+    function SaveCSVFile(vList: TStringList;aTitle, aDir, aFileName: String): boolean;
+    procedure BubbleSortByPlayerID(aList: TObjectList);
     { Private declarations }
   public
     { Public declarations }
@@ -565,6 +572,7 @@ type
     property DownloadErrors:integer read FDownloadErrors write SetDownloadErrors;
     property TransferListed: integer read FTransferListed write FTransferListed;
     property AutoTBSReeks:integer read FAutoTBSReeks write FAutoTBSReeks;
+    property AutoStart:boolean read FAutoStart write SetAutoStart;
     property ScanDate:TDate read FScanDate write FScanDate;
     property NextBidwarCheck:TDateTime read FNextBidwarCheck write SetNextBidwarCheck;
     property FirstTime: boolean read FFirstTime write FFirstTime;
@@ -579,6 +587,7 @@ type
 
     START_SEIZOEN_NO = 32;
     START_SEIZOEN = '08-08-2010';
+    MAX_FORUM_LENGTH = 3500;
 
 
 var
@@ -720,7 +729,7 @@ begin
   begin
     if (FAutoStart) and (DownLoadErrors > 30) then
     begin
-      Wait(3 * 60, 5 * 60);
+      Wait(15 * 60, 25 * 60);
       DownloadErrors := 0;
       LogIn;
     end
@@ -1582,7 +1591,7 @@ begin
   FChangeLog := TStringList.Create;
   DownloadErrors := 0;
   FLoggedIn := FALSE;
-  FAutoStart := FALSE;
+  AutoStart := FALSE;
 
   ReadIniFile;
 
@@ -1601,6 +1610,7 @@ begin
   begin
     if UpperCase(ParamStr(1)) = '-AUTO' then
     begin
+      FFullAuto := TRUE;
       if (ParamCount > 1) and (ParamStr(2) <> '') then
       begin
         AutoTBSReeks := StrToInt(ParamStr(2));
@@ -1610,30 +1620,27 @@ begin
 
       tmrAutoStart.Enabled := TRUE;
     end;
+  end
+  else
+  begin
+    AutoStart := TRUE;
   end;
 end;
 
 procedure TfrmHTScanner.DoAutoStart(aTBSReeks:integer);
-var
-  vMinID, i: integer;
 begin
   BringToFront;
   Application.ProcessMessages;
-  FAutoStart := TRUE;
+  AutoStart := TRUE;
   mLogging.Lines.Add('AutoStart');
   try
     Wait(60*4, 60*17);
     LogIn;
-    vMinID := uBibDb.GetFieldValue(ibdbHTInfo,'JEUGD_COMPETITIES',[],[],'ID',srtInteger,svtMin);
 
     mLogging.Lines.Add('Logged in...');
     mLogging.Lines.Add(Format('Scanning 17yo+ en TBSReeks %d',[aTBSReeks]));
 
-    ScoutAll17yo(-1);
-    for i:=-2 downto vMinID do
-    begin
-      ScoutJeugdTalents(i);
-    end;
+    ScoutAll17yo;
     Wait(5*60,20*60);
     Application.Terminate;
   except
@@ -2178,7 +2185,7 @@ begin
 
 
       vValues := uBibDb.GetSPValues(ibdbHTInfo,'GET_TALENTED_EX',
-        [aSpeler.ID, -1],['TALENTED','U20_LEEFTIJD'],[srtInteger, srtInteger]);
+        [aSpeler.ID, -1, -1],['TALENTED','U20_LEEFTIJD'],[srtInteger, srtInteger]);
 
       if (vValues[1] = -1) then
       begin
@@ -3314,7 +3321,7 @@ begin
     6:  ScanJeugdCompetitie;
     7:  ToonAutoScout;                     
     8:  AddBlackListedTeam;
-    9:  ScoutAll17yo(0);
+    9:  ScoutAll17yo;
     10: ScoutWrongCharacters;
     11: DoMiniTBS;
     12: GetU20Lijstjes;
@@ -3325,173 +3332,60 @@ end;
 procedure TfrmHTScanner.GetNTLijstjes;
 var
   i, vCount:integer;
-  vLichting, vKarakter, vIsU20, vDummy, vInfo: String;
+  vLichting, vKarakter, vIsU20, vDummy, vInfo, vDir: String;
   vList: TStringList;
   vDummyBool: Boolean;
+  vVoortgang: TfrmVoortgang;
 begin
-  vList := TStringList.Create;
+  vDir := ExtractFilePath(Application.ExeName)+'Scouting\NT\';
+  vVoortgang := TfrmVoortgang.Create(nil,7);
   try
-    FormKiesLichting.KiesLichting(ibdbHTInfo, vDummy, vLichting, vDummyBool);
+    vList := TStringList.Create;
+    try
+      FormKiesLichting.KiesLichting(ibdbHTInfo, vDummy, vLichting, vDummyBool);
 
-    if (vLichting <> '') then
-    begin
-      for i:=1 to 7 do
+      if (vLichting <> '') then
       begin
-        // 1 = WB
-        // 2 = IM
-        // 4 = FW
-
-        vList.Clear;
-        vCount := 0;
-        with uBibRuntime.CreateSQL(ibdbHTInfo) do
+        if (DirectoryExists(vDir)) then
         begin
-          try
-            with SQL do
-            begin
-              Add('SELECT *');
-              Add('FROM GET_NT_TALENTEN(:LINIE) WHERE LICHTING = :LICHTING ORDER BY TOTAL_INDEX DESC');
-            end;
-            ParamByName('LINIE').asInteger := i;
-            ParamByName('LICHTING').asString := vLichting;
-            ExecQuery;
-            while not EOF do
-            begin
-              inc(vCount);
-              if (vCount <= 30) then
+          RemoveFiles(vDir, '.csv');
+        end;
+
+        vVoortgang.Melding := 'Bezig met genereren NT-lijsten...';
+
+        for i:=1 to 7 do
+        begin
+          // 1 = WB
+          // 2 = IM
+          // 4 = FW
+
+          vList.Clear;
+          vCount := 0;
+          with uBibRuntime.CreateSQL(ibdbHTInfo) do
+          begin
+            try
+              with SQL do
               begin
-                if (FieldByName('U20_TALENTED').asInteger = -1) then
-                begin
-                  vIsU20 := 'U20';
-                end
-                else
-                begin
-                  vIsU20 := '';
-                end;
-
-                if FieldByName('LEIDERSCHAP').asString = 'goed' then
-                begin
-                  vKarakter := 'Goed leider';
-                end
-                else
-                begin
-                  vKarakter := '';
-                end;
-
-                if (vKarakter <> '') then
-                begin
-                  vInfo := (Format('[%s] %s [b]%s[/b] %s %s',[
-                    FieldByName('SPECIALITEIT').asString,
-                    vKarakter,
-                    FieldByName('SCOUT').asString,
-                    FieldByName('OPMERKING_SCOUT').asString,
-                    vIsU20]));
-                end
-                else
-                begin
-                  vInfo := (Format('[%s] [b]%s[/b] %s %s',[
-                    FieldByName('SPECIALITEIT').asString,
-                    FieldByName('SCOUT').asString,
-                    FieldByName('OPMERKING_SCOUT').asString,
-                    vIsU20]));
-                end;
-
-                vList.Add(Format('%.2d. [youthplayerid=%d] %s %s %d %s',
-                  [vCount,
-                   FieldByName('PLAYER_ID').asInteger,
-                   FieldByName('PLAYER_NAME').asString,
-                   FieldByName('STATS').asString,
-                   FieldByName('U20_AFWIJKING').asInteger,
-                   vInfo]));
-
-                vList.Add('');
+                Add('SELECT *');
+                Add('FROM GET_NT_TALENTEN(:LINIE) WHERE LICHTING = :LICHTING ORDER BY TOTAL_INDEX DESC');
               end;
-              Next;
-            end;
-          finally
-            uBibDB.CommitTransaction(Transaction,TRUE);
-            Free;
-          end;
-        end;
-
-        case i of
-          1: vList.SaveToFile(ExtractFilePath(Application.ExeName)+'Scouting\NT_Wingbacks.csv');
-          2: vList.SaveToFile(ExtractFilePath(Application.ExeName)+'Scouting\NT_Middenvelders.csv');
-          3: vList.SaveToFile(ExtractFilePath(Application.ExeName)+'Scouting\NT_Vleugelspelers.csv');
-          4: vList.SaveToFile(ExtractFilePath(Application.ExeName)+'Scouting\NT_Aanvallers.csv');
-          5: vList.SaveToFile(ExtractFilePath(Application.ExeName)+'Scouting\NT_PMVerdedigers.csv');
-          6: vList.SaveToFile(ExtractFilePath(Application.ExeName)+'Scouting\NT_Verdedigers.csv');
-          7: vList.SaveToFile(ExtractFilePath(Application.ExeName)+'Scouting\NT_DFW.csv');
-        end;
-      end;
-    end;
-  finally
-    vList.Free;
-  end;
-
-  ShowMessage('KLAAR');
-end;
-
-procedure TfrmHTScanner.GetU20Lijstjes;
-var
-  i, vCount:integer;
-  vKwalificatie: boolean;
-  vLichting, vKarakter, vDummy, vInfo: String;
-  vList: TStringList;
-begin
-  vList := TStringList.Create;
-  try
-    FormKiesLichting.KiesLichting(ibdbHTInfo, vLichting, vDummy, vKwalificatie);
-
-    if (vLichting <> '') then
-    begin
-      for i:=1 to 7 do
-      begin
-        // 1 = WB
-        // 2 = IM
-        // 4 = FW
-
-        vList.Clear;
-        vCount := 0;
-        with uBibRuntime.CreateSQL(ibdbHTInfo) do
-        begin
-          try
-            with SQL do
-            begin
-              Add('SELECT *');
-              Add('FROM GET_U20_TALENTEN(:LINIE) WHERE LICHTING = :LICHTING ORDER BY TOTAL_INDEX DESC');
-            end;
-            ParamByName('LINIE').asInteger := i;
-            ParamByName('LICHTING').asString := vLichting;
-            ExecQuery;
-            while not EOF do
-            begin
-              inc(vCount);
-              if (vCount <= 30) then
+              ParamByName('LINIE').asInteger := i;
+              ParamByName('LICHTING').asString := vLichting;
+              ExecQuery;
+              while not EOF do
               begin
-                // Bij kwalificatiespelers en counterdefs is het karakter erg belangrijk.
-                if ((vKwalificatie) or (i = 6)) then
+                inc(vCount);
+                if (vCount <= 30) then
                 begin
-                  vKarakter := FieldByName('KARAKTER').asString;
-
-                  if (vKarakter <> '') then
+                  if (FieldByName('U20_TALENTED').asInteger = -1) then
                   begin
-                    vKarakter := Format('[u]%s[/u]',[vKarakter]);
+                    vIsU20 := 'U20';
+                  end
+                  else
+                  begin
+                    vIsU20 := '';
                   end;
 
-                  if FieldByName('LEIDERSCHAP').asString = 'goed' then
-                  begin
-                    if (vKarakter <> '') then
-                    begin
-                      vKarakter := vKarakter + ', Goed leider';
-                    end
-                    else
-                    begin
-                      vKarakter := 'Goed leider';
-                    end;
-                  end
-                end
-                else
-                begin
                   if FieldByName('LEIDERSCHAP').asString = 'goed' then
                   begin
                     vKarakter := 'Goed leider';
@@ -3500,60 +3394,388 @@ begin
                   begin
                     vKarakter := '';
                   end;
+
+                  if (vKarakter <> '') then
+                  begin
+                    vInfo := (Format('[%s] %s [b]%s[/b] %s %s',[
+                      FieldByName('SPECIALITEIT').asString,
+                      vKarakter,
+                      FieldByName('SCOUT').asString,
+                      FieldByName('OPMERKING_SCOUT').asString,
+                      vIsU20]));
+                  end
+                  else
+                  begin
+                    vInfo := (Format('[%s] [b]%s[/b] %s %s',[
+                      FieldByName('SPECIALITEIT').asString,
+                      FieldByName('SCOUT').asString,
+                      FieldByName('OPMERKING_SCOUT').asString,
+                      vIsU20]));
+                  end;
+
+                  vList.Add(Format('%.2d. [youthplayerid=%d] %s %s %d %s',
+                    [vCount,
+                     FieldByName('PLAYER_ID').asInteger,
+                     FieldByName('PLAYER_NAME').asString,
+                     FieldByName('STATS').asString,
+                     FieldByName('U20_AFWIJKING').asInteger,
+                     vInfo]));
+
+                  vList.Add('');
                 end;
 
-                if (vKarakter <> '') then
+                if (Length(vList.Text) > MAX_FORUM_LENGTH) then
                 begin
-                  vInfo := (Format('[%s] %s [b]%s[/b] %s',[
-                    FieldByName('SPECIALITEIT').asString,
-                    vKarakter,
-                    FieldByName('SCOUT').asString,
-                    FieldByName('OPMERKING_SCOUT').asString]));
-                end
-                else
-                begin
-                  vInfo := (Format('[%s] [b]%s[/b] %s',[
-                    FieldByName('SPECIALITEIT').asString,
-                    FieldByName('SCOUT').asString,
-                    FieldByName('OPMERKING_SCOUT').asString]));
+                  case i of
+                    1: SaveCSVFile(vList,'NT OWB',vDir,'NT_Wingbacks.csv');
+                    2: SaveCSVFile(vList,'NT IM',vDir,'NT_Middenvelders.csv');
+                    3: SaveCSVFile(vList,'NT WNG',vDir,'NT_Vleugelspelers.csv');
+                    4: SaveCSVFile(vList,'NT FW',vDir,'NT_Aanvallers.csv');
+                    5: SaveCSVFile(vList,'NT OCD',vDir,'NT_PMVerdedigers.csv');
+                    6: SaveCSVFile(vList,'NT CD/GK',vDir,'NT_Verdedigers.csv');
+                    7: SaveCSVFile(vList,'NT DFW',vDir,'NT_DFW.csv');
+                  end;
                 end;
-
-
-                vList.Add(Format('%.2d. [youthplayerid=%d] %s %s %d %s',
-                  [vCount,
-                   FieldByName('PLAYER_ID').asInteger,
-                   FieldByName('PLAYER_NAME').asString,
-                   FieldByName('STATS').asString,
-                   FieldByName('U20_AFWIJKING').asInteger,
-                   vInfo]));
-
-
-                vList.Add('');
+                
+                Next;
               end;
-              Next;
+            finally
+              uBibDB.CommitTransaction(Transaction,TRUE);
+              Free;
             end;
-          finally
-            uBibDB.CommitTransaction(Transaction,TRUE);
-            Free;
+          end;
+
+          case i of
+            1: SaveCSVFile(vList,'NT OWB',vDir,'NT_Wingbacks.csv');
+            2: SaveCSVFile(vList,'NT IM',vDir,'NT_Middenvelders.csv');
+            3: SaveCSVFile(vList,'NT WNG',vDir,'NT_Vleugelspelers.csv');
+            4: SaveCSVFile(vList,'NT FW',vDir,'NT_Aanvallers.csv');
+            5: SaveCSVFile(vList,'NT OCD',vDir,'NT_PMVerdedigers.csv'); 
+            6: SaveCSVFile(vList,'NT CD/GK',vDir,'NT_Verdedigers.csv');
+            7: SaveCSVFile(vList,'NT DFW',vDir,'NT_DFW.csv');
+          end;
+          vVoortgang.StepIt;
+          Application.ProcessMessages;
+        end;
+      end;
+    finally
+      vList.Free;
+    end;
+  finally
+    vVoortgang.Free;
+  end;
+  ShowMessage('KLAAR');
+end;
+
+procedure TfrmHTScanner.GetU20Lijstjes;
+
+function GetPlayerFromList(aPlayerID: Integer; aList: TObjectList):TJeugdspeler;
+var
+  i: integer;
+begin
+  result := nil;
+  if aList.Count > 0 then
+  begin
+    i := 0;
+    while (i < aList.Count) and (result = nil) do
+    begin
+      if StrToInt(TJeugdSpeler(aList[i]).ID) = aPlayerID then
+      begin
+        result := TJeugdSpeler(aList[i]);
+      end;
+      inc(i);
+    end;
+  end;
+
+  if (result = nil) then
+  begin
+    result := TJeugdspeler.Create;
+    result.ID := IntToStr(aPlayerID);
+    result.TeamID := 0;
+
+    aList.Add(result);
+  end;
+end;
+
+var
+  i, vCount:integer;
+  vKwalificatie, vSortbyPotentie: boolean;
+  vLichting, vKarakter, vDummy, vInfo, vSortField, vPos, vDir: String;
+  vList: TStringList;
+  vVoortgang: TfrmVoortgang;
+  vPlayerList: TObjectList;
+  vSpeler: TJeugdspeler;
+begin
+  vPlayerList := TObjectList.Create(FALSE);
+  vDir := ExtractFilePath(Application.ExeName)+'Scouting\U20\';
+  try
+    vVoortgang := TfrmVoortgang.Create(nil, 10);
+    try
+      vList := TStringList.Create;
+      try
+        FormKiesLichting.KiesLichting(ibdbHTInfo, vLichting, vDummy, vKwalificatie);
+
+        if (vLichting <> '') then
+        begin
+          if (DirectoryExists(vDir)) then
+          begin
+            RemoveFiles(vDir, '.csv');
+          end;
+
+          vSortbyPotentie := uBibMessageBox.MessageBoxQuestion('Sorteren op potentie?',
+            'U20 shortlists');
+
+          if (vSortbyPotentie) then
+          begin
+            vSortField := 'TOTAL_INDEX';
+          end
+          else
+          begin
+            vSortField := 'CURRENT_INDEX';
+          end;
+          vVoortgang.Melding := 'Bezig met genereren U20 lijsten...';
+          for i:=0 to 7 do
+          begin
+            case i of
+              1: vPos := 'OWB';
+              2: vPos := 'IM';
+              3: vPos := 'WNG';
+              4: vPos := 'FW';
+              5: vPos := 'OCD';
+              6: vPos := 'CD';
+              7: vPos := 'DFW';
+            end;
+
+            vList.Clear;
+            vCount := 0;
+            with uBibRuntime.CreateSQL(ibdbHTInfo) do
+            begin
+              try
+                with SQL do
+                begin
+                  Add('SELECT *');
+                  Add(Format('FROM GET_U20_TALENTEN(:LINIE) WHERE LICHTING = :LICHTING ORDER BY %s DESC',[vSortField]));
+                end;
+                ParamByName('LINIE').asInteger := i;
+                ParamByName('LICHTING').asString := vLichting;
+                ExecQuery;
+                while not EOF do
+                begin
+                  inc(vCount);
+                  if (vCount <= 30) then
+                  begin
+                    vSpeler := GetPlayerFromList(FieldByName('PLAYER_ID').asInteger, vPlayerList);
+                    vSpeler.Naam := FieldByName('PLAYER_NAME').asString;
+                    if (vSpeler.Positie = '') then
+                    begin
+                      vSpeler.Positie := vPos;
+                    end
+                    else
+                    begin
+                      vSpeler.Positie := vSpeler.Positie + ' | ' + vPos;
+                    end;
+                    vSpeler.TeamId := vSpeler.TeamId + 1;
+                    vSpeler.Herkomst := FieldByName('SCOUT').asString;
+                    vSpeler.GeboorteDatum := FieldByName('PROMOTIE_DATUM').asDateTime;
+
+
+
+                    // Bij kwalificatiespelers en counterdefs is het karakter belangrijk.
+                    if ((vKwalificatie) or (i = 6)) then
+                    begin
+                      vKarakter := FieldByName('KARAKTER').asString;
+
+                      if (vKarakter <> '') then
+                      begin
+                        vKarakter := Format('[u]%s[/u]',[vKarakter]);
+                      end;
+
+                      if FieldByName('LEIDERSCHAP').asString = 'goed' then
+                      begin
+                        if (vKarakter <> '') then
+                        begin
+                          vKarakter := vKarakter + ', Goed leider';
+                        end
+                        else
+                        begin
+                          vKarakter := 'Goed leider';
+                        end;
+                      end
+                    end
+                    else
+                    begin
+                      if FieldByName('LEIDERSCHAP').asString = 'goed' then
+                      begin
+                        vKarakter := 'Goed leider';
+                      end
+                      else
+                      begin
+                        vKarakter := '';
+                      end;
+                    end;
+
+                    if (vKarakter <> '') then
+                    begin
+                      vInfo := (Format('[%s] %s [b]%s[/b] %s',[
+                        FieldByName('SPECIALITEIT').asString,
+                        vKarakter,
+                        FieldByName('SCOUT').asString,
+                        FieldByName('OPMERKING_SCOUT').asString]));
+                    end
+                    else
+                    begin
+                      vInfo := (Format('[%s] [b]%s[/b] %s',[
+                        FieldByName('SPECIALITEIT').asString,
+                        FieldByName('SCOUT').asString,
+                        FieldByName('OPMERKING_SCOUT').asString]));
+                    end;
+
+
+                    vList.Add(Format('%.2d. [youthplayerid=%d] %s %s %d %s',
+                      [vCount,
+                       FieldByName('PLAYER_ID').asInteger,
+                       FieldByName('PLAYER_NAME').asString,
+                       FieldByName('STATS').asString,
+                       FieldByName('U20_AFWIJKING').asInteger,
+                       vInfo]));
+
+
+                    vList.Add('');
+                  end;
+
+                  if (Length(vList.Text) >= MAX_FORUM_LENGTH) then
+                  case i of
+                    0: SaveCSVFile(vList,'U20 GK',vDir,'U20_Keepers.csv');
+                    1: SaveCSVFile(vList,'U20 OWB',vDir,'U20_Wingbacks.csv');
+                    2: SaveCSVFile(vList,'U20 IM',vDir,'U20_Middenvelders.csv');
+                    3: SaveCSVFile(vList,'U20 WNG',vDir,'U20_Vleugelspelers.csv');
+                    4: SaveCSVFile(vList,'U20 FW',vDir,'U20_Aanvallers.csv');
+                    5: SaveCSVFile(vList,'U20 OCD',vDir,'U20_PMVerdedigers.csv');
+                    6: SaveCSVFile(vList,'U20 CD',vDir,'U20_Verdedigers.csv');
+                    7: SaveCSVFile(vList,'U20 DFW',vDir,'U20_DFW.csv');
+                  end;
+
+                  Next;
+                end;
+              finally
+                uBibDB.CommitTransaction(Transaction,TRUE);
+                Free;
+              end;
+            end;
+
+            case i of
+              0: SaveCSVFile(vList,'U20 GK',vDir,'U20_Keepers.csv');
+              1: SaveCSVFile(vList,'U20 OWB',vDir,'U20_Wingbacks.csv');
+              2: SaveCSVFile(vList,'U20 IM',vDir,'U20_Middenvelders.csv');
+              3: SaveCSVFile(vList,'U20 WNG',vDir,'U20_Vleugelspelers.csv');
+              4: SaveCSVFile(vList,'U20 FW',vDir,'U20_Aanvallers.csv');
+              5: SaveCSVFile(vList,'U20 OCD',vDir,'U20_PMVerdedigers.csv');
+              6: SaveCSVFile(vList,'U20 CD',vDir,'U20_Verdedigers.csv');
+              7: SaveCSVFile(vList,'U20 DFW',vDir,'U20_DFW.csv');
+            end;
+
+            vVoortgang.StepIt;
+            Application.ProcessMessages;
           end;
         end;
 
-        case i of
-          1: vList.SaveToFile(ExtractFilePath(Application.ExeName)+'Scouting\U20_Wingbacks.csv');
-          2: vList.SaveToFile(ExtractFilePath(Application.ExeName)+'Scouting\U20_Middenvelders.csv');
-          3: vList.SaveToFile(ExtractFilePath(Application.ExeName)+'Scouting\U20_Vleugelspelers.csv');
-          4: vList.SaveToFile(ExtractFilePath(Application.ExeName)+'Scouting\U20_Aanvallers.csv');
-          5: vList.SaveToFile(ExtractFilePath(Application.ExeName)+'Scouting\U20_PMVerdedigers.csv');
-          6: vList.SaveToFile(ExtractFilePath(Application.ExeName)+'Scouting\U20_Verdedigers.csv');
-          7: vList.SaveToFile(ExtractFilePath(Application.ExeName)+'Scouting\U20_DFW.csv');
+        // Nu de dubbele spelers.
+        BubbleSortByPlayerID(vPlayerList);
+        vList.Clear;
+        for i:=0 to vPlayerList.Count - 1 do
+        begin
+          vSpeler := TJeugdSpeler(vPlayerList[i]);
+          if (vSpeler.TeamID > 1) then
+          begin
+            vList.Add(Format('[youthplayerid=%s] %s [%s] [%s]',[vSpeler.ID, vSpeler.Naam, vSpeler.Positie,
+              uHattrick.GetPlayerSkills(ibdbHTInfo, StrToInt(vSpeler.ID))]));
+            vList.Add('');
+          end;
+
+          if (Length(vList.Text) >= MAX_FORUM_LENGTH) then
+          begin
+            SaveCSVFile(vList,'U20 Multi-talents',vDir,'U20_Double.csv');
+          end;
         end;
+        vVoortgang.StepIt;
+        SaveCSVFile(vList,'U20 Multi-talents',vDir,'U20_Double.csv');
+
+        // Nu nog een lijstje op promotiedatum
+        BubbleSort(vPlayerList);
+        vList.Clear;
+        for i:=0 to vPlayerList.Count - 1 do
+        begin
+          vSpeler := TJeugdSpeler(vPlayerList[i]);
+
+          vList.Add(Format('%s - [youthplayerid=%s] %s [%s] [%s]',[FormatDateTime('dd-mm-yyyy',vSpeler.GeboorteDatum),
+            vSpeler.ID, vSpeler.Naam, uHattrick.GetPlayerSkills(ibdbHTInfo, StrToInt(vSpeler.ID)), vSpeler.Herkomst]));
+
+          vList.Add('');
+
+          if (Length(vList.Text) >= MAX_FORUM_LENGTH) then
+          begin
+            SaveCSVFile(vList,'U20-XTC prospects op promotiedatum',vDir,'U20_Promotiedatum.csv');
+          end;
+        end;
+        vVoortgang.StepIt;
+        SaveCSVFile(vList,'U20-XTC prospects op promotiedatum',vDir,'U20_Promotiedatum.csv');
+      finally
+        vList.Free;
       end;
+    finally
+      vVoortgang.Free;
+    end;
+
+    for i:=vPlayerList.Count -1 downto 0 do
+    begin
+      TJeugdSpeler(vPlayerList[i]).Free;
     end;
   finally
-    vList.Free;
+    vPlayerList.Free;
   end;
-
   ShowMessage('KLAAR');
+end;
+
+procedure TfrmHTScanner.BubbleSortByPlayerID(aList:TObjectList);
+var
+  i, j: Integer;
+  temp: TJeugdspeler;
+begin
+  // bubble sort
+  for i := 0 to aList.Count - 1 do begin
+    for j := 0 to ( aList.Count - 1 ) - i do begin
+      // Condition to handle i=0 & j = 9. j+1 tries to access x[10] which
+      // is not there in zero based array
+      if ( j + 1 = aList.Count ) then
+        continue;
+      if ( StrToInt(TJeugdspeler(aList[j]).ID) > StrToInt(TJeugdSpeler(aList[j+1]).ID) ) then begin
+        temp              := TJeugdSpeler(aList[j]);
+        aList[j]   := aList[j+1];
+        aList[j+1] := temp;
+      end; // endif
+    end; // endwhile
+  end; // endwhile
+end;
+
+procedure TfrmHTScanner.BubbleSort(aList:TObjectList);
+var
+  i, j: Integer;
+  temp: TJeugdspeler;
+begin
+  // bubble sort
+  for i := 0 to aList.Count - 1 do begin
+    for j := 0 to ( aList.Count - 1 ) - i do begin
+      // Condition to handle i=0 & j = 9. j+1 tries to access x[10] which
+      // is not there in zero based array
+      if ( j + 1 = aList.Count ) then
+        continue;
+      if ( TJeugdspeler(aList[j]).GeboorteDatum > TJeugdSpeler(aList[j+1]).GeboorteDatum ) then begin
+        temp              := TJeugdSpeler(aList[j]);
+        aList[j]   := aList[j+1];
+        aList[j+1] := temp;
+      end; // endif
+    end; // endwhile
+  end; // endwhile
 end;
 
 procedure TfrmHTScanner.InitScanResults;
@@ -3574,11 +3796,10 @@ begin
   ShowMessage('klaar');
 end;
 
-procedure TfrmHTScanner.ScoutAll17yo(aTBSReeks:integer);
+procedure TfrmHTScanner.ScoutAll17yo;
 var
-  vMax, vCount, vSpecCount,vSpecloos, vTBSReeks: Integer;
+  vMax, vCount, vSpecCount,vSpecloos: Integer;
   vSQL:TIBSQL;
-  vComp:String;
   vValues:TFieldValues;
 begin
   if (FirstTime) then
@@ -3605,15 +3826,6 @@ begin
   FFullScouting := TRUE;
 
   InitScanResults;
-
-  if (aTBSReeks = 0) and (uBibMessageBox.MessageBoxQuestion('Wil je aansluitend de TBS spelers inlezen?','HTScanner')) then
-  begin
-    vTBSReeks := formKiesJeudcompetities.KiesCompetitieReeks(ibdbHTInfo,TRUE,vComp);
-  end
-  else
-  begin
-    vTBSReeks := aTBSReeks;
-  end;
 
   vValues := uBibDb.GetFieldValues(ibdbHTInfo,'SCAN_HISTORIE',['DATUM'],[ScanDate],
       ['SPECS_FOUND','NO_SPEC_FOUND'],[srtInteger,srtInteger]);
@@ -3733,14 +3945,6 @@ begin
         uBibDb.CommitTransaction(Transaction,TRUE);
         Free;
       end;
-
-      if (vTBSReeks = 0) then
-      begin
-        if not (FAutoStart) then
-        begin
-          ShowMessage('Klaar!');
-        end;
-      end;
     end;
   finally
     SendStatusMail(Format('%d spelers gecontroleerd [%d specloos, %d specialiteiten]',
@@ -3750,15 +3954,31 @@ begin
     FFullScouting := FALSE;
   end;
 
-  if (vTBSReeks < 0) then
+  if (Quadspeed1.Checked) then
   begin
-    if (Quadspeed1.Checked) then
-    begin
-      btnTripleSpeedClick(btnTripleSpeed);
-    end;
+    btnTripleSpeedClick(btnTripleSpeed);
+  end;
 
-    Wait(10 * 60,18 * 60);
-    ScoutJeugdTalents(vTBSReeks);
+  Wait(10 * 60,18 * 60);
+  with uBibRuntime.CreateSQL(ibdbHTInfo) do
+  begin
+    try
+      with SQL do
+      begin
+        Add('SELECT ID FROM GET_TBS_INFO');
+        Add('WHERE PLAYERS_TODO > 0 AND ID < -1');
+        Add('ORDER BY LAATSTE_SCAN');
+      end;
+      ExecQuery;
+      while not EOF do
+      begin
+        ScoutJeugdTalents(FieldByName('ID').asInteger);
+        Next;
+      end;
+    finally
+      uBibDb.CommitTransaction(Transaction, TRUE);
+      Free;
+    end;
   end;
 end;
 
@@ -4348,10 +4568,13 @@ begin
           Add('B.LEIDERSCHAP,');
           Add('B.NATIONALITEIT,');
           Add('B.JEUGD_COMPETITIE_ID');
-          Add('FROM GET_BATCHLINGS(:KARAKTER_ID) B');
+          Add('FROM GET_POSSIBLE_TWINS(:KARAKTER_ID,-1) T');
+          Add('LEFT JOIN GET_BATCHLINGS(T.ID,:PLAYER_ID) B ON (T.ID = B.KARAKTER_ID)');
           Add('LEFT JOIN GET_CURRENT_LEAGUEID(B.PLAYER_ID) P ON (0=0)');
           Add('ORDER BY B.IN_DATUM DESC,B.KARAKTER_ID');
         end;
+        
+        ParamByName('PLAYER_ID').asInteger := aCurPlayerID;
         ParamByName('KARAKTER_ID').asInteger := aKarakterID;
         ExecQuery;
 
@@ -4429,7 +4652,8 @@ begin
 
               if (vOK) and not(vPromoted) then
               begin
-                if (FieldByName('NATIONALITEIT').asString = 'Nederland') then
+                if ((FieldByName('NATIONALITEIT').asString = 'Nederland') and
+                    (FieldByName('KARAKTER_ID').asInteger = aKarakterID)) then
                 begin
                   inc(vCount);
                   vChar := '';
@@ -4458,7 +4682,10 @@ begin
               end;
             end;
 
-            if (FieldByName('PLAYER_ID').asInteger <> aCurPlayerID) and (FieldByName('NATIONALITEIT').asString = 'Nederland') and not(vPromoted) then
+            if (FieldByName('PLAYER_ID').asInteger <> aCurPlayerID) and
+               (FieldByName('NATIONALITEIT').asString = 'Nederland') and
+               (FieldByName('KARAKTER_ID').asInteger = aKarakterID) and
+               not(vPromoted) then
             begin
               result := Format('%s [youthplayerid=%d]',[result, FieldByName('PLAYER_ID').asInteger]);
             end;
@@ -4785,7 +5012,14 @@ begin
   FOpnieuw := FALSE;
   if GetU20Leeftijden then
   begin
-    vOmschrijving := InputBox('Scouting','Geef een omschrijving',CurScan);
+    if (AutoStart) then
+    begin
+      vOmschrijving := CurScan;
+    end
+    else
+    begin
+      vOmschrijving := InputBox('Scouting','Geef een omschrijving',CurScan);
+    end;
 
     vPlayers := TStringList.Create;
     vLinieBatchLings := TStringList.Create;
@@ -5056,6 +5290,31 @@ begin
 
     aCSVFile.Clear;
   end;
+end;
+
+function TfrmHTScanner.SaveCSVFile(vList: TStringList;aTitle, aDir, aFileName:String):boolean;
+var
+  vCount: integer;
+  vNewFileName: String;
+begin
+  result := TRUE;
+  vCount := 1;
+
+  if not(DirectoryExists(aDir)) then
+  begin
+    ForceDirectories(aDir);
+  end;
+
+  vNewFileName := Format('%s\%s_%d.csv',[aDir,aFileName,vCount]);
+  while FileExists(vNewFileName) do
+  begin
+    inc(vCount);
+    vNewFileName := Format('%s\%s_%d.csv',[aDir,aFileName,vCount]);
+  end;
+  vList.Insert(0,'');
+  vList.Insert(0,Format('[b]%s(%d)[/b]',[aTitle, vCount]));
+  vList.SaveToFile(vNewFileName);
+  vList.Clear;
 end;
 
 procedure TfrmHTScanner.GetJeugdSpelerInfo(aSpeler:TJeugdSpeler; aSavePrestaties:boolean=TRUE);
@@ -5710,7 +5969,7 @@ begin
 
         if (vLinie = -1) then
         begin
-          if FAutoStart then
+          if (FAutoStart) or (Forcesave1.Checked) then
           begin
             mLogging.Lines.Add(Format('Kan linie van speler %d niet bepalen!',[aPlayerID]));
             vLinie := -1;
@@ -5745,7 +6004,7 @@ begin
       begin
         vSenior.IsKeeper := vLinie = 0;
         vSenior.Restyled := vRestyled;
-
+                                
         SaveScouting(vSenior,TRUE);
 
         if (vSenior.KarakterID = vKarakterID) or (vSenior.GeboorteDatum = vGeboorteDatum)  then
@@ -5909,7 +6168,7 @@ var
   vScanID : integer;
 begin
   vStop := FALSE;
-  if (FAutoStart) then
+  if (FFullAuto) then
   begin
     // Niet na 11:30 's avonds auto scan!
     if (Now > ScanDate + (23.5/24)) then
@@ -5993,7 +6252,7 @@ begin
                 vMelding := 'Speler(s) niet aangetroffen!';
               end;
             end;
-            if (FAutoStart) then
+            if (FFullAuto) then
             begin
               // Niet na 11:30 's avonds auto scan!
               if (Now > Date + (23.5/24)) then
@@ -7014,28 +7273,20 @@ end;
 procedure TfrmHTScanner.btnParseU17DocsClick(Sender: TObject);
 var
   vDoControl: boolean;
-  vTBSReeks: Integer;
-  vComp: String;
 begin
   vDoControl := FALSE;
-  vTBSReeks := -100;
 
   ScanAll := uBibMessageBox.MessageBoxQuestion('Moeten alle spelers in de docs gecontroleerd worden?','HTScanner');
 
   if (ScanAll) then
   begin
     vDoControl := uBibMessageBox.MessageBoxQuestion('Wil je aansluitend de 17+ spelers controleren?','HTScanner');
-
-     if (vDoControl) and (uBibMessageBox.MessageBoxQuestion('Wil je aansluitend de TBS spelers inlezen?','HTScanner')) then
-     begin
-      vTBSReeks := formKiesJeudcompetities.KiesCompetitieReeks(ibdbHTInfo,TRUE,vComp);
-     end
   end;
 
   ParseDocs(ScanAll);
   if (vDoControl) then
   begin
-    ScoutAll17yo(vTBSReeks);
+    ScoutAll17yo;
   end;
 end;
 
@@ -7769,7 +8020,7 @@ begin
           GetJeugdspelerInfoByID(FieldByName('PLAYER_ID').asInteger,
             FieldByName('TEAM_ID').asInteger,FieldByName('PLAYER_NAME').asString,
             TRUE,FALSE,TRUE);
-        end;    
+        end;
         Next;
       end;
     finally
@@ -7780,11 +8031,12 @@ begin
 end;
 
 begin
-  vMax := uBibDb.GetFieldValue(ibdbHTInfo,'KARAKTER_PROFIEL',[],[],'ID',srtInteger, svtCount);
+  vMax := uBibDb.GetFieldValue(ibdbHTInfo,'JEUGDSPELERS',[],[],'ID',srtInteger, svtCount,nil,
+    'GEBOORTE_DATUM < ''01.01.1970'' AND KARAKTER_ID > 0');
   vCur := 0;
   btnTripleSpeedClick(btnTripleSpeed);
   btnStopScouting.Visible := ivAlways;
-  with uBibRuntime.CreateSQL(ibdbHTInfo,'SELECT ID, SPECIALITEIT, LEIDERSCHAP FROM KARAKTER_PROFIEL') do
+  with uBibRuntime.CreateSQL(ibdbHTInfo,'SELECT * FROM JEUGDSPELERS WHERE GEBOORTE_DATUM < ''01.01.1970'' AND KARAKTER_ID > 0') do
   begin
     try
       ExecQuery;
@@ -7793,13 +8045,10 @@ begin
         inc(vCur);
         lblStatus.Caption := Format('%d/%d',[vCur, vMax]);
 
-        if (FieldByName('SPECIALITEIT').asString <> '') then
-        begin
-          if (FieldByName('LEIDERSCHAP').asString = '') then
-          begin
-            ScoutPlayers(FieldByName('ID').asInteger);
-          end;
-        end;
+        GetJeugdspelerInfoByID(FieldByName('PLAYER_ID').asInteger,
+            FieldByName('TEAM_ID').asInteger,FieldByName('PLAYER_NAME').asString,
+            TRUE,FALSE,TRUE);
+            
         Next;
       end;
     finally
@@ -7885,7 +8134,7 @@ begin
 end;
 
 function TfrmHTScanner.LoadBigScoutPlayers(aSilent:boolean;aFileName:String; var aError: boolean; var
-  aRows: integer):integer;
+  aRows: integer; var aBekend: integer):integer;
 const
   COL_PLAYERID = 'B';
   COL_PLAYERNAME = 'D';
@@ -7905,6 +8154,7 @@ var
   vGo:boolean;
 begin
   result := 0;
+  aBekend := 0;
   vGo := TRUE;
   aError := FALSE;
   aRows := 0;
@@ -7995,7 +8245,12 @@ begin
                   finally
                     vWedstrijd.Free;
                   end;
+                end
+                else
+                begin
+                  inc(aBekend);
                 end;
+
                 Application.ProcessMessages;
                 vFormVoortgang.StepIt;
               end;
@@ -8013,13 +8268,43 @@ begin
   finally
     vFormVoortgang.Release;
   end;
+
+  if (aError) then
+  begin
+    aBekend := 0;
+  end;
+end;
+
+function TfrmHTScanner.GetTotalPlayers(aReeks:integer):integer;
+begin
+  with uBibRuntime.CreateSQL(ibdbHTInfo) do
+  begin
+    try
+      SQL.Add('SELECT');
+      SQL.Add('COUNT(DISTINCT(P.PLAYER_ID)) AANTAL');
+      SQL.Add('FROM JEUGD_PRESTATIES P');
+      SQL.Add('LEFT JOIN JEUGDSPELERS J ON (P.PLAYER_ID = J.PLAYER_ID)');
+      SQL.Add('WHERE');
+      SQL.Add('P.JEUGD_COMPETITIES_ID = :ID AND');
+      SQL.Add('J.PLAYER_ID IS NULL AND');
+      SQL.Add('P.STERREN >= 6.0');
+
+      ParamByName('ID').asInteger := aReeks;
+      ExecQuery;
+
+      result := FIeldByName('AANTAL').asInteger;
+    finally
+      uBibDb.CommitTransaction(Transaction, TRUE);
+      Free;
+    end;
+  end;
 end;
 
 procedure TfrmHTScanner.ScoutBigScoutPlayers(aReeks:integer);
 var
   vFileName, vPath, vXLSFiles, vTitle:String;
   vFiles:TSearchRec;
-  vCount, vSubCount, vNewCount, i, vPos, vRows, vSterren: integer;
+  vCount, vSubCount, vTotaalBekend, vBekend, vNewCount, i, vPos, vRows, vSterren, vResult, vTotalPlayers: integer;
   vAuto, vDoorgaan, vError, vDoExporteren:boolean;
   vURL, vNextURL: String;
   vLinks: Variant;
@@ -8100,6 +8385,8 @@ begin
 
 
     vCount := 0;
+    vBekend := 0;
+    vTotaalBekend := 0;
     vDoorgaan := vAuto and (vXLSFiles <> '');
 
     repeat
@@ -8108,8 +8395,9 @@ begin
         try
           repeat
             vFileName := vFiles.Name;
-            vSubCount := LoadBigScoutPlayers(vAuto, vPath + vFileName, vError, vRows);
+            vSubCount := LoadBigScoutPlayers(vAuto, vPath + vFileName, vError, vRows, vBekend);
             vCount := vCount + vSubCount;
+            vTotaalBekend := vTotaalBekend + vBekend;
 
             if CopyFile(PChar(vPath + vFileName),PChar(vPath + 'Imported\'+ vFileName),FALSE) then
             begin
@@ -8188,21 +8476,27 @@ begin
       end;
     until not (vDoorgaan);
 
-    pgctrlLijst.ActivePage := tbBrowser;
-
     vNewCount := 0;
 
     if (vCount > 0) then
     begin
-      uBibDB.ExecSQL(ibdbHTInfo,'INSERT INTO COMPETITIES_SCANNED (ID, SCAN_DATE, JEUGD_COMPETITIES_ID) '+
-        'VALUES (GEN_ID(GEN_COMP_SCANNED,1),CURRENT_TIMESTAMP,:ID)',
-        ['ID'],[aReeks]);
+      vTotalPlayers := GetTotalPlayers(aReeks);
+
+      uBibDB.ExecSQL(ibdbHTInfo,'INSERT INTO COMPETITIES_SCANNED (ID, SCAN_DATE, JEUGD_COMPETITIES_ID, TOTAL_PLAYERS) '+
+        'VALUES (GEN_ID(GEN_COMP_SCANNED,1),CURRENT_TIMESTAMP,:ID,:TOTAAL)',
+        ['ID','TOTAAL'],[aReeks, vTotalPlayers]);
     end;
 
-    if (MessageBox(Handle,PChar(Format('%d nieuwe prestaties ingeladen!'+#13+#13+
-      'Spelersinfo ophalen?',[vCount])),PChar('Hattrick scanner'),MB_ICONINFORMATION + MB_YESNO) = ID_YES) then
+    vResult := MessageBox(Handle,PChar(Format('%d/%d nieuwe prestaties ingeladen!'+#13+#13+
+      'Spelersinfo ophalen?',[vCount,vCount + vTotaalBekend])),PChar('Hattrick scanner'),MB_ICONINFORMATION + MB_YESNO);
+
+    pgctrlLijst.ActivePage := tbBrowser;
+
+
+    if (vResult = ID_YES) then
     begin
-      if (aReeks = -1) and ((uBibMessageBox.MessageBoxQuestion('U17 Docs inlezen?','Hattrick Scanner'))) then
+
+      if (aReeks = -1) and ((AutoStart) or (uBibMessageBox.MessageBoxQuestion('U17 Docs inlezen?','Hattrick Scanner'))) then
       begin
         btnParseU17DocsClick(btnParseU17Docs);
       end;
@@ -8211,15 +8505,26 @@ begin
 
       if not(btnStopScouting.Down) and (vDoExporteren) then
       begin
-        if (vAuto) or (MessageBox(Handle,PChar('TBS run voorbereiden?'),PChar('Hattrick scanner'),MB_ICONINFORMATION + MB_YESNO) = ID_YES) then
+        if (AutoStart) or (MessageBox(Handle,PChar('TBS run voorbereiden?'),PChar('Hattrick scanner'),MB_ICONINFORMATION + MB_YESNO) = ID_YES) then
         begin
           PrepareTBSRun(aReeks);
         end;
-        vCount := ExtractPlayersToCSV(CompetitieReeks, TRUE, 0);
+        if (AutoStart) or (uBibMessageBox.MessageBoxQuestion('Inclusief onbekende specialiteiten?','HTScanner')) then
+        begin
+          vCount := ExtractPlayersToCSV(CompetitieReeks, TRUE, 0);
+          FOpnieuw := TRUE;
+        end
+        else
+        begin
+          vCount := ExtractPlayersToCSV(CompetitieReeks, FALSE, 0);
+        end;
 
         if (FOpnieuw) then
         begin
-          ShowMessage('Spelers opnieuw exporteren, door wijzigingen in de specialiteiten!');
+          if not(AutoStart) then
+          begin
+            ShowMessage('Spelers opnieuw exporteren, door wijzigingen in de specialiteiten!');
+          end;
           vNewCount := ExtractPlayersToCSV(CompetitieReeks, FALSE, 0);
         end;
       end;
@@ -8951,7 +9256,7 @@ begin
         ExecQuery;
         while not EOF do
         begin
-          vValues := uBibDb.GetSPValues(ibdbHTInfo,'GET_TALENTED_EX',[FieldByName('PLAYER_ID').asInteger,-1],
+          vValues := uBibDb.GetSPValues(ibdbHTInfo,'GET_TALENTED_EX',[FieldByName('PLAYER_ID').asInteger,-1, -1],
             ['TALENTED','U20_TALENTED'],[srtInteger,srtInteger]);
 
           vTalented := (vValues[0] = -1) or (vValues[1] = -1);
@@ -8980,7 +9285,7 @@ begin
     try
       with SQL do
       begin
-        Add('SELECT * FROM GET_TALENTED_EX(:PLAYERID, 0)');
+        Add('SELECT * FROM GET_TALENTED_EX(:PLAYERID, 0, -1)');
       end;
       ParamByName('PLAYERID').asInteger := aPlayerID;
       ExecQuery;
@@ -9006,6 +9311,17 @@ var
   vGewijzigd, vSpelerGewijzigdCount:integer;
   vSpelerChanged, vTalented, vTalentedNew: boolean;
   vUpdated: TStringList;
+const
+  COL_PLAYERID = 'A';
+  COL_PLAYERNAME = 'C';
+  COL_ALLROUND = 'I';
+  COL_KEEPEN = 'K';
+  COL_VERDEDIGEN = 'M';
+  COL_VLEUGELSPEL = 'O';
+  COL_POSITIESPEL = 'Q';
+  COL_SCOREN = 'S';
+  COL_PASSEN = 'U';
+  COL_SPELHERVATTEN = 'W';
 begin
   vUpdated := TStringList.Create;
   btnTripleSpeedClick(btnTripleSpeed);
@@ -9034,8 +9350,8 @@ begin
               vUpdated.Clear;
               vTalented := FALSE;
               vSpelerChanged := FALSE;
-              sPlayerID := VarToStr(vExcelFunctions.GetCellRange(Format('A%d', [i])));
-              sPlayerName := vExcelFunctions.GetCellRange(Format('C%d', [i]));
+              sPlayerID := VarToStr(vExcelFunctions.GetCellRange(Format('%s%d', [COL_PLAYERID, i])));
+              sPlayerName := vExcelFunctions.GetCellRange(Format('%s%d', [COL_PLAYERNAME,i]));
 
               vVoortgang.Melding := Format('Inlezen %s...',[sPlayerName]);
 
@@ -9072,7 +9388,7 @@ begin
                       ParamByName('ID').asInteger := vKarakterID;
                       ExecQuery;
                       // Allround
-                      sWaarde := vExcelFunctions.GetCellRange(Format('H%d', [i]));
+                      sWaarde := vExcelFunctions.GetCellRange(Format('%s%d', [COL_ALLROUND,i]));
                       if (sWaarde <> '') then
                       begin
                         if (FieldByName('ALLROUND').asString <> sWaarde) then
@@ -9084,7 +9400,7 @@ begin
                       end;
 
                       // Keepen
-                      sWaarde := vExcelFunctions.GetCellRange(Format('J%d', [i]));
+                      sWaarde := vExcelFunctions.GetCellRange(Format('%s%d', [COL_KEEPEN, i]));
                       if (sWaarde <> '') then
                       begin
                         vWaarde := StrToFloat(sWaarde);
@@ -9103,7 +9419,7 @@ begin
                       end;
 
                       // Verdedigen
-                      sWaarde := vExcelFunctions.GetCellRange(Format('L%d', [i]));
+                      sWaarde := vExcelFunctions.GetCellRange(Format('%s%d', [COL_VERDEDIGEN, i]));
                       if (sWaarde <> '') then
                       begin
                         vWaarde := StrToFloat(sWaarde);
@@ -9122,7 +9438,7 @@ begin
                       end;
 
                       // Vleugelspel
-                      sWaarde := vExcelFunctions.GetCellRange(Format('N%d', [i]));
+                      sWaarde := vExcelFunctions.GetCellRange(Format('%s%d', [COL_VLEUGELSPEL,i]));
                       if (sWaarde <> '') then
                       begin
                         vWaarde := StrToFloat(sWaarde);
@@ -9141,7 +9457,7 @@ begin
                       end;
 
                       // Positiespel
-                      sWaarde := vExcelFunctions.GetCellRange(Format('P%d', [i]));
+                      sWaarde := vExcelFunctions.GetCellRange(Format('%s%d', [COL_POSITIESPEL, i]));
                       if (sWaarde <> '') then
                       begin
                         vWaarde := StrToFloat(sWaarde);
@@ -9160,7 +9476,7 @@ begin
                       end;
 
                       // Scoren
-                      sWaarde := vExcelFunctions.GetCellRange(Format('R%d', [i]));
+                      sWaarde := vExcelFunctions.GetCellRange(Format('%s%d', [COL_SCOREN, i]));
                       if (sWaarde <> '') then
                       begin
                         vWaarde := StrToFloat(sWaarde);
@@ -9179,7 +9495,7 @@ begin
                       end;
 
                       // Passen
-                      sWaarde := vExcelFunctions.GetCellRange(Format('T%d', [i]));
+                      sWaarde := vExcelFunctions.GetCellRange(Format('%s%d', [COL_PASSEN, i]));
                       if (sWaarde <> '') then
                       begin
                         vWaarde := StrToFloat(sWaarde);
@@ -9198,7 +9514,7 @@ begin
                       end;
 
                       // Spelhervatting
-                      sWaarde := vExcelFunctions.GetCellRange(Format('V%d', [i]));
+                      sWaarde := vExcelFunctions.GetCellRange(Format('%s%d', [COL_SPELHERVATTEN, i]));
                       if (sWaarde <> '') then
                       begin
                         vWaarde := StrToFloat(sWaarde);
@@ -9266,6 +9582,8 @@ begin
     vUpdated.Free;
     vVoortgang.Free;
     FChangeLog.SaveToFile(ExtractFilePath(aFileName)+'changelog.txt');
+
+    ShellExecute(Handle,PChar('open'),PChar(ExtractFilePath(aFileName)+'changelog.txt'),nil,nil,SW_SHOWNORMAL);
   end;
 end;
 
@@ -9291,6 +9609,17 @@ begin
   begin
     ImportHTYCFile(vFileName);
   end;
+end;
+
+procedure TfrmHTScanner.btnAutoClick(Sender: TObject);
+begin
+  AutoStart := not AutoStart;
+end;
+
+procedure TfrmHTScanner.SetAutoStart(const Value: boolean);
+begin
+  FAutoStart := Value;
+  btnAuto.Checked := Value;
 end;
 
 end.

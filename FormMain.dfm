@@ -55,6 +55,7 @@ object frmHTScanner: TfrmHTScanner
         Height = 758
         Align = alClient
         TabOrder = 0
+        Silent = False
         OnDownloadBegin = HTBrowserDownloadBegin
         OnBeforeNavigate2 = HTBrowserBeforeNavigate2
         OnDocumentComplete = HTBrowserDocumentComplete
@@ -65,8 +66,10 @@ object frmHTScanner: TfrmHTScanner
         PrintOptions.Margins.Right = 19.05
         PrintOptions.Margins.Top = 19.05
         PrintOptions.Margins.Bottom = 19.05
+        PrintOptions.Header = '&w&bpagina &p van &P'
         PrintOptions.HTMLHeader.Strings = (
           '<HTML></HTML>')
+        PrintOptions.Footer = '&u&b&d'
         PrintOptions.Orientation = poPortrait
         ControlData = {
           4C0000001B4A0000A43500000000000000000000000000000000000000000000
@@ -972,7 +975,6 @@ object frmHTScanner: TfrmHTScanner
         Height = 758
         Align = alClient
         TabOrder = 0
-        Silent = False
         OnDownloadBegin = TSIBrowserDownloadBegin
         OnBeforeNavigate2 = TSIBrowserBeforeNavigate2
         OnDocumentComplete = TSIBrowserDocumentComplete
@@ -983,8 +985,10 @@ object frmHTScanner: TfrmHTScanner
         PrintOptions.Margins.Right = 19.05
         PrintOptions.Margins.Top = 19.05
         PrintOptions.Margins.Bottom = 19.05
+        PrintOptions.Header = '&w&bpagina &p van &P'
         PrintOptions.HTMLHeader.Strings = (
           '<HTML></HTML>')
+        PrintOptions.Footer = '&u&b&d'
         PrintOptions.Orientation = poPortrait
         ControlData = {
           4C0000001B4A0000A43500000000000000000000000000000000000000000000
@@ -1165,6 +1169,7 @@ object frmHTScanner: TfrmHTScanner
           Height = 423
           Align = alClient
           TabOrder = 1
+          Silent = False
           OnDocumentComplete = HTBrowserDocumentComplete
           DisableCtrlShortcuts = 'N'
           UserInterfaceOptions = [EnablesFormsAutoComplete, EnableThemes]
@@ -1173,8 +1178,10 @@ object frmHTScanner: TfrmHTScanner
           PrintOptions.Margins.Right = 19.05
           PrintOptions.Margins.Top = 19.05
           PrintOptions.Margins.Bottom = 19.05
+          PrintOptions.Header = '&w&bpagina &p van &P'
           PrintOptions.HTMLHeader.Strings = (
             '<HTML></HTML>')
+          PrintOptions.Footer = '&u&b&d'
           PrintOptions.Orientation = poPortrait
           ControlData = {
             4C0000001B4A0000A43500000000000000000000000000000000000000000000
@@ -1199,6 +1206,7 @@ object frmHTScanner: TfrmHTScanner
           Height = 341
           Align = alClient
           TabOrder = 0
+          Silent = False
           OnDocumentComplete = HTBrowserDocumentComplete
           DisableCtrlShortcuts = 'N'
           UserInterfaceOptions = [EnablesFormsAutoComplete, EnableThemes]
@@ -1207,8 +1215,10 @@ object frmHTScanner: TfrmHTScanner
           PrintOptions.Margins.Right = 19.05
           PrintOptions.Margins.Top = 19.05
           PrintOptions.Margins.Bottom = 19.05
+          PrintOptions.Header = '&w&bpagina &p van &P'
           PrintOptions.HTMLHeader.Strings = (
             '<HTML></HTML>')
+          PrintOptions.Footer = '&u&b&d'
           PrintOptions.Orientation = poPortrait
           ControlData = {
             4C0000001B4A0000A43500000000000000000000000000000000000000000000
@@ -1225,6 +1235,7 @@ object frmHTScanner: TfrmHTScanner
         Height = 343
         Align = alClient
         TabOrder = 2
+        Silent = False
         OnDocumentComplete = HTBrowserDocumentComplete
         DisableCtrlShortcuts = 'N'
         UserInterfaceOptions = [EnablesFormsAutoComplete, EnableThemes]
@@ -1233,8 +1244,10 @@ object frmHTScanner: TfrmHTScanner
         PrintOptions.Margins.Right = 19.05
         PrintOptions.Margins.Top = 19.05
         PrintOptions.Margins.Bottom = 19.05
+        PrintOptions.Header = '&w&bpagina &p van &P'
         PrintOptions.HTMLHeader.Strings = (
           '<HTML></HTML>')
+        PrintOptions.Footer = '&u&b&d'
         PrintOptions.Orientation = poPortrait
         ControlData = {
           4C0000001B4A0000A43500000000000000000000000000000000000000000000
@@ -8571,6 +8584,10 @@ object frmHTScanner: TfrmHTScanner
     object Forcesave1: TMenuItem
       Caption = 'Force save'
       OnClick = Forcesave1Click
+    end
+    object btnAuto: TMenuItem
+      Caption = 'Auto'
+      OnClick = btnAutoClick
     end
   end
   object JvTrayIcon1: TJvTrayIcon

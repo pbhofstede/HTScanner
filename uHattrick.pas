@@ -226,6 +226,7 @@ function ParsePlayerInfo(vBody: TStringList): TTSISet;
 function GetGeboorteDatum(aLeeftijd,aDagen:integer):TDate;
 function TwinIsPossible(aDatabase:TIBDatabase;aGeboorteDatum:TDate;
   aKarakterID:integer):boolean;
+function GetPlayerSkills(aDatabase: TIBDatabase;aPlayerID: Integer): String;
 function ParseJeugdwedstrijd(vBody:TStringList;aLeagueID,aMatchID:String;
   aTeamID, aMainLeagueID: Integer):TWedstrijd;
 function GetKarakters(aDatabase:TIBDatabase; aNeus, aGezicht, aOgen, aMond,
@@ -233,7 +234,6 @@ function GetKarakters(aDatabase:TIBDatabase; aNeus, aGezicht, aOgen, aMond,
 function GetVolgNummer(aDatabase:TIBDatabase; aNeus, aGezicht, aOgen, aMond,
   aHaar, aBody: String; aIsKeeper:boolean):integer;
 function GetYouthLineupLink(aMainURL: String;aTeamID, aMatchID:integer):String;
-function GetNewTwins(aDatabase: TIBDatabase; aKarakterID: Integer):integer;
 procedure SyncNewTwins(aDatabase: TIBDatabase; aKarakterID: integer);
 function GetPossibleTwins(aDatabase: TIBDatabase; aKarakterID: Integer):TBatchlingArray;
 
@@ -268,7 +268,7 @@ begin
       SQL.Add('SELECT J.GEBOORTE_DATUM, L.AGE, L.DAYS');
       SQL.Add('FROM JEUGDSPELERS J');
       SQL.Add('LEFT JOIN GET_LEEFTIJD(J.GEBOORTE_DATUM, CURRENT_DATE) L ON (0=0)');
-      SQL.Add('WHERE J.KARAKTER_ID = :ID');
+      SQL.Add('WHERE J.KARAKTER_ID = :ID AND J.GEBOORTE_DATUM > ''01.01.1970''');
       ParamByName('ID').asInteger := aKarakterID;
       ExecQuery;
 
@@ -1064,6 +1064,60 @@ begin
   end;
 end;
 
+function GetPlayerSkills(aDatabase:TIBDatabase;aPlayerID: Integer): String;
+
+function ValueToStr(aValue:double):String;
+begin
+  if (aValue > 0) then
+  begin
+    result := Format('%.1f',[aValue]);
+  end
+  else
+  begin
+    result := '?';
+  end;
+end;
+
+var
+  sCurGK, sCurDef, sCurPos, sCurWing, sCurPass, sCurSc, sCurSH: String;
+  sPosGK, sPosDef, sPosPos, sPosWing, sPosPass, sPosSc, sPosSH: String;
+  vKarakterID: integer;
+
+  vValues: TFieldValues;
+begin
+  vValues := uBibdb.GetFieldValues(aDatabase,'JEUGDSPELERS',
+    ['PLAYER_ID'],[aPlayerID],['KARAKTER_ID','KEEPEN','VERDEDIGEN','POSITIESPEL','VLEUGELSPEL','PASSEN','SCOREN','SPELHERVATTEN'],
+      [srtInteger, srtFloat, srtFloat, srtFloat, srtFloat, srtFloat, srtFloat, srtFloat]);
+
+  vKarakterID := vValues[0];
+
+  sCurGK :=  ValueToStr(vValues[1]);
+  sCurDef := ValueToStr(vValues[2]);
+  sCurPos := ValueToStr(vValues[3]);
+  sCurWing := ValueToStr(vValues[4]);
+  sCurPass := ValueToStr(vValues[5]);
+  sCurSc := ValueToStr(vValues[6]);
+  sCurSH := ValueToStr(vValues[7]);
+
+  SetLength(vValues,0);
+
+  vValues := uBibdb.GetFieldValues(aDatabase,'KARAKTER_PROFIEL',
+    ['ID'],[vKarakterID],['POT_KEEPEN','POT_VERDEDIGEN','POT_POSITIESPEL','POT_VLEUGELSPEL','POT_PASSEN','POT_SCOREN','POT_SPELHERVATTEN'],
+      [srtFloat, srtFloat, srtFloat, srtFloat, srtFloat, srtFloat, srtFloat]);
+
+  sPosGK := ValueToStr(vValues[0]);
+  sPosDef := ValueToStr(vValues[1]);
+  sPosPos := ValueToStr(vValues[2]);
+  sPosWing := ValueToStr(vValues[3]);
+  sPosPass := ValueToStr(vValues[4]);
+  sPosSc := ValueToStr(vValues[5]);
+  sPosSH := ValueToStr(vValues[6]);
+
+  result := Format('%s/%s GK - %s/%s DEF - %s/%s POS - %s/%s WNG - %s/%s PASS - %s/%s SC - %s/%s SH',
+    [sCurGK, sPosGK, sCurDef, sPosDef, sCurPos, sPosPos, sCurWing, sPosWing, sCurPass, sPosPass,
+      sCurSc, sPosSc, sCurSh, sPosSH]);
+end;
+
 function FormatSpecialiteit(aXLSSpec: String): String;
 begin
   aXLSSpec := Copy(Trim(UpperCase(aXLSSpec)), 1, 1);
@@ -1360,7 +1414,6 @@ begin
       end;
     end;
   end;
-  uHattrick.GetNewTwins(aDatabase, vID);
 
   result := vID;
 end;
@@ -1382,12 +1435,12 @@ const
   '  (AGRESSIVITEIT, CONDITIE, DATUM, DEADLINE, EERLIJKHEID, ERVARING, HERKOMST, HOOGSTE_BOD, ID, '+
   '   KARAKTER, KARAKTER_PROFIEL_ID, KEEPEN, LEEFTIJD, LEIDERSCHAP, LOON, NT, PASSEN, PLAYER_ID, ' +
   '   PLAYER_NAAM, POSITIESPEL, SCOREN, SPECIALITEIT, SPELHERVATTING, SUBSKILL, TALENT_SCOUTING, TSI, '+
-  '   U20, VERDEDIGEN, VLEUGELSPEL, VORM, VRAAGPRIJS, WEKEN_BLESSURE, YOUTHPLAYER_ID ) '+
+  '   U20, VERDEDIGEN, VLEUGELSPEL, VORM, VRAAGPRIJS, WEKEN_BLESSURE, YOUTHPLAYER_ID, GEBOORTEDATUM ) '+
   'VALUES (' +
   '   :AGRESSIVITEIT, :CONDITIE, :DATUM, :DEADLINE, :EERLIJKHEID, :ERVARING, :HERKOMST, :HOOGSTE_BOD,'+
   '   :ID, :KARAKTER, :KARAKTER_PROFIEL_ID, :KEEPEN, :LEEFTIJD, :LEIDERSCHAP, :LOON, :NT, :PASSEN, '+
   '   :PLAYER_ID, :PLAYER_NAAM, :POSITIESPEL, :SCOREN, :SPECIALITEIT, :SPELHERVATTING, :SUBSKILL, '+
-  '   :TALENT_SCOUTING, :TSI, :U20, :VERDEDIGEN, :VLEUGELSPEL, :VORM, :VRAAGPRIJS, :WEKEN_BLESSURE, :YOUTHPLAYER_ID)';
+  '   :TALENT_SCOUTING, :TSI, :U20, :VERDEDIGEN, :VLEUGELSPEL, :VORM, :VRAAGPRIJS, :WEKEN_BLESSURE, :YOUTHPLAYER_ID, :GEBOORTEDATUM)';
 var
   vCurSkill:double;
 begin
@@ -1395,8 +1448,7 @@ begin
     result := -1;
     if (aTSISet.PlayerID > 0) then
     begin
-      aTSISet.FTransferListed := (aTSISet.Deadline > 0);
-
+      aTSISet.FTransferListed := FALSE;
       vId := uBibDb.GetFieldValue(aDatabase,'SCOUTING',['PLAYER_ID'],[aTSISet.PlayerID],'ID',srtInteger);
 
       if (vID > 0) then
@@ -1413,15 +1465,18 @@ begin
         uBibDb.ExecSQL(aDatabase,'UPDATE SCOUTING SET PLAYER_NAAM = :PLAYER_NAAM, TSI = :TSI, VORM = :VORM, CONDITIE = :CONDITIE,'+
           ' LEEFTIJD = :LEEFTIJD, HERKOMST = :HERKOMST, SPECIALITEIT = :SPECIALITEIT, ERVARING = :ERVARING, KARAKTER = :KARAKTER, '+
           ' AGRESSIVITEIT = :AGRESSIVITEIT, EERLIJKHEID = :EERLIJKHEID, LEIDERSCHAP = :LEIDERSCHAP, DATUM = CURRENT_DATE,'+
-          ' LOON = :LOON, WEKEN_BLESSURE = :WEKEN_BLESSURE, KARAKTER_PROFIEL_ID = :KARAKTER_PROFIEL_ID WHERE ID = :ID',
+          ' LOON = :LOON, WEKEN_BLESSURE = :WEKEN_BLESSURE, KARAKTER_PROFIEL_ID = :KARAKTER_PROFIEL_ID, GEBOORTEDATUM = :GEBOORTEDATUM,'+
+          ' U20 = :U20, NT = :NT WHERE ID = :ID',
             ['ID','PLAYER_NAAM','TSI','VORM','CONDITIE','LEEFTIJD','HERKOMST','SPECIALITEIT','ERVARING','KARAKTER',
-             'AGRESSIVITEIT','EERLIJKHEID', 'LEIDERSCHAP', 'LOON', 'WEKEN_BLESSURE', 'KARAKTER_PROFIEL_ID'],
+             'AGRESSIVITEIT','EERLIJKHEID', 'LEIDERSCHAP', 'LOON', 'WEKEN_BLESSURE', 'KARAKTER_PROFIEL_ID','GEBOORTEDATUM','U20','NT'],
             [vID,aTSISet.PlayerName,aTSISet.PlayerTSI,aTSISet.Vorm,aTSISet.Conditie, aTSISet.Leeftijd, aTSISet.Herkomst,
              vSpec, aTSISet.Ervaring, aTSISet.Karakter, aTSISet.Agressiviteit, aTSISet.Eerlijkheid, aTSISet.Leiderschap,
-             aTSISet.Loon, aTSISet.WekenBlessure, aTSISet.KarakterID]);
+             aTSISet.Loon, aTSISet.WekenBlessure, aTSISet.KarakterID, aTSISet.GeboorteDatum, Ord(aTSISet.U20) * -1,
+             Ord(aTSISet.NT) * -1]);
 
-        if (aTSISet.Deadline > 0) and (aTSISet.TransferDatum >= Date - 7) then
+        if (aTSISet.Deadline > 0) then
         begin
+          aTSISet.FTransferListed := TRUE;
           vCurSkill := uBibDb.GetFieldValue(aDatabase,'SCOUTING',['ID'],[vID],'VERDEDIGEN',srtFloat);
 
           if (vCurSkill = 0) then
@@ -1437,6 +1492,12 @@ begin
                aTSISet.Deadline]);
           end;
         end;
+
+        if (aTSISet.YouthPlayerID > 0) then
+        begin
+          uBibDb.ExecSQL(aDatabase,'UPDATE SCOUTING SET YOUTHPLAYER_ID = :PLAYER_ID WHERE ID = :ID',
+            ['ID','PLAYER_ID'],[vID, aTSISet.YouthPlayerID]);
+        end;
       end
       else
       begin
@@ -1451,8 +1512,10 @@ begin
             ParamByName('TSI').asInteger := aTSISet.PlayerTSI;
             ParamByName('VORM').asInteger := aTSISet.Vorm;
             ParamByName('CONDITIE').asInteger := aTSISet.Conditie;
-            if (aTSISet.TransferDatum >= Date - 7) then
+            if (aTSISet.Deadline > 0) then
             begin
+              aTSISet.FTransferListed := TRUE;
+
               ParamByName('POSITIESPEL').asFloat := aTSISet.PositieSpel;
               ParamByName('VERDEDIGEN').asFloat := aTSISet.Verdedigen;
               ParamByName('SCOREN').asFloat := aTSISet.Scoren;
@@ -1499,6 +1562,7 @@ begin
             begin
               ParamByName('YOUTHPLAYER_ID').asInteger := aTSISet.YouthPlayerID;
             end;
+            ParamByName('GEBOORTEDATUM').asDate := aTSISet.GeboorteDatum;
 
             ExecQuery;
           finally
@@ -1686,125 +1750,23 @@ end;
   Result:    TBatchlingArray
 -----------------------------------------------------------------------------}
 function GetPossibleTwins(aDatabase: TIBDatabase; aKarakterID: Integer):TBatchlingArray;
-var
-  vLeeftijd, vLeefijd1: integer;
-  vPlayerID:integer;
-  vValues: TFieldValues;
-  vGezicht, vHaar, vLeiderSchap: String;
 begin
   SetLength(result, 0);
 
-  vPlayerID := uBibDb.GetFieldValue(aDatabase,'JEUGDSPELERS',['KARAKTER_ID'],
-    [aKarakterID],'PLAYER_ID',srtInteger, svtMax);
-
-  vLeeftijd := uBibDb.GetFieldValue(aDatabase,'JEUGDSPELERS J LEFT JOIN GET_LEEFTIJD(J.GEBOORTE_DATUM, CURRENT_DATE) L ON (0=0)',
-    ['J.PLAYER_ID'],[vPlayerID],'L.DAYS',srtInteger);
-
-  vValues := uBibDb.GetFieldValues(aDatabase,'KARAKTER_PROFIEL',['ID'],
-    [aKarakterID],['GEZICHT','HAAR','LEIDERSCHAP'],[srtString,srtString,srtString]);
-
-  vGezicht := vValues[0];
-  vHaar := vValues[1];
-  vLeiderSchap := vValues[2];
-
-  with uBibRuntime.CreateSQL(aDatabase) do
+  with uBibRuntime.CreateSQL(aDatabase,'SELECT * FROM GET_POSSIBLE_TWINS(:ID, 0)') do
   begin
     try
-      with SQL do
-      begin
-        Add('SELECT');
-        Add('P.ID');
-        Add('FROM KARAKTER_PROFIEL P');
-        Add('WHERE');
-        Add('P.IS_KEEPER = (SELECT IS_KEEPER FROM KARAKTER_PROFIEL WHERE ID = :ID) AND');
-        Add('P.GEZICHT STARTING :GEZICHT AND');
-        Add('P.HAAR STARTING :HAAR AND');
-        Add('P.NEUS = (SELECT NEUS FROM KARAKTER_PROFIEL WHERE ID = :ID) AND');
-        Add('P.OGEN = (SELECT OGEN FROM KARAKTER_PROFIEL WHERE ID = :ID) AND');
-        Add('P.MOND = (SELECT MOND FROM KARAKTER_PROFIEL WHERE ID = :ID) AND');
-        Add('P.BODY = (SELECT BODY FROM KARAKTER_PROFIEL WHERE ID = :ID) AND');
-        if (vLeiderSchap <> '') then
-        begin
-          Add('P.BODY = (SELECT BODY FROM KARAKTER_PROFIEL WHERE ID = :ID) AND');
-          Add('P.SPECIALITEIT = (SELECT SPECIALITEIT FROM KARAKTER_PROFIEL WHERE ID = :ID) AND');
-          Add('P.KARAKTER = (SELECT KARAKTER FROM KARAKTER_PROFIEL WHERE ID = :ID) AND');
-          Add('P.AGRESSIVITEIT = (SELECT AGRESSIVITEIT FROM KARAKTER_PROFIEL WHERE ID = :ID) AND');
-          Add('P.EERLIJKHEID = (SELECT EERLIJKHEID FROM KARAKTER_PROFIEL WHERE ID = :ID) AND');
-          Add('P.LEIDERSCHAP = (SELECT LEIDERSCHAP FROM KARAKTER_PROFIEL WHERE ID = :ID)');
-        end
-        else
-        begin
-          Add('P.BODY = (SELECT BODY FROM KARAKTER_PROFIEL WHERE ID = :ID)');
-        end;
-      end;
-      ParamByName('GEZICHT').asString := Copy(vGezicht,1,2);
-      ParamByName('HAAR').asString := Copy(vHaar,1,2);
       ParamByName('ID').asInteger := aKarakterID;
       ExecQuery;
       while not EOF do
       begin
-        if (FieldByName('ID').asInteger <> aKarakterID) then
-        begin
-          vPlayerID := uBibDb.GetFieldValue(aDatabase,'JEUGDSPELERS',['KARAKTER_ID'],
-            [FieldByName('ID').asInteger],'PLAYER_ID',srtInteger, svtMax);
-
-          vLeefijd1 := uBibDb.GetFieldValue(aDatabase,'JEUGDSPELERS J LEFT JOIN GET_LEEFTIJD(J.GEBOORTE_DATUM, CURRENT_DATE) L ON (0=0)',
-            ['J.PLAYER_ID'],[vPlayerID],'L.DAYS',srtInteger);
-
-          if (vLeeftijd = vLeefijd1) then
-          begin
-            SetLength(Result,High(Result)+2);
-            Result[High(Result)] := FieldByName('ID').asInteger;
-          end;
-        end;
+        SetLength(Result,High(Result)+2);
+        Result[High(Result)] := FieldByName('ID').asInteger;
         Next;
       end;
     finally
       uBibDb.CommitTransaction(Transaction, TRUE);
       Free;
-    end;
-  end;
-end;
-
-{-----------------------------------------------------------------------------
-  Procedure: GetNewTwins
-  Author:    Harry
-  Date:      27-apr-2012
-  Arguments: aDatabase: TIBDatabase; aKarakterID: Integer
-  Result:    integer
------------------------------------------------------------------------------}
-function GetNewTwins(aDatabase: TIBDatabase; aKarakterID: Integer):integer;
-var
-  vID,i: integer;
-  vList: TBatchlingArray;
-begin
-  result := 0;
-
-  vList := uHattrick.GetPossibleTwins(aDatabase, aKarakterID);
-
-  if High(vList) > -1 then
-  begin
-    for i:=Low(vList) to High(vList) do
-    begin
-      vID := uBibDb.GetFieldValue(aDatabase,'TWINS',['KARAKTER_ID','TWIN_KARAKTER_ID'],
-              [aKarakterID, vList[i]],'ID',srtInteger);
-
-      if (vID = 0) then
-      begin
-        vID := uBibDb.GetFieldValue(aDatabase,'TWINS',['KARAKTER_ID','TWIN_KARAKTER_ID'],
-          [vList[i], aKarakterID],'ID',srtInteger);
-      end;
-
-      if (vID = 0) then
-      begin
-        inc(result);
-        uBibDb.ExecSQL(aDatabase,'INSERT INTO TWINS (ID, KARAKTER_ID, TWIN_KARAKTER_ID) VALUES'+#13+
-          '(GEN_ID(GEN_TWINS_ID,1),:KARAKTER_ID,:TWIN_KARAKTER_ID)',
-          ['KARAKTER_ID','TWIN_KARAKTER_ID'],
-          [aKarakterID, vList[i]]);
-
-        uHattrick.GetNewTwins(aDatabase,vList[i]);
-      end;
     end;
   end;
 end;

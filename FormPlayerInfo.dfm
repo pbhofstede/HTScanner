@@ -1,6 +1,6 @@
 object frmPlayerInfo: TfrmPlayerInfo
-  Left = 153
-  Top = 127
+  Left = 37
+  Top = 35
   Width = 1364
   Height = 643
   Caption = 'Speler/manager informatie'
@@ -24,7 +24,7 @@ object frmPlayerInfo: TfrmPlayerInfo
     Top = 0
     Width = 1348
     Height = 605
-    ActivePage = tbPlayerinfo
+    ActivePage = tbNTScouting
     Align = alClient
     HideButtons = False
     HotTrack = False
@@ -75,6 +75,12 @@ object frmPlayerInfo: TfrmPlayerInfo
           Font.Style = [fsBold]
           ParentFont = False
           Visible = False
+        end
+        object lblStatus: TLabel
+          Left = 224
+          Top = 10
+          Width = 3
+          Height = 13
         end
         object edPlayerID: TEdit
           Left = 88
@@ -665,6 +671,118 @@ object frmPlayerInfo: TfrmPlayerInfo
             Height = 13
             Caption = 'Talented?'
           end
+          object lblCurGK: TLabel
+            Left = 185
+            Top = 32
+            Width = 15
+            Height = 13
+            Alignment = taRightJustify
+            Caption = 'GK'
+            Font.Charset = DEFAULT_CHARSET
+            Font.Color = clWindowText
+            Font.Height = -11
+            Font.Name = 'Tahoma'
+            Font.Style = [fsBold]
+            ParentFont = False
+          end
+          object lblCurCD: TLabel
+            Left = 185
+            Top = 48
+            Width = 15
+            Height = 13
+            Alignment = taRightJustify
+            Caption = 'GK'
+            Font.Charset = DEFAULT_CHARSET
+            Font.Color = clWindowText
+            Font.Height = -11
+            Font.Name = 'Tahoma'
+            Font.Style = [fsBold]
+            ParentFont = False
+          end
+          object lblCurOCD: TLabel
+            Left = 185
+            Top = 64
+            Width = 15
+            Height = 13
+            Alignment = taRightJustify
+            Caption = 'GK'
+            Font.Charset = DEFAULT_CHARSET
+            Font.Color = clWindowText
+            Font.Height = -11
+            Font.Name = 'Tahoma'
+            Font.Style = [fsBold]
+            ParentFont = False
+          end
+          object lblCurOWB: TLabel
+            Left = 185
+            Top = 80
+            Width = 15
+            Height = 13
+            Alignment = taRightJustify
+            Caption = 'GK'
+            Font.Charset = DEFAULT_CHARSET
+            Font.Color = clWindowText
+            Font.Height = -11
+            Font.Name = 'Tahoma'
+            Font.Style = [fsBold]
+            ParentFont = False
+          end
+          object lblCurIM: TLabel
+            Left = 185
+            Top = 96
+            Width = 15
+            Height = 13
+            Alignment = taRightJustify
+            Caption = 'GK'
+            Font.Charset = DEFAULT_CHARSET
+            Font.Color = clWindowText
+            Font.Height = -11
+            Font.Name = 'Tahoma'
+            Font.Style = [fsBold]
+            ParentFont = False
+          end
+          object lblCurWNG: TLabel
+            Left = 185
+            Top = 112
+            Width = 15
+            Height = 13
+            Alignment = taRightJustify
+            Caption = 'GK'
+            Font.Charset = DEFAULT_CHARSET
+            Font.Color = clWindowText
+            Font.Height = -11
+            Font.Name = 'Tahoma'
+            Font.Style = [fsBold]
+            ParentFont = False
+          end
+          object lblCurFW: TLabel
+            Left = 185
+            Top = 128
+            Width = 15
+            Height = 13
+            Alignment = taRightJustify
+            Caption = 'GK'
+            Font.Charset = DEFAULT_CHARSET
+            Font.Color = clWindowText
+            Font.Height = -11
+            Font.Name = 'Tahoma'
+            Font.Style = [fsBold]
+            ParentFont = False
+          end
+          object lblCurdFW: TLabel
+            Left = 185
+            Top = 144
+            Width = 15
+            Height = 13
+            Alignment = taRightJustify
+            Caption = 'GK'
+            Font.Charset = DEFAULT_CHARSET
+            Font.Color = clWindowText
+            Font.Height = -11
+            Font.Name = 'Tahoma'
+            Font.Style = [fsBold]
+            ParentFont = False
+          end
           object chckNTTalented: TCheckBox
             Left = 130
             Top = 168
@@ -695,7 +813,7 @@ object frmPlayerInfo: TfrmPlayerInfo
           Top = 0
           Width = 1348
           Height = 325
-          ActivePage = tbBatchlings
+          ActivePage = tbTeamSpelers
           Align = alClient
           HideButtons = False
           HotTrack = False
@@ -2794,7 +2912,7 @@ object frmPlayerInfo: TfrmPlayerInfo
       '  J.DELETED,'
       '  J.PROMOTED'
       'FROM'
-      '  GET_BESTE_PRESTATIE_PER_LINIE(:KARAKTERID, 0) P'
+      '  GET_BESTE_PRESTATIE_PER_LINIE(:KARAKTERID, 0, NULL) P'
       '  LEFT JOIN JEUGDSPELERS J ON (P.PLAYER_ID = J.PLAYER_ID)'
       
         '  LEFT JOIN GET_LEEFTIJD(J.GEBOORTE_DATUM, CURRENT_DATE) L ON (0' +

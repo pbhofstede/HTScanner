@@ -1,8 +1,8 @@
 object frmKiesReeks: TfrmKiesReeks
   Left = 510
   Top = 233
-  Width = 390
-  Height = 298
+  Width = 528
+  Height = 391
   Caption = 'Kies competitiereeks'
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -17,8 +17,8 @@ object frmKiesReeks: TfrmKiesReeks
   object dxdbgrdSISObjectInfo: TdxDBGrid
     Left = 2
     Top = 2
-    Width = 370
-    Height = 254
+    Width = 508
+    Height = 347
     Bands = <
       item
       end>
@@ -92,6 +92,18 @@ object frmKiesReeks: TfrmKiesReeks
       BandIndex = 0
       RowIndex = 0
       FieldName = 'TBS_DATUM'
+    end
+    object dxdbgrdSISObjectInfoPLAYERS_TODO: TdxDBGridColumn
+      Caption = 'Todo'
+      BandIndex = 0
+      RowIndex = 0
+      FieldName = 'PLAYERS_TODO'
+    end
+    object dxdbgrdSISObjectInfoColumn7: TdxDBGridColumn
+      Visible = False
+      BandIndex = 0
+      RowIndex = 0
+      FieldName = 'PLAYERS_DONE'
     end
   end
   object ibqrComps: TIBQuery
