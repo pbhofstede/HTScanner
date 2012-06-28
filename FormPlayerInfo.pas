@@ -369,6 +369,7 @@ type
       var aIndex: double): boolean;
   private
     FSpelerSQL: TIBSQL;
+    FReloadTwinsEtc: boolean;
     { Private declarations }
     procedure ParsePlayerInfo(aSQL:TIBSQL);
     procedure Zoek;
@@ -481,7 +482,6 @@ var
   vScoren, vSpelhervatten, vAfwijking:integer;
 begin
   //LoadPicture(aSQL.FieldByName('KARAKTER_ID').asInteger);
-
   with uBibRuntime.CreateSQL(frmHTScanner.ibdbHTInfo,'SELECT * FROM GET_PROMOTED_STATS(:KARAKTERID)') do
   begin
     try
@@ -500,6 +500,7 @@ begin
       Free;
     end;
   end;
+
 
   with uBibRuntime.CreateSQL(frmHTScanner.ibdbHTInfo) do
   begin
@@ -528,7 +529,6 @@ begin
       Free;
     end;
   end;
-
 
   vSQL := uBibRuntime.CreateSQL(frmHTScanner.ibdbHTInfo);
 
@@ -858,8 +858,12 @@ var
 begin
   FCurPlayerID := -1;
   Screen.Cursor := crSQLWait;
-  ibqrBatchlings.Close;
-  ibqrPrestaties.Close;
+  if (FReloadTwinsEtc) then
+  begin
+    ibqrBatchlings.Close;
+    ibqrPrestaties.Close;
+  end;
+  
   try
     vTeamID := 0;
     if ibdtstManagerInfo.State in [dsEdit,dsInsert] then
@@ -890,39 +894,45 @@ begin
         ParsePlayerInfo(FSpelerSQL);
       end;
 
-      with ibqrBatchlings do
+      if (FReloadTwinsEtc) then
       begin
-        ParamByName('KARAKTERID').asInteger := FSpelerSQL.FieldByName('KARAKTER_ID').asInteger;
-        Open;
-        if (RecordCount > 0) then
+        with ibqrBatchlings do
         begin
-          tbBatchlings.Caption := Format('Batchlings (%d)',[RecordCount]);
-        end
-        else
+          ParamByName('KARAKTERID').asInteger := FSpelerSQL.FieldByName('KARAKTER_ID').asInteger;
+          Open;
+          if (RecordCount > 0) then
+          begin
+            tbBatchlings.Caption := Format('Batchlings (%d)',[RecordCount]);
+          end
+          else
+          begin
+            tbBatchlings.Caption := 'Batchlings';
+          end;
+        end;
+
+        GetPossibleBatchlings;
+
+        with ibqrPrestaties do
         begin
-          tbBatchlings.Caption := 'Batchlings';
+          ParamByName('KARAKTERID').asInteger := FSpelerSQL.FieldByName('KARAKTER_ID').asInteger;
+          Open;
         end;
       end;
-
-      GetPossibleBatchlings;
-
-      with ibqrPrestaties do
-      begin
-        ParamByName('KARAKTERID').asInteger := FSpelerSQL.FieldByName('KARAKTER_ID').asInteger;
-        Open;
-      end;
     end;
 
-    with ibqrTalenten do
+    If (FReloadTwinsEtc) then
     begin
-      Close;
-      if vTeamID > 0 then
+      with ibqrTalenten do
       begin
-        ParamByName('TEAMID').asInteger := vTeamID;
-        Open;
+        Close;
+        if vTeamID > 0 then
+        begin
+          ParamByName('TEAMID').asInteger := vTeamID;
+          Open;
+        end;
       end;
     end;
-
+    
     if (vTeamID > 0) then
     begin
       lblBlacklist.Visible := (uBibDB.GetFieldValue(frmHTScanner.ibdbHTInfo,'BLACKLIST',
@@ -955,6 +965,7 @@ begin
     begin
       edPlayerID.SetFocus;
     end;
+    FReloadTwinsEtc := TRUE;
   end;
 end;
 
@@ -968,6 +979,8 @@ const
     'LEFT JOIN DOCS D ON (J.GOOGLE_DOC = D.DOC_NAME AND J.TABSHEET = D.SHEET_NAME)'+#13+
     'WHERE J.PLAYER_ID = :ID';
 begin
+  FReloadTwinsEtc := TRUE;
+  
   pcgControlInfo.ActivePage := tbPlayerinfo;
   dxPageControl1.ActivePage := tbBatchlings;
   ibdtstScouting.Database := frmHTScanner.ibdbHTInfo;
@@ -1625,9 +1638,11 @@ begin
             Format('UPDATE KARAKTER_PROFIEL SET %s = NULL WHERE ID = :ID',[vField]),
               ['ID'],[vKarakterID]);
         end;
+        FReloadTwinsEtc := FALSE;
+
         edPlayerID.Text := IntToStr(CurPlayerID);
 
-        CalcPotentials(CurPlayerID, vKarakterID);
+        //CalcPotentials(CurPlayerID, vKarakterID);
       except
         ShowMessage('Duh! Ongeldige waarde :S');
       end;

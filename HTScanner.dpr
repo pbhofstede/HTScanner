@@ -2,6 +2,11 @@ program HTScanner;
 
 uses
   FastMM4,
+  madExcept,
+  madLinkDisAsm,
+  madListHardware,
+  madListProcesses,
+  madListModules,
   Forms,
   FormMain in 'FormMain.pas' {frmHTScanner},
   formAutoScout in 'formAutoScout.pas' {frmAutoScout},

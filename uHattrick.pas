@@ -236,6 +236,7 @@ function GetVolgNummer(aDatabase:TIBDatabase; aNeus, aGezicht, aOgen, aMond,
 function GetYouthLineupLink(aMainURL: String;aTeamID, aMatchID:integer):String;
 procedure SyncNewTwins(aDatabase: TIBDatabase; aKarakterID: integer);
 function GetPossibleTwins(aDatabase: TIBDatabase; aKarakterID: Integer):TBatchlingArray;
+function CreateReadTransAction(aDatabase: TIBDatabase; aName: String = ''): TIBTransAction;
 
 implementation
 uses
@@ -262,7 +263,7 @@ begin
   vCurDagen := uBibDb.GetSPValue(aDatabase,'GET_LEEFTIJD',
     [aGeboorteDatum, Date],'DAYS',srtINteger);
 
-  with uBibRuntime.CreateSQL(aDatabase) do
+  with uBibRuntime.CreateSQL(aDatabase,'',uHattrick.CreateReadTransAction(aDatabase)) do
   begin
     try
       SQL.Add('SELECT J.GEBOORTE_DATUM, L.AGE, L.DAYS');
@@ -923,7 +924,8 @@ var
   vLeiderschap, vSpecialiteit: String;
 begin
   vKarakters:= nil;
-  vID := uBibDb.GetFieldValue(aDatabase,'JEUGDSPELERS',['PLAYER_ID'],[aSpeler.ID],'KARAKTER_ID',srtInteger);
+  vID := uBibDb.GetFieldValue(aDatabase,'JEUGDSPELERS',['PLAYER_ID'],[aSpeler.ID],'KARAKTER_ID',srtInteger,
+    svtNormal, uHattrick.CreateReadTransaction(aDatabase));
 
   if (vID = 0) then
   begin
@@ -995,9 +997,9 @@ begin
     begin
       aSpeler.IsNew := FALSE;
       vLeiderschap := uBibDb.GetFieldValue(aDatabase,'KARAKTER_PROFIEL',
-        ['ID'],[vID],'LEIDERSCHAP',srtString);
+        ['ID'],[vID],'LEIDERSCHAP',srtString, svtNormal, uHattrick.CreateReadTransaction(aDatabase));
       vSpecialiteit := uBibDb.GetFieldValue(aDatabase,'KARAKTER_PROFIEL',
-        ['ID'],[vID],'SPECIALITEIT',srtString);
+        ['ID'],[vID],'SPECIALITEIT',srtString, svtNormal, uHattrick.CreateReadTransaction(aDatabase));
 
       aSpeler.Leiderschap := vLeiderschap;
       
@@ -1087,7 +1089,8 @@ var
 begin
   vValues := uBibdb.GetFieldValues(aDatabase,'JEUGDSPELERS',
     ['PLAYER_ID'],[aPlayerID],['KARAKTER_ID','KEEPEN','VERDEDIGEN','POSITIESPEL','VLEUGELSPEL','PASSEN','SCOREN','SPELHERVATTEN'],
-      [srtInteger, srtFloat, srtFloat, srtFloat, srtFloat, srtFloat, srtFloat, srtFloat]);
+      [srtInteger, srtFloat, srtFloat, srtFloat, srtFloat, srtFloat, srtFloat, srtFloat],
+      svtNormal, uHattrick.CreateReadTransaction(aDatabase));
 
   vKarakterID := vValues[0];
 
@@ -1103,7 +1106,8 @@ begin
 
   vValues := uBibdb.GetFieldValues(aDatabase,'KARAKTER_PROFIEL',
     ['ID'],[vKarakterID],['POT_KEEPEN','POT_VERDEDIGEN','POT_POSITIESPEL','POT_VLEUGELSPEL','POT_PASSEN','POT_SCOREN','POT_SPELHERVATTEN'],
-      [srtFloat, srtFloat, srtFloat, srtFloat, srtFloat, srtFloat, srtFloat]);
+      [srtFloat, srtFloat, srtFloat, srtFloat, srtFloat, srtFloat, srtFloat],
+      svtNormal, uHattrick.CreateReadTransaction(aDatabase));
 
   sPosGK := ValueToStr(vValues[0]);
   sPosDef := ValueToStr(vValues[1]);
@@ -1162,7 +1166,7 @@ var
   i:integer;
 begin
   i:=-1;
-  with uBibRuntime.CreateSQL(aDatabase) do
+  with uBibRuntime.CreateSQL(aDatabase,'',uHattrick.CreateReadTransAction(aDatabase)) do
   begin
     try
       with SQL do
@@ -1206,7 +1210,7 @@ function GetKarakters(aDatabase:TIBDatabase; aNeus, aGezicht, aOgen, aMond,
 begin
   SetLength(Result,0);
   
-  with uBibRuntime.CreateSQL(aDatabase) do
+  with uBibRuntime.CreateSQL(aDatabase,'',uHattrick.CreateReadTransAction(aDatabase)) do
   begin
     try
       with SQL do
@@ -1269,7 +1273,8 @@ begin
 
   if (aTSISet.YouthPlayerID > 0) then
   begin
-    vYouthKarakterID := uBibDb.GetFieldValue(aDatabase,'JEUGDSPELERS',['PLAYER_ID'],[aTSISet.YouthPlayerID],'KARAKTER_ID',srtInteger);
+    vYouthKarakterID := uBibDb.GetFieldValue(aDatabase,'JEUGDSPELERS',['PLAYER_ID'],[aTSISet.YouthPlayerID],'KARAKTER_ID',srtInteger,
+      svtNormal, uHattrick.CreateReadTransaction(aDatabase));
   end
   else
   begin
@@ -1375,7 +1380,7 @@ begin
       else
       begin
         vSpecialiteit := uBibDb.GetFieldValue(aDatabase,'KARAKTER_PROFIEL',['ID'],
-          [vID],'SPECIALITEIT',srtString);
+          [vID],'SPECIALITEIT',srtString, svtNormal, uHattrick.CreateReadTransaction(aDatabase));
 
         vOk := TRUE;
 
@@ -1419,6 +1424,44 @@ begin
 end;
 
 {-----------------------------------------------------------------------------
+  Procedure: CreateReadTransAction
+  Author:    Harry
+  Date:      23-jun-2012
+  Arguments: aDatabase: TIBDatabase; aName: String = ''): TIBTransAction; begin try Result := TIBTransaction.Create(nil
+  Result:    None
+-----------------------------------------------------------------------------}
+function CreateReadTransAction(aDatabase: TIBDatabase; aName: String = ''): TIBTransAction;
+begin
+  try
+    Result := TIBTransaction.Create(nil);
+
+    with Result do
+    begin
+      if (aName <> '') then
+      begin
+        Name := aName;
+      end;
+      DefaultDatabase := aDataBase;
+
+      with Params do
+      begin
+        Clear;
+        Add('read');
+        Add('read_committed');
+        Add('nowait');
+        Add('rec_version');
+      end;
+      if DefaultDataBase.Connected then
+        StartTransaction;
+    end;
+  except
+    uBibLog.Global_AddLog(Format('Fout in %s.%s',['uBibRuntime','CreateTransAction']));
+    raise;
+  end;
+end;
+
+
+{-----------------------------------------------------------------------------
   Author:    Pieter Bas
   Datum:     22-01-2010
   Doel:
@@ -1449,7 +1492,8 @@ begin
     if (aTSISet.PlayerID > 0) then
     begin
       aTSISet.FTransferListed := FALSE;
-      vId := uBibDb.GetFieldValue(aDatabase,'SCOUTING',['PLAYER_ID'],[aTSISet.PlayerID],'ID',srtInteger);
+      vId := uBibDb.GetFieldValue(aDatabase,'SCOUTING',['PLAYER_ID'],[aTSISet.PlayerID],'ID',srtInteger,
+        svtNormal, uHattrick.CreateReadTransaction(aDatabase));
 
       if (vID > 0) then
       begin
@@ -1477,7 +1521,8 @@ begin
         if (aTSISet.Deadline > 0) then
         begin
           aTSISet.FTransferListed := TRUE;
-          vCurSkill := uBibDb.GetFieldValue(aDatabase,'SCOUTING',['ID'],[vID],'VERDEDIGEN',srtFloat);
+          vCurSkill := uBibDb.GetFieldValue(aDatabase,'SCOUTING',['ID'],[vID],'VERDEDIGEN',srtFloat,
+            svtNormal, uHattrick.CreateReadTransaction(aDatabase));
 
           if (vCurSkill = 0) then
           begin
@@ -1674,7 +1719,8 @@ begin
   vKarakterLijst[High(vKarakterLijst)] := aKarakterID;
 
   // Twins opzoeken
-  with uBibRuntime.CreateSQL(aDatabase,'SELECT KARAKTER_ID FROM TWINS WHERE TWIN_KARAKTER_ID = :ID') do
+  with uBibRuntime.CreateSQL(aDatabase,'SELECT KARAKTER_ID FROM TWINS WHERE TWIN_KARAKTER_ID = :ID',
+    uHattrick.CreateReadTransAction(aDatabase)) do
   begin
     try
       ParamByName('ID').asInteger := aKarakterID;
@@ -1692,7 +1738,8 @@ begin
   end;
 
   // En de andere kant
-  with uBibRuntime.CreateSQL(aDatabase,'SELECT TWIN_KARAKTER_ID FROM TWINS WHERE KARAKTER_ID = :ID') do
+  with uBibRuntime.CreateSQL(aDatabase,'SELECT TWIN_KARAKTER_ID FROM TWINS WHERE KARAKTER_ID = :ID',
+    uHattrick.CreateReadTransAction(aDatabase)) do
   begin
     try
       ParamByName('ID').asInteger := aKarakterID;
@@ -1726,7 +1773,7 @@ begin
   for i:=Low(vVelden) to High(vVelden) do
   begin
     with uBibRuntime.CreateSQL(aDatabase,
-      Format('SELECT MAX(%s) FROM KARAKTER_PROFIEL WHERE %s',[vVelden[i],vWhereSQL])) do
+      Format('SELECT MAX(%s) FROM KARAKTER_PROFIEL WHERE %s',[vVelden[i],vWhereSQL]),uHattrick.CreateReadTransAction(aDatabase)) do
     begin
       try
         ExecQuery;
@@ -1753,7 +1800,7 @@ function GetPossibleTwins(aDatabase: TIBDatabase; aKarakterID: Integer):TBatchli
 begin
   SetLength(result, 0);
 
-  with uBibRuntime.CreateSQL(aDatabase,'SELECT * FROM GET_POSSIBLE_TWINS(:ID, 0)') do
+  with uBibRuntime.CreateSQL(aDatabase,'SELECT * FROM GET_POSSIBLE_TWINS(:ID, 0)',uHattrick.CreateReadTransAction(aDatabase)) do
   begin
     try
       ParamByName('ID').asInteger := aKarakterID;

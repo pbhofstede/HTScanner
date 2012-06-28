@@ -24,7 +24,7 @@ object frmPlayerInfo: TfrmPlayerInfo
     Top = 0
     Width = 1348
     Height = 605
-    ActivePage = tbNTScouting
+    ActivePage = tbPlayerinfo
     Align = alClient
     HideButtons = False
     HotTrack = False

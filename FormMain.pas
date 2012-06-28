@@ -605,7 +605,7 @@ uses
 function TfrmHTScanner.GetU20Leeftijden:boolean;
 begin
   Setlength(FLeeftijden,0);
-  with uBibRuntime.CreateSQL(ibdbHTInfo) do
+  with uBibRuntime.CreateSQL(ibdbHTInfo,'',uHattrick.CreateReadTransaction(ibdbHTInfo)) do
   begin
     try
       with SQL do
@@ -1007,7 +1007,7 @@ begin
   begin
     vMaxNivo :=uBibDb.GetFieldValue(ibdbHTInfo,'TRANSFER_PRIJZEN',
     ['SCAN_DATE','PLAYER_TYPE','AGE'],[Date,aPlayerType,aLeeftijd],
-    'SKILL1_LEVEL',srtInteger,svtMax);
+    'SKILL1_LEVEL',srtInteger,svtMax,uHattrick.CreateReadTransaction(ibdbHTInfo));
 
     if (vMaxNivo = 0) then
     begin
@@ -1603,6 +1603,14 @@ begin
     FScoutingHistorySQL := uBibDb.CreateInsertSQL(ibdbHTInfo,'SCOUTING_HISTORIE');
     FJeugdspelersSQL := uBibDb.CreateInsertSQL(ibdbHTInfo,'JEUGDSPELERS');
     FJeugdPrestatiesSQL := uBibDb.CreateInsertSQL(ibdbHTInfo,'JEUGD_PRESTATIES');
+
+    uBibDB.CommitTransaction(FInsertSQL.Transaction,FALSE);
+    uBibDB.CommitTransaction(FTSISQL.Transaction,FALSE);
+    uBibDB.CommitTransaction(FScoutingHistorySQL.Transaction,FALSE);
+    uBibDB.CommitTransaction(FJeugdspelersSQL.Transaction,FALSE);
+    uBibDB.CommitTransaction(FJeugdPrestatiesSQL.Transaction,FALSE);
+
+
     WriteScanHistorie;
   end;
 
@@ -2058,13 +2066,13 @@ end;
 function TfrmHTScanner.YouthPlayerExists(aYouthPlayerID:Integer):boolean;
 begin
   result := uBibDb.GetFieldValue(ibdbHTInfo,'JEUGDSPELERS',['PLAYER_ID'],
-    [aYouthPlayerID],'ID',srtInteger,svtMax) > 0;
+    [aYouthPlayerID],'ID',srtInteger,svtMax,uHattrick.CreateReadTransaction(ibdbHTInfo)) > 0;
 end;
 
 function TfrmHTScanner.PlayerExists(aPlayerID:Integer):boolean;
 begin
   result := uBibDb.GetFieldValue(ibdbHTInfo,'SCOUTING',['PLAYER_ID'],
-    [aPlayerID],'ID',srtInteger,svtMax) > 0;
+    [aPlayerID],'ID',srtInteger,svtMax,uHattrick.CreateReadTransaction(ibdbHTInfo)) > 0;
 end;
 
 procedure TfrmHTScanner.SaveScoutingToHistory(aTSISet:TTSISet);
@@ -2097,15 +2105,16 @@ var
 begin
   result := -1;
   if (uBibDb.GetFieldValue(ibdbHTInfo,'JEUGD_PRESTATIES',['PLAYER_ID'],
-    [aSpelerID],'ID',srtInteger,svtCount) > 0) then
+    [aSpelerID],'ID',srtInteger,svtCount,uHattrick.CreateReadTransaction(ibdbHTInfo)) > 0) then
   begin
     vID := uBibDB.GetFieldValue(ibdbHTInfo,'JEUGD_PRESTATIES',
-      ['PLAYER_ID'],[aSpelerID],'FIRST 1 ID',srtInteger,svtNormal,nil,' AND POSITIE <> ''???'' ORDER BY STERREN DESC');
+      ['PLAYER_ID'],[aSpelerID],'FIRST 1 ID',srtInteger,svtNormal,uHattrick.CreateReadTransaction(ibdbHTInfo),
+      ' AND POSITIE <> ''???'' ORDER BY STERREN DESC');
 
     if (vID > 0) then
     begin
       result := uBibDB.GetFieldValue(ibdbHTInfo,'JEUGD_PRESTATIES',
-        ['ID'],[vID],'LINIE',srtInteger);
+        ['ID'],[vID],'LINIE',srtInteger,svtNormal,uHattrick.CreateReadTransaction(ibdbHTInfo));
     end;
   end;
 end;
@@ -2146,7 +2155,7 @@ begin
     end;
 
     vID := uBibDb.GetFieldValue(ibdbHTInfo,'JEUGDSPELERS',['PLAYER_ID'],[aSpeler.ID],
-      'ID',srtInteger);
+      'ID',srtInteger,svtNormal,uHattrick.CreateReadTransaction(ibdbHTInfo));
 
     if (vID = 0) then
     begin
@@ -2210,7 +2219,7 @@ begin
     else
     begin
       vGeboorteDatum := ubibDb.GetFieldValue(ibdbHTInfo,'JEUGDSPELERS',
-        ['ID'],[vID],'GEBOORTE_DATUM',srtDate);
+        ['ID'],[vID],'GEBOORTE_DATUM',srtDate,svtNormal,uHattrick.CreateReadTransaction(ibdbHTInfo));
 
       if (vGeboorteDatum <> aSpeler.GeboorteDatum) then
       begin
@@ -2285,10 +2294,6 @@ begin
         uBibDb.CommitTransaction(Transaction,FALSE);
       end;
     end;
-
-    // Foutief TeamID vanuit het verleden goed zetten (indien nodig)
-    uBibDb.ExecSQL(ibdbHTInfo,'UPDATE JEUGD_PRESTATIES SET TEAM_ID = :TEAMID WHERE PLAYER_ID = :ID AND TEAM_ID <> :TEAMID',
-      ['TEAMID','ID'],[vSpeler.TeamID,vSpeler.ID]);
   end;
 end;
 
@@ -2618,7 +2623,7 @@ end;
 
 function TfrmHTScanner.GetPlayerInfo(aScoutingID:integer;aSkillSet:TSkillSet):integer;
 begin
-  with uBibRuntime.CreateSQL(ibdbHTInfo) do
+  with uBibRuntime.CreateSQL(ibdbHTInfo,'',uHattrick.CreateReadTransaction(ibdbHTInfo)) do
   begin
     try
       with SQL do
@@ -3234,7 +3239,7 @@ begin
   vCount := 0;
   vSaved := 0;
 
-  with ubibRuntime.CreateSQL(ibdbHTInfo,'') do
+  with ubibRuntime.CreateSQL(ibdbHTInfo,'',uHattrick.CreateReadTransaction(ibdbHTInfo)) do
   begin
     try
       with SQL do
@@ -3256,7 +3261,7 @@ begin
     end;
   end;
 
-  with ubibRuntime.CreateSQL(ibdbHTInfo,'') do
+  with ubibRuntime.CreateSQL(ibdbHTInfo,'',uHattrick.CreateReadTransaction(ibdbHTInfo)) do
   begin
     try
       with SQL do
@@ -3361,7 +3366,7 @@ begin
 
           vList.Clear;
           vCount := 0;
-          with uBibRuntime.CreateSQL(ibdbHTInfo) do
+          with uBibRuntime.CreateSQL(ibdbHTInfo,'',uHattrick.CreateReadTransaction(ibdbHTInfo)) do
           begin
             try
               with SQL do
@@ -3548,7 +3553,7 @@ begin
 
             vList.Clear;
             vCount := 0;
-            with uBibRuntime.CreateSQL(ibdbHTInfo) do
+            with uBibRuntime.CreateSQL(ibdbHTInfo,'',uHattrick.CreateReadTransaction(ibdbHTInfo)) do
             begin
               try
                 with SQL do
@@ -3828,15 +3833,14 @@ begin
   InitScanResults;
 
   vValues := uBibDb.GetFieldValues(ibdbHTInfo,'SCAN_HISTORIE',['DATUM'],[ScanDate],
-      ['SPECS_FOUND','NO_SPEC_FOUND'],[srtInteger,srtInteger]);
+      ['SPECS_FOUND','NO_SPEC_FOUND'],[srtInteger,srtInteger],svtNormal,uHattrick.CreateReadTransaction(ibdbHTInfo));
 
   vSpecCount := vValues[0];
   vSpecloos := vValues[1];
   vMax := 0;
-
   try
 
-    with uBibRuntime.CreateSQL(ibdbHTInfo) do
+    with uBibRuntime.CreateSQL(ibdbHTInfo, '', uHattrick.CreateReadTransAction(ibdbHTInfo)) do
     begin
       try
         with SQL do
@@ -3870,7 +3874,7 @@ begin
     SendStatusMail(Format('Scan started. %d spelers te controleren...',
         [vMax]), FALSE);
 
-    with uBibRuntime.CreateSQL(ibdbHTInfo) do
+    with uBibRuntime.CreateSQL(ibdbHTInfo,'',uHattrick.CreateReadTransAction(ibdbHTInfo)) do
     begin
       try
         with SQL do
@@ -3896,14 +3900,23 @@ begin
             end;
           end;
           FISU20 := (FieldByName('IS_U20').asInteger = -1);
-
-          GetJeugdspelerInfoByID(FieldByName('PLAYER_ID').asInteger,
-            FieldByName('TEAM_ID').asInteger,FieldByName('PLAYER_NAME').asString,
-            TRUE,FALSE,TRUE);
-
+          try
+            GetJeugdspelerInfoByID(FieldByName('PLAYER_ID').asInteger,
+              FieldByName('TEAM_ID').asInteger,FieldByName('PLAYER_NAME').asString,
+              TRUE,FALSE,TRUE);
+          except
+            {On E:Exception do
+            begin
+              Wait(60000 * 20, 60000 * 30);
+              LogIn;
+              GetJeugdspelerInfoByID(FieldByName('PLAYER_ID').asInteger,
+                FieldByName('TEAM_ID').asInteger,FieldByName('PLAYER_NAME').asString,
+                TRUE,FALSE,TRUE);
+            end; }
+          end;
           if (FieldByName('SPECIALITEIT').asString = '') then
           begin
-            vSQL := uBibRuntime.CreateSQL(ibdbHTInfo);
+            vSQL := uBibRuntime.CreateSQL(ibdbHTInfo,'',uHattrick.CreateReadTransAction(ibdbHTInfo));
             try
               with vSQL.SQL do
               begin
@@ -3960,7 +3973,7 @@ begin
   end;
 
   Wait(10 * 60,18 * 60);
-  with uBibRuntime.CreateSQL(ibdbHTInfo) do
+  with uBibRuntime.CreateSQL(ibdbHTInfo,'',uHattrick.CreateReadTransAction(ibdbHTInfo)) do
   begin
     try
       with SQL do
@@ -3972,7 +3985,10 @@ begin
       ExecQuery;
       while not EOF do
       begin
-        ScoutJeugdTalents(FieldByName('ID').asInteger);
+        if not(btnStopScouting.Down) then
+        begin
+          ScoutJeugdTalents(FieldByName('ID').asInteger);
+        end;
         Next;
       end;
     finally
@@ -4053,7 +4069,7 @@ begin
       vStatus.Add('Talenten op TL:');
       vStatus.Add('');
 
-      with uBibRuntime.CreateSQL(ibdbHTInfo) do
+      with uBibRuntime.CreateSQL(ibdbHTInfo,'',uHattrick.CreateReadTransaction(ibdbHTInfo)) do
       begin
         try
           with SQL do
@@ -4113,7 +4129,8 @@ begin
   if (sTeamID <> '') then
   begin
     vTeamID := StrToInt(sTeamID);
-    vID := uBibDb.GetFieldValue(ibdbHTInfo,'BLACKLIST',['TEAM_ID'],[vTeamID],'ID',srtInteger);
+    vID := uBibDb.GetFieldValue(ibdbHTInfo,'BLACKLIST',['TEAM_ID'],[vTeamID],'ID',srtInteger,
+    svtNormal,uHattrick.CreateReadTransaction(ibdbHTInfo));
 
     if (vID = 0) then
     begin
@@ -4216,12 +4233,13 @@ begin
       vDone := 0;
 
       vComps := uBibDb.GetfieldValue(ibdbHTInfo,'JEUGD_COMPETITIES',['ID'],[CompetitieReeks],
-        'OMSCHRIJVING',srtString);
+        'OMSCHRIJVING',srtString,svtNormal,uHattrick.CreateReadTransaction(ibdbHTInfo));
 
       if MessageBox(Handle,PChar(Format('Competities %s scannen?',
         [vComps])),PChar('U17 Scouting'),MB_ICONQUESTION + MB_YESNO) = ID_YES then
       begin
-        with uBibRuntime.CreateSQL(ibdbHTInfo,'SELECT VAN_ID, TOT_ID FROM JEUGD_COMPETITIES_ID WHERE JEUGD_COMPETITIES_ID = :ID') do
+        with uBibRuntime.CreateSQL(ibdbHTInfo,'SELECT VAN_ID, TOT_ID FROM JEUGD_COMPETITIES_ID WHERE JEUGD_COMPETITIES_ID = :ID',
+          uHattrick.CreateReadTransaction(ibdbHTInfo)) do
         begin
           ParamByName('ID').asInteger := CompetitieReeks;
           ExecQuery;
@@ -4240,7 +4258,8 @@ begin
                   FormatDateTime('hh:nn:ss',vRemaining)]);
                 try
                   vScanDate := uBibDb.GetFieldValue(ibdbHTInfo,
-                    'COMPETITIES_SCANNED',['LEAGUE_ID'],[i],'SCAN_DATE',srtDate,svtMax);
+                    'COMPETITIES_SCANNED',['LEAGUE_ID'],[i],'SCAN_DATE',srtDate,svtMax,
+                    uHattrick.CreateReadTransaction(ibdbHTInfo));
 
                   if (vScanDate <= Date - 7) then
                   begin
@@ -4365,7 +4384,8 @@ begin
 
                               vMatchID := uHattrick.ExtractIDFromLink(vLinkList[j],'matchID=');
                               vID := uBibDb.GetFieldValue(ibdbHTInfo,'JEUGD_PRESTATIES',
-                                ['TEAM_ID','MATCH_ID'],[vTeamID,vMatchID],'ID',srtInteger);
+                                ['TEAM_ID','MATCH_ID'],[vTeamID,vMatchID],'ID',srtInteger,
+                                svtNormal,uHattrick.CreateReadTransaction(ibdbHTInfo));
 
                               if (vID = 0) then
                               begin
@@ -4461,7 +4481,7 @@ begin
       end;
 
       vCount := uBibDb.GetFieldValue(ibdbHTInfo,'COMPETITIES_SCANNED',[],[],'ID',srtInteger,svtCount,
-          nil,Format('(SCAN_DATE BETWEEN %s AND %S) AND (JEUGD_COMPETITIES_ID = %d)',
+          uHattrick.CreateReadTransaction(ibdbHTInfo),Format('(SCAN_DATE BETWEEN %s AND %S) AND (JEUGD_COMPETITIES_ID = %d)',
             [QuotedStr(FormatDateTime('dd.mm.yyyy',Date - 6)),QuotedStr(FormatDateTime('dd.mm.yyyy',Date)),CompetitieReeks]));
 
       ShowMessage(Format('Klaar: %d competities gescout!',[vCount]));
@@ -4538,7 +4558,7 @@ begin
   try
     result := '';
     vCount := 0;
-    with uBibRuntime.CreateSQL(ibdbHTInfo) do
+    with uBibRuntime.CreateSQL(ibdbHTInfo,'',uHattrick.CreateReadTransaction(ibdbHTInfo)) do
     begin
       try
         with SQL do
@@ -4605,10 +4625,12 @@ begin
             CurLeiderschap := FieldByName('LEIDERSCHAP').asString;
 
             vLastUpdate := uBibDB.GetFieldValue(ibdbHTInfo,'JEUGDSPELERS',
-              ['PLAYER_ID'],[FieldByName('PLAYER_ID').asInteger],'LAST_UPDATE',srtDateTime);
+              ['PLAYER_ID'],[FieldByName('PLAYER_ID').asInteger],'LAST_UPDATE',srtDateTime,
+              svtNormal,uHattrick.CreateReadTransaction(ibdbHTInfo));
 
             vPromoted := uBibDB.GetFieldValue(ibdbHTInfo,'JEUGDSPELERS',
-              ['PLAYER_ID'],[FieldByName('PLAYER_ID').asInteger],'PROMOTED',srtInteger) = -1;
+              ['PLAYER_ID'],[FieldByName('PLAYER_ID').asInteger],'PROMOTED',srtInteger,
+              svtNormal,uHattrick.CreateReadTransaction(ibdbHTInfo)) = -1;
 
             if (ScanAll) then
             begin
@@ -4625,7 +4647,7 @@ begin
                   FieldByName('TEAM_ID').asInteger,FieldByName('PLAYER_NAME').asString,TRUE,
                   FieldByName('KEEPER').asInteger = -1,TRUE);
 
-              vSQL := uBibRuntime.CreateSQL(ibdbHTInfo);
+              vSQL := uBibRuntime.CreateSQL(ibdbHTInfo,'',uHattrick.CreateReadTransaction(ibdbHTInfo));
               try
                 with vSQL.SQL do
                 begin
@@ -4825,7 +4847,7 @@ end;
 
 function TfrmHTSCanner.GetLeeftijd(aGeboorteDatum:TDate):String;
 begin
-  with uBibRuntime.CreateSQL(ibdbHTInfo) do
+  with uBibRuntime.CreateSQL(ibdbHTInfo,'',uHattrick.CreateReadTransaction(ibdbHTInfo)) do
   begin
     try
       with SQL do
@@ -4897,7 +4919,7 @@ var
 begin
   vLeeftijd17 := Date - (2 * 16 * 7);
 
-  with uBibRuntime.CreateSQL(ibdbHTInfo) do
+  with uBibRuntime.CreateSQL(ibdbHTInfo,'',uHattrick.CreateReadTransaction(ibdbHTInfo)) do
   begin
     try
       with SQL do
@@ -4923,7 +4945,7 @@ begin
   if (vAantal > 0) then
   begin
     aList.Add(Format('[b][youthplayerid=%d] %s[/b]',[aPlayerID, aPlayerName]));
-    with uBibRuntime.CreateSQL(ibdbHTInfo) do
+    with uBibRuntime.CreateSQL(ibdbHTInfo,'',uHattrick.CreateReadTransaction(ibdbHTInfo)) do
     begin
       try
         with SQL do
@@ -4975,7 +4997,7 @@ var
 begin
   InitScanResults;
 
-  vQuery := uBibRuntime.CreateQuery(ibdbHTInfo);
+  vQuery := uBibRuntime.CreateQuery(ibdbHTInfo,'',uHattrick.CreateReadTransAction(ibdbHTInfo));
   with vQuery do
   begin
     with SQL do
@@ -5058,7 +5080,8 @@ begin
               if (vOK) then
               begin
                 vBlackListed := (uBibDB.GetFieldValue(ibdbHTInfo,'BLACKLIST',
-                  ['TEAM_ID'],[FieldByName('TEAM_ID').asInteger],'ID',srtInteger)) > 0;
+                  ['TEAM_ID'],[FieldByName('TEAM_ID').asInteger],'ID',srtInteger,
+                  svtNormal, uHattrick.CreateReadTransaction(ibdbHTInfo))) > 0;
 
                 if not(vBlackListed) then
                 begin
@@ -5085,11 +5108,13 @@ begin
                   end
                   else
                   begin
-                    vLastUpdate := uBibDb.GetFieldValue(ibdbHTInfo,'JEUGDSPELERS',['PLAYER_ID'],[FieldByName('PLAYER_ID').asInteger],'LAST_UPDATE',srtDateTime);
+                    vLastUpdate := uBibDb.GetFieldValue(ibdbHTInfo,'JEUGDSPELERS',['PLAYER_ID'],[FieldByName('PLAYER_ID').asInteger],
+                      'LAST_UPDATE',srtDateTime,svtNormal,uHattrick.CreateReadTransaction(ibdbHTInfo));
                     if (vLastUpdate < Date - 7) then
                     begin                            
                       vIsKeeper := uBibDb.GetFieldValue(ibdbHTInfo,
-                        'KARAKTER_PROFIEL',['ID'],[FieldByName('KARAKTER_ID').asInteger],'IS_KEEPER',srtInteger) = -1;
+                        'KARAKTER_PROFIEL',['ID'],[FieldByName('KARAKTER_ID').asInteger],'IS_KEEPER',srtInteger,
+                        svtNormal,uHattrick.CreateReadTransaction(ibdbHTInfo)) = -1;
 
                       GetJeugdspelerInfoByID(
                         FieldByName('PLAYER_ID').asInteger,
@@ -5100,7 +5125,8 @@ begin
                         TRUE);
 
                       if uBibDb.GetFieldValue(ibdbHTInfo,'JEUGDSPELERS',
-                        ['PLAYER_ID'],[FieldByName('TEAM_ID').asInteger],'DELETED',srtInteger) = -1 then
+                        ['PLAYER_ID'],[FieldByName('TEAM_ID').asInteger],'DELETED',srtInteger,
+                        svtNormal,uHattrick.CreateReadTransaction(ibdbHTInfo)) = -1 then
                       begin
                         Wait(5,8);
                         FOpnieuw := TRUE;
@@ -5109,7 +5135,8 @@ begin
                   end;
 
                   vCount := uBibDb.GetFieldValue(ibdbHTInfo,'JEUGDSPELERS',
-                    ['KARAKTER_ID'],[FieldByName('KARAKTER_ID').asInteger],'PLAYER_ID',srtInteger,svtCount);
+                    ['KARAKTER_ID'],[FieldByName('KARAKTER_ID').asInteger],'PLAYER_ID',srtInteger,svtCount,
+                    uHattrick.CreateReadTransaction(ibdbHTInfo));
 
                   vBatchLine := '';
                   if (vCount > 1) then
@@ -5546,12 +5573,14 @@ begin
       if (aSpeler.TeamID <= 0) then
       begin
         aSpeler.TeamID := uBibDb.GetFieldValue(ibdbHTInfo,'JEUGD_PRESTATIES',
-          ['PLAYER_ID'],[aSpeler.ID],'FIRST 1 TEAM_ID',srtInteger,svtNOrmal,nil,'ORDER BY ID DESC');
+          ['PLAYER_ID'],[aSpeler.ID],'FIRST 1 TEAM_ID',srtInteger,svtNOrmal,
+            uHattrick.CreateReadTransaction(ibdbHTInfo),'ORDER BY ID DESC');
 
         if (aSpeler.TeamID = 0) then
         begin
           aSpeler.TeamID := uBibDb.GetFieldValue(ibdbHTInfo,'JEUGDSPELERS',
-            ['PLAYER_ID'],[aSpeler.ID],'TEAM_ID',srtInteger,svtNOrmal);
+            ['PLAYER_ID'],[aSpeler.ID],'TEAM_ID',srtInteger,svtNOrmal,
+            uHattrick.CreateReadTransaction(ibdbHTInfo));
         end;
       end;
 
@@ -5642,13 +5671,16 @@ begin
                 aSpeler.Sterren := vSterren;
 
                 vWedstrijd.Spelers.Add(aSpeler);
+
                 vReeks := uBibDb.GetFieldValue(ibdbHTInfo,'JEUGD_PRESTATIES',
-                  ['PLAYER_ID'],[aSpeler.ID],'FIRST 1 JEUGD_COMPETITIES_ID',srtInteger,svtNOrmal,nil,'ORDER BY ID DESC');
+                  ['PLAYER_ID'],[aSpeler.ID],'FIRST 1 JEUGD_COMPETITIES_ID',srtInteger,svtNOrmal,
+                    uHattrick.CreateReadTransAction(ibdbHTInfo),'ORDER BY ID DESC');
 
                 if (vReeks = 0) then
                 begin
                   vReeks := uBibDb.GetFieldValue(ibdbHTInfo,'JEUGD_COMPETITIES',
-                    ['NATIONALITEIT'],[aSpeler.Herkomst],'ID',srtInteger);
+                    ['NATIONALITEIT'],[aSpeler.Herkomst],'ID',srtInteger,svtNormal,
+                    uHattrick.CreateReadTransaction(ibdbHTInfo));
 
                   // Geen reeks gevonden?
                   if (vReeks = 0) then
@@ -5658,12 +5690,12 @@ begin
                 end;
 
                 if (uBibDb.GetFieldValue(ibdbHTInfo,'JEUGD_PRESTATIES',['PLAYER_ID','MATCH_ID'],
-                [aSpeler.ID,vMatchID],'ID',srtInteger) = 0) then
+                [aSpeler.ID,vMatchID],'ID',srtInteger,svtNormal, uHattrick.CreateReadTransaction(ibdbHTInfo)) = 0) then
                 begin
                   SaveWedstrijd(vWedstrijd, vReeks);
                 end
                 else if (uBibDb.GetFieldValue(ibdbHTInfo,'JEUGD_PRESTATIES',['PLAYER_ID','MATCH_ID'],
-                  [aSpeler.ID,vMatchID],'POSITIE',srtString) = '???') then
+                  [aSpeler.ID,vMatchID],'POSITIE',srtString,svtNormal,uHattrick.CreateReadTransaction(ibdbHTInfo)) = '???') then
                 begin
                   uBibDb.ExecSQL(ibdbHTInfo,'UPDATE JEUGD_PRESTATIES SET POSITIE = :POSITIE, LINIE = :LINIE WHERE PLAYER_ID = :ID AND MATCH_ID = :MATCHID',
                     ['POSITIE','LINIE','ID','MATCHID'],
@@ -5834,7 +5866,8 @@ end;
 
 procedure TfrmHTScanner.GetPosition(aPlayerID: integer);
 begin
-  with uBibRuntime.CreateSQL(ibdbHTInfo,'SELECT FIRST 1 MATCH_ID, TEAM_ID FROM JEUGD_PRESTATIES WHERE PLAYER_ID = :ID ORDER BY SPEELDATUM DESC') do
+  with uBibRuntime.CreateSQL(ibdbHTInfo,'SELECT FIRST 1 MATCH_ID, TEAM_ID FROM JEUGD_PRESTATIES WHERE PLAYER_ID = :ID ORDER BY SPEELDATUM DESC',
+    uHattrick.CreateReadTransaction(ibdbHTInfo)) do
   begin
     try
       ParamByName('ID').asInteger := aPlayerID;
@@ -5883,7 +5916,8 @@ begin
 
       if (vSpeler.Deleted) then
       begin
-        if (uBibDb.GetFieldValue(ibdbHTInfo,'JEUGDSPELERS',['PLAYER_ID'],[aPlayerID],'PLAYER_ID',srtInteger) = 0) then
+        if (uBibDb.GetFieldValue(ibdbHTInfo,'JEUGDSPELERS',['PLAYER_ID'],[aPlayerID],'PLAYER_ID',srtInteger,
+          svtNormal,uHattrick.CreateReadTransaction(ibdbHTInfo)) = 0) then
         begin
           SaveJeugdspeler(vSpeler);
         end;
@@ -5935,23 +5969,23 @@ begin
   else
   begin
     vKarakterID := uBibDb.GetFieldValue(ibdbHTInfo,'JEUGDSPELERS',['PLAYER_ID'],
-      [aPlayerID],'KARAKTER_ID',srtInteger);
+      [aPlayerID],'KARAKTER_ID',srtInteger,svtNormal,uHattrick.CreateReadTransaction(ibdbHTInfo));
 
     vPlayerName := uBibDb.GetFieldValue(ibdbHTInfo,'JEUGD_PRESTATIES',['PLAYER_ID'],
-      [aPlayerID],'PLAYER_NAME',srtString);
+      [aPlayerID],'PLAYER_NAME',srtString,svtNormal,uHattrick.CreateReadTransaction(ibdbHTInfo));
 
     vRestyled := uBibDb.GetFieldValue(ibdbHTInfo,'JEUGDSPELERS',['PLAYER_ID'],
-      [aPlayerID],'RESTYLED',srtInteger) = -1;
+      [aPlayerID],'RESTYLED',srtInteger,svtNormal, uHattrick.CreateReadTransaction(ibdbHTInfo)) = -1;
 
     vGeboorteDatum := uBibDb.GetFieldValue(ibdbHTInfo,'JEUGDSPELERS',['PLAYER_ID'],
-      [aPlayerID],'GEBOORTE_DATUM',srtDateTime);
+      [aPlayerID],'GEBOORTE_DATUM',srtDateTime,svtNormal, uHattrick.CreateReadTransaction(ibdbHTInfo));
 
     if (vKarakterID > 0) then
     begin
       CurSpec := VarToStr(uBibDb.GetFieldValue(ibdbHTInfo,'KARAKTER_PROFIEL',
-        ['ID'],[vKarakterID],'SPECIALITEIT',srtString));
+        ['ID'],[vKarakterID],'SPECIALITEIT',srtString,svtNormal,uHattrick.CreateReadTransaction(ibdbHTInfo)));
       CurLeiderschap := VarToStr(uBibDb.GetFieldValue(ibdbHTInfo,'KARAKTER_PROFIEL',
-        ['ID'],[vKarakterID],'LEIDERSCHAP',srtString));
+        ['ID'],[vKarakterID],'LEIDERSCHAP',srtString, svtNormal,uHattrick.CreateReadTransaction(ibdbHTInfo)));
       WriteScanResults(vKarakterID, '+');
     end;
 
@@ -6048,9 +6082,9 @@ begin
         if (vSenior.KarakterID > 0) then
         begin
           CurSpec := VarToStr(uBibDb.GetFieldValue(ibdbHTInfo,'KARAKTER_PROFIEL',
-              ['ID'],[vSenior.KarakterID],'SPECIALITEIT',srtString));
+              ['ID'],[vSenior.KarakterID],'SPECIALITEIT',srtString,svtNormal,uHattrick.CreateReadTransaction(ibdbHTInfo)));
           CurLeiderschap := VarToStr(uBibDb.GetFieldValue(ibdbHTInfo,'KARAKTER_PROFIEL',
-              ['ID'],[vSenior.KarakterID],'LEIDERSCHAP',srtString));
+              ['ID'],[vSenior.KarakterID],'LEIDERSCHAP',srtString,svtNormal,uHattrick.CreateReadTransaction(ibdbHTInfo)));
               
           if vSenior.SpecOntdekt then
           begin
@@ -6090,7 +6124,7 @@ begin
           begin
             // Dus toch geen onbekende speler!!
             if (uBibDb.GetFieldValue(ibdbHTInfo,'JEUGDSPELERS',['KARAKTER_ID'],
-              [vJeugdKarakterID],'ID',srtInteger,svtCount) > 0) then
+              [vJeugdKarakterID],'ID',srtInteger,svtCount,uHattrick.CreateReadTransaction(ibdbHTInfo)) > 0) then
             begin
               OnbekendeSpelers := OnbekendeSpelers - 1;
               BekendeSpelers := BekendeSpelers + 1;
@@ -6114,7 +6148,7 @@ begin
                   ['ID','KAR_ID'],[aPlayerID, vSenior.KarakterID]);
 
             // Oude spelers opzoeken en herstellen!
-            with uBibRuntime.CreateSQL(ibdbHTInfo) do
+            with uBibRuntime.CreateSQL(ibdbHTInfo,'',uHattrick.CreateReadTransaction(ibdbHTInfo)) do
             begin
               try
                 with SQL do
@@ -6181,14 +6215,14 @@ begin
     InitScanResults;
 
     vScanID := uBibDb.GetFieldValue(ibdbHTInfo,'COMPETITIES_SCANNED',
-      ['JEUGD_COMPETITIES_ID'],[aReeks],'ID',srtInteger, svtMax);
+      ['JEUGD_COMPETITIES_ID'],[aReeks],'ID',srtInteger, svtMax, uHattrick.CreateReadTransaction(ibdbHTInfo));
 
     BekendeSpelers := uBiBDb.GetFieldValue(ibdbHTInfo,'COMPETITIES_SCANNED',
-      ['ID'],[vScanID],'BEKEND',srtInteger);
+      ['ID'],[vScanID],'BEKEND',srtInteger,svtNormal,uHattrick.CreateReadTransaction(ibdbHTInfo));
     OnbekendeSpelers := uBiBDb.GetFieldValue(ibdbHTInfo,'COMPETITIES_SCANNED',
-      ['ID'],[vScanID],'ONBEKEND',srtInteger);
+      ['ID'],[vScanID],'ONBEKEND',srtInteger,svtNormal,uHattrick.CreateReadTransaction(ibdbHTInfo));
 
-    with uBibRuntime.CreateSQL(ibdbHTInfo) do
+    with uBibRuntime.CreateSQL(ibdbHTInfo,'',uHattrick.CreateReadTransAction(ibdbHTInfo)) do
     begin
       try
        with SQL do
@@ -6209,7 +6243,7 @@ begin
       end;
     end;
     vCount := 0;
-    with uBibRuntime.CreateSQL(ibdbHTInfo) do
+    with uBibRuntime.CreateSQL(ibdbHTInfo,'',uHattrick.CreateReadTransAction(ibdbHTInfo)) do
     begin
       try
         with SQL do
@@ -6249,6 +6283,8 @@ begin
               end
               else
               begin
+                uBibDb.ExecSQL(ibdbHTInfo,'UPDATE COMPETITIES_SCANNED SET TOTAL_PLAYERS = TOTAL_PLAYERS -1 WHERE ID = :ID',
+                    ['ID'],[vScanID]);
                 vMelding := 'Speler(s) niet aangetroffen!';
               end;
             end;
@@ -6637,7 +6673,8 @@ begin
     begin
       lblStatus.Caption := Format('%d/%d',[vCount,Length(vPlayerIDs)]);
 
-      if (uBibDB.GetFieldValue(ibdbHTInfo, 'KOOPJES', ['PLAYER_ID'], [vPlayerIDs[vCount]], 'ID', srtInteger) = 0) then
+      if (uBibDB.GetFieldValue(ibdbHTInfo, 'KOOPJES', ['PLAYER_ID'], [vPlayerIDs[vCount]], 'ID', srtInteger,
+        svtNormal,uHattrick.CreateReadTransaction(ibdbHTInfo)) = 0) then
       begin
         vURL := CurrentURL;
         vURL := Copy(vURL, 1, Pos('.hattrick.org/', CurrentURL));
@@ -6796,7 +6833,8 @@ begin
       InputQuery('Maximale prijs', 'Voer de maximale prijs in', vMaxBodStr);
 
       vFieldValues := uBibDB.GetFieldValues(ibdbHTInfo, 'SCOUTING', ['ID'], [vScoutingID],
-        ['PLAYER_ID', 'HOOGSTE_BOD', 'DEADLINE'], [srtInteger, srtInteger, srtDateTime]);
+        ['PLAYER_ID', 'HOOGSTE_BOD', 'DEADLINE'], [srtInteger, srtInteger, srtDateTime],svtNormal,
+        uHattrick.CreateReadTransaction(ibdbHTInfo));
 
       SaveKoopje(vScoutingID, vFieldValues[0], ibqrTransferPrijzen.FieldByName('TRANSFER_PRIZE').AsInteger,
         vFieldValues[1], uBibConv.AnyStrToInt(vMaxBodStr), vFieldValues[2],
@@ -6838,7 +6876,8 @@ begin
     SaveScouting(vPlayerInfo,TRUE);
 
     vYouthID := uBibDb.GetFieldValue(ibdbHTInfo,'JEUGDSPELERS',
-      ['PLAYER_NAME'],[vPlayerInfo.PlayerName],'PLAYER_ID',srtInteger,svtNormal);
+      ['PLAYER_NAME'],[vPlayerInfo.PlayerName],'PLAYER_ID',srtInteger,svtNormal,
+      uHattrick.CreateReadTransaction(ibdbHTInfo));
 
     if vYouthID > 0 then
     begin
@@ -6862,7 +6901,8 @@ begin
   end;
   
   vCount := uBibDb.GetFieldValue(ibdbHTInfo,'JEUGDSPELERS',
-    ['KARAKTER_ID'],[vPlayerInfo.KarakterID],'PLAYER_ID',srtInteger,svtCount);
+    ['KARAKTER_ID'],[vPlayerInfo.KarakterID],'PLAYER_ID',srtInteger,svtCount,
+    uHattrick.CreateReadTransaction(ibdbHTInfo));
     
   if (vCount > 1) then
   begin
@@ -7343,31 +7383,39 @@ var
 begin
   result := FALSE;
 
-  vID := uBibDb.GetFieldValue(ibdbHTInfo,'JEUGDSPELERS',['PLAYER_ID'],[aPlayerID],'ID',srtInteger);
+  vID := uBibDb.GetFieldValue(ibdbHTInfo,'JEUGDSPELERS',['PLAYER_ID'],[aPlayerID],'ID',srtInteger,
+    svtNormal,uHattrick.CreateReadTransaction(ibdbHTInfo));
 
   if (vID > 0) then
   begin
-    vLastUpdate := uBibDb.GetFieldValue(ibdbHTInfo,'JEUGDSPELERS',['PLAYER_ID'],[aPlayerID],'LAST_UPDATE',srtDateTime);
+    vLastUpdate := uBibDb.GetFieldValue(ibdbHTInfo,'JEUGDSPELERS',['PLAYER_ID'],[aPlayerID],'LAST_UPDATE',srtDateTime,
+      svtNormal,uHattrick.CreateReadTransaction(ibdbHTInfo));
 
     if (vLastUpdate < Date) then
     begin
-      vPromoted := (uBibDb.GetFieldValue(ibdbHTInfo,'JEUGDSPELERS',['PLAYER_ID'],[aPlayerID],'PROMOTED',srtInteger) = -1);
-      vKarakterID := uBibDb.GetFieldValue(ibdbHTInfo,'JEUGDSPELERS',['PLAYER_ID'],[aPlayerID],'KARAKTER_ID',srtInteger);
+      vPromoted := (uBibDb.GetFieldValue(ibdbHTInfo,'JEUGDSPELERS',['PLAYER_ID'],[aPlayerID],'PROMOTED',srtInteger,
+        svtNormal,uHattrick.CreateReadTransaction(ibdbHTInfo)) = -1);
+      vKarakterID := uBibDb.GetFieldValue(ibdbHTInfo,'JEUGDSPELERS',['PLAYER_ID'],[aPlayerID],'KARAKTER_ID',srtInteger,
+        svtNormal, uHattrick.CreateReadTransaction(ibdbHTInfo));
 
       if (vPromoted) then
       begin
         if (vKarakterID <= 0) then
         begin
-          vNaam := uBibDb.GetFieldValue(ibdbHTInfo,'JEUGDSPELERS',['PLAYER_ID'],[aPlayerID],'PLAYER_NAME',srtString);
-          vTeamID := uBibDb.GetFieldValue(ibdbHTInfo,'JEUGDSPELERS',['PLAYER_ID'],[aPlayerID],'TEAM_ID',srtString);
+          vNaam := uBibDb.GetFieldValue(ibdbHTInfo,'JEUGDSPELERS',['PLAYER_ID'],[aPlayerID],'PLAYER_NAME',srtString,
+            svtNormal,uHattrick.CreateReadTransaction(ibdbHTInfo));
+          vTeamID := uBibDb.GetFieldValue(ibdbHTInfo,'JEUGDSPELERS',['PLAYER_ID'],[aPlayerID],'TEAM_ID',srtString,
+            svtNormal,uHattrick.CreateReadTransaction(ibdbHTInfo));
           result := GetJeugdspelerInfoByID(aPlayerID,vTeamID,vNaam,TRUE,FALSE,TRUE);
         end;
       end
       else
       begin
-        vSpecialiteit := uBibDb.GetFieldValue(ibdbHTInfo,'KARAKTER_PROFIEL',['ID'],[vKarakterID],'SPECIALITEIT',srtString);
+        vSpecialiteit := uBibDb.GetFieldValue(ibdbHTInfo,'KARAKTER_PROFIEL',['ID'],[vKarakterID],'SPECIALITEIT',srtString,
+          svtNormal,uHattrick.CreateReadTransaction(ibdbHTInfo));
         CurSpec := vSpecialiteit;
-        CurLeiderschap := uBibDb.GetFieldValue(ibdbHTInfo,'KARAKTER_PROFIEL',['ID'],[vKarakterID],'LEIDERSCHAP',srtString);
+        CurLeiderschap := uBibDb.GetFieldValue(ibdbHTInfo,'KARAKTER_PROFIEL',['ID'],[vKarakterID],'LEIDERSCHAP',srtString,
+          svtNormal,uHattrick.CreateReadTransaction(ibdbHTInfo));
         WriteScanResults(vKarakterID,'~');
         
         if (vSpecialiteit = '') then
@@ -7392,8 +7440,10 @@ begin
 
               if (vSpeler.Naam = '') then
               begin
-                vNaam := uBibDb.GetFieldValue(ibdbHTInfo,'JEUGDSPELERS',['PLAYER_ID'],[aPlayerID],'PLAYER_NAME',srtString);
-                vDatum := uBibDb.GetFieldValue(ibdbHTInfo,'JEUGDSPELERS',['PLAYER_ID'],[aPlayerID],'GEBOORTE_DATUM',srtDate);
+                vNaam := uBibDb.GetFieldValue(ibdbHTInfo,'JEUGDSPELERS',['PLAYER_ID'],[aPlayerID],'PLAYER_NAME',srtString,
+                  svtNormal,uHattrick.CreateReadTransaction(ibdbHTInfo));
+                vDatum := uBibDb.GetFieldValue(ibdbHTInfo,'JEUGDSPELERS',['PLAYER_ID'],[aPlayerID],'GEBOORTE_DATUM',srtDate,
+                  svtNormal,uHattrick.CreateReadTransaction(ibdbHTInfo));
 
                 if (vDatum > 0) then
                 begin
@@ -7424,8 +7474,10 @@ begin
           end
           else
           begin
-            vNaam := uBibDb.GetFieldValue(ibdbHTInfo,'JEUGDSPELERS',['PLAYER_ID'],[aPlayerID],'PLAYER_NAME',srtString);
-            vTeamID := uBibDb.GetFieldValue(ibdbHTInfo,'JEUGDSPELERS',['PLAYER_ID'],[aPlayerID],'TEAM_ID',srtString);
+            vNaam := uBibDb.GetFieldValue(ibdbHTInfo,'JEUGDSPELERS',['PLAYER_ID'],[aPlayerID],'PLAYER_NAME',srtString,
+              svtNormal,uHattrick.CreateReadTransaction(ibdbHTInfo));
+            vTeamID := uBibDb.GetFieldValue(ibdbHTInfo,'JEUGDSPELERS',['PLAYER_ID'],[aPlayerID],'TEAM_ID',srtString,
+              svtNormal,uHattrick.CreateReadTransaction(ibdbHTInfo));
             result := GetJeugdspelerInfoByID(aPlayerID,vTeamID,vNaam,FALSE,FALSE,TRUE);
           end;
         end;
@@ -7440,7 +7492,8 @@ var
   vScout: String;
 begin
   vValues := uBibDb.GetFieldValues(ibdbHTInfo,'DOCS',['DOC_NAME','SHEET_NAME'],
-    [aDoc, aSheet],['ID','SCOUT','ACTIEF'],[srtInteger,srtString,srtInteger]);
+    [aDoc, aSheet],['ID','SCOUT','ACTIEF'],[srtInteger,srtString,srtInteger],
+    svtNormal,uHattrick.CreateReadTransaction(ibdbHTInfo));
 
   if (vValues[0] > 0) then
   begin
@@ -7580,7 +7633,8 @@ begin
 
     if (vPlayerID > 0) then
     begin
-      vIsSenior := uBibDB.GetFieldValue(ibdbHTInfo, 'SCOUTING', ['YOUTHPLAYER_ID'], [vPlayerID], 'ID', srtInteger) > 0;
+      vIsSenior := uBibDB.GetFieldValue(ibdbHTInfo, 'SCOUTING', ['YOUTHPLAYER_ID'], [vPlayerID], 'ID', srtInteger,
+        svtNormal,uHattrick.CreateReadTransaction(ibdbHTInfo)) > 0;
 
       if not(vIsSenior) then
       begin
@@ -7589,16 +7643,18 @@ begin
           CheckSpecialiteit(vPlayerID);
         end;
 
-        vKarakterProfielID := uBibDB.GetFieldValue(ibdbHTInfo, 'JEUGDSPELERS', ['PLAYER_ID'], [vPlayerID], 'KARAKTER_ID', srtInteger);
+        vKarakterProfielID := uBibDB.GetFieldValue(ibdbHTInfo, 'JEUGDSPELERS', ['PLAYER_ID'], [vPlayerID], 'KARAKTER_ID', srtInteger,
+          svtNormal,uHattrick.CreateReadTransaction(ibdbHTInfo));
 
         // Foutieve keepers verwijderen!
         if GetBestLinie(IntToStr(vPlayerID)) = 0 then
         begin
           if (uBibDb.GetFieldValue(ibdbHTInfo,'KARAKTER_PROFIEL',['ID'],
-            [vKarakterProfielID],'IS_KEEPER',srtInteger) = 0) then
+            [vKarakterProfielID],'IS_KEEPER',srtInteger,svtNormal,uHattrick.CreateReadTransaction(ibdbHTInfo)) = 0) then
           begin
             vPromoted :=
-              (uBibDb.GetFieldValue(ibdbHTInfo,'JEUGDSPELERS',['PLAYER_ID'],[vPlayerID],'PROMOTED',srtInteger) = -1);
+              (uBibDb.GetFieldValue(ibdbHTInfo,'JEUGDSPELERS',['PLAYER_ID'],[vPlayerID],'PROMOTED',srtInteger,
+              svtNormal,uHattrick.CreateReadTransaction(ibdbHTInfo)) = -1);
 
             if not(vPromoted) then
             begin
@@ -7606,7 +7662,7 @@ begin
                 ['ID'],[vPlayerID]);
               // Opnieuw opslaan ?
               vKarakterProfielID := uBibDb.GetFieldValue(ibdbHTInfo,'JEUGDSPELERS',
-                ['PLAYER_ID'],[vPlayerID],'KARAKTER_ID',srtInteger);
+                ['PLAYER_ID'],[vPlayerID],'KARAKTER_ID',srtInteger,svtNormal,uHattrick.CreateReadTransaction(ibdbHTInfo));
             end;
           end;
         end;
@@ -7615,7 +7671,7 @@ begin
         begin
           //karakterID staat op -1, speler bestaat dus niet meer in jeugd!
           vNaam := uBibDb.GetFieldValue(ibdbHTInfo,'JEUGDSPELERS',['PLAYER_ID'],[vPlayerID],
-            'PLAYER_NAME',srtString);
+            'PLAYER_NAME',srtString,svtNormal,uHattrick.CreateReadTransaction(ibdbHTInfo));
 
           FErrorList.Add(Format('[youthplayerid=%d] %s [?]',[vPlayerID, vNaam]));
         end
@@ -7648,7 +7704,8 @@ begin
         if (vKarakterProfielID > 0) then
         begin
           vPromoted :=
-              (uBibDb.GetFieldValue(ibdbHTInfo,'JEUGDSPELERS',['PLAYER_ID'],[vPlayerID],'PROMOTED',srtInteger) = -1);
+              (uBibDb.GetFieldValue(ibdbHTInfo,'JEUGDSPELERS',['PLAYER_ID'],[vPlayerID],'PROMOTED',srtInteger,
+              svtNormal,uHattrick.CreateReadTransaction(ibdbHTInfo)) = -1);
 
           if (CheckBatchlings) then
           begin
@@ -7656,14 +7713,15 @@ begin
           end;
 
           vLastPlayerUpdate :=
-            uBibDb.GetFieldValue(ibdbHTInfo,'JEUGDSPELERS',['PLAYER_ID'],[vPlayerID],'LAST_UPDATE',srtDateTime);
+            uBibDb.GetFieldValue(ibdbHTInfo,'JEUGDSPELERS',['PLAYER_ID'],[vPlayerID],'LAST_UPDATE',srtDateTime,
+            svtNormal,uHattrick.CreateReadTransaction(ibdbHTInfo));
 
           if (vLastPlayerUpdate < FStartParsing) or (Pos(UpperCase('VERWIJDERD'),UpperCase(vExcelFunctions.ExcelApp.ActiveSheet.Name)) = 0) then
           begin
 
             // Player sowieso op exported zetten, speler komt n.l. al voor in de scouting docs.
             vNaam := uBibDb.GetFieldValue(ibdbHTInfo,'JEUGDSPELERS',['PLAYER_ID'],[vPlayerID],
-                  'PLAYER_NAME',srtString);
+                  'PLAYER_NAME',srtString,svtNormal,uHattrick.CreateReadTransaction(ibdbHTInfo));
 
             vScout := GetScout(vExcelFunctions.ExcelApp.ActiveWorkbook.Name, vExcelFunctions.ExcelApp.ActiveSheet.Name, vNaam);
             vOpmerking := vExcelFunctions.GetCellRange(Format('%s%d', [OPMERKING_SCOUT, vCount]));
@@ -7725,7 +7783,7 @@ begin
             vSpecialiteit := uHattrick.FormatSpecialiteit(vSpecialiteitXLS);
 
             vSpec := UBibDb.getfieldValue(ibdbHTInfo,'KARAKTER_PROFIEL',['ID'],[vKarakterProfielID],
-              'SPECIALITEIT', srtString);
+              'SPECIALITEIT', srtString,svtNormal,uHattrick.CreateReadTransaction(ibdbHTInfo));
 
             if (GetLinie(IntToStr(vPlayerID)) <> 0) then
             begin
@@ -7822,14 +7880,16 @@ begin
             vFieldValues := uBibDB.GetFieldValues(ibdbHTInfo, 'KARAKTER_PROFIEL', ['ID'], [vKarakterProfielID],
               ['POT_KEEPEN', 'POT_POSITIESPEL', 'POT_PASSEN', 'POT_VLEUGELSPEL', 'POT_VERDEDIGEN', 'POT_SCOREN', 'POT_SPELHERVATTEN',
                'SPECIALITEIT', 'ALLROUND', 'LAST_UPDATE','HTYC'],
-              [srtFloat, srtFloat, srtFloat, srtFloat, srtFloat, srtFloat, srtFloat, srtString, srtInteger, srtDateTime, srtInteger]);
+              [srtFloat, srtFloat, srtFloat, srtFloat, srtFloat, srtFloat, srtFloat, srtString, srtInteger, srtDateTime, srtInteger],
+              svtNormal,uHattrick.CreateReadTransaction(ibdbHTInfo));
 
             vLastUpdate := VarToDateTime(vFieldValues[9]);
             vIsHTYC := vFieldValues[10] = -1;
 
             vCurValues :=  uBibDB.GetFieldValues(ibdbHTInfo, 'JEUGDSPELERS', ['PLAYER_ID'], [vPlayerID],
               ['KEEPEN', 'POSITIESPEL', 'PASSEN', 'VLEUGELSPEL', 'VERDEDIGEN', 'SCOREN', 'SPELHERVATTEN'],
-              [srtFloat, srtFloat, srtFloat, srtFloat, srtFloat, srtFloat, srtFloat]);
+              [srtFloat, srtFloat, srtFloat, srtFloat, srtFloat, srtFloat, srtFloat],
+              svtNormal, uHattrick.CreateReadTransaction(ibdbHTInfo));
 
             if (DoChangeValue(vFieldValues[0], vKeepenPot, vIsHTYC, 7.9)) then
             begin
@@ -8031,12 +8091,13 @@ begin
 end;
 
 begin
-  vMax := uBibDb.GetFieldValue(ibdbHTInfo,'JEUGDSPELERS',[],[],'ID',srtInteger, svtCount,nil,
+  vMax := uBibDb.GetFieldValue(ibdbHTInfo,'JEUGDSPELERS',[],[],'ID',srtInteger, svtCount,uHattrick.CreateReadTransaction(ibdbHTInfo),
     'GEBOORTE_DATUM < ''01.01.1970'' AND KARAKTER_ID > 0');
   vCur := 0;
   btnTripleSpeedClick(btnTripleSpeed);
   btnStopScouting.Visible := ivAlways;
-  with uBibRuntime.CreateSQL(ibdbHTInfo,'SELECT * FROM JEUGDSPELERS WHERE GEBOORTE_DATUM < ''01.01.1970'' AND KARAKTER_ID > 0') do
+  with uBibRuntime.CreateSQL(ibdbHTInfo,'SELECT * FROM JEUGDSPELERS WHERE GEBOORTE_DATUM < ''01.01.1970'' AND KARAKTER_ID > 0',
+    uHattrick.CreateReadTransaction(ibdbHTInfo)) do
   begin
     try
       ExecQuery;
@@ -8216,7 +8277,7 @@ begin
                   StatusBar1.Update;
                 end;
                 vID := uBibDb.GetFieldValue(ibdbHTInfo,'JEUGD_PRESTATIES',['PLAYER_ID','MATCH_ID'],
-                  [vPlayerID,vMatchID],'ID',srtInteger);
+                  [vPlayerID,vMatchID],'ID',srtInteger,svtNormal,uHattrick.CreateReadTransaction(ibdbHTInfo));
 
                 if (vID = 0) then
                 begin
@@ -8277,7 +8338,7 @@ end;
 
 function TfrmHTScanner.GetTotalPlayers(aReeks:integer):integer;
 begin
-  with uBibRuntime.CreateSQL(ibdbHTInfo) do
+  with uBibRuntime.CreateSQL(ibdbHTInfo,'',uHattrick.CreateReadTransaction(ibdbHTInfo)) do
   begin
     try
       SQL.Add('SELECT');
@@ -8314,7 +8375,8 @@ begin
   btnStopScouting.Visible := ivAlways;
   InitScanResults;
 
-  vDoExporteren := uBibDb.GetFieldValue(ibdbHTInfo,'JEUGD_COMPETITIES',['ID'],[aReeks],'EXPORTEREN',srtInteger) = -1;
+  vDoExporteren := uBibDb.GetFieldValue(ibdbHTInfo,'JEUGD_COMPETITIES',['ID'],[aReeks],'EXPORTEREN',srtInteger,
+    svtNormal, uHattrick.CreateReadTransaction(ibdbHTInfo)) = -1;
 
   vPath := ExtractFilePath(Application.ExeName)+'BigScout\';
   IEDownload1.DownloadFolder := vPath;
@@ -8324,11 +8386,13 @@ begin
 
   if (vAuto) then
   begin
-    vURL := uBibDb.GetFieldValue(ibdbHTInfo,'JEUGD_COMPETITIES',['ID'],[aReeks],'TBS_URL',srtString);
+    vURL := uBibDb.GetFieldValue(ibdbHTInfo,'JEUGD_COMPETITIES',['ID'],[aReeks],'TBS_URL',srtString,
+      svtNormal, uHattrick.CreateReadTransaction(ibdbHTInfo));
 
     if (vURL <> '') then
     begin
-      vSterren := uBibDb.GetFieldValue(ibdbHTInfo,'JEUGD_COMPETITIES',['ID'],[aReeks],'COALESCE(MIN_RATING,6)',srtInteger);
+      vSterren := uBibDb.GetFieldValue(ibdbHTInfo,'JEUGD_COMPETITIES',['ID'],[aReeks],'COALESCE(MIN_RATING,6)',srtInteger,
+        svtNormal, uHattrick.CreateReadTransaction(ibdbHTInfo));
 
       pgctrlLijst.ActivePage := tbTSI;
       if (vURL <> TSIBrowser.LocationURL) then
@@ -8695,7 +8759,8 @@ begin
   if (FLastKarakterID > 0) then
   begin
     vAantal := uBibDb.GetFieldValue(ibdbHTInfo,'JEUGDSPELERS',
-      ['KARAKTER_ID'],[FLastKarakterID],'ID',srtInteger,svtCount);
+      ['KARAKTER_ID'],[FLastKarakterID],'ID',srtInteger,svtCount,
+      uHattrick.CreateReadTransaction(ibdbHTInfo));
   end
   else
   begin
@@ -8863,7 +8928,8 @@ begin
         end;
 
         vID := uBibDb.GetFieldValue(ibdbHTInfo,'NT_SCOUTING',
-          ['PLAYER_ID'],[vPlayerID],'ID',srtInteger);
+          ['PLAYER_ID'],[vPlayerID],'ID',srtInteger, svtNormal,
+          uHattrick.CreateReadTransaction(ibdbHTInfo));
 
         if (vID = 0) then
         begin
@@ -8995,7 +9061,8 @@ var
   vSQL : TIBSQL;
 begin
 
-  vID := uBibDb.GetFieldValue(ibdbHTInfo,'SCAN_HISTORIE',['DATUM'],[ScanDate],'ID',srtInteger);
+  vID := uBibDb.GetFieldValue(ibdbHTInfo,'SCAN_HISTORIE',['DATUM'],[ScanDate],'ID',srtInteger,
+    svtNormal,uHattrick.CreateReadTransaction(ibdbHTInfo));
   if (vID = 0) then
   begin
     FirstTime := TRUE;
@@ -9005,7 +9072,7 @@ begin
       vSQL.ParamByName('ID').asInteger := uBibDb.GetGeneratorValue(ibdbHTInfo,
         'GEN_SCAN_HISTORIE_ID');
 
-      with uBibRuntime.CreateSQL(ibdbHTInfo) do
+      with uBibRuntime.CreateSQL(ibdbHTInfo,'',uHattrick.CreateReadTransaction(ibdbHTInfo)) do
       begin
         try
           with SQL do
@@ -9041,9 +9108,9 @@ begin
       end;
       vSQL.ParamByName('DATUM').asDate := ScanDate;
       vSQL.ParamByName('TOTAAL_SPELERS').asInteger := uBibDb.GetFieldValue(ibdbHTInfo,
-        'JEUGDSPELERS',[],[],'ID',srtInteger,svtCount);
+        'JEUGDSPELERS',[],[],'ID',srtInteger,svtCount,uHattrick.CreateReadTransaction(ibdbHTInfo));
       vSQL.ParamByName('TOTAAL_KARAKTERS').AsInteger := uBibDb.GetFieldValue(ibdbHTInfo,
-        'KARAKTER_PROFIEL',[],[],'ID',srtInteger,svtCount);
+        'KARAKTER_PROFIEL',[],[],'ID',srtInteger,svtCount,uHattrick.CreateReadTransaction(ibdbHTInfo));
       vSQL.ExecQuery;
     finally
       uBibDb.CommitTransaction(vSQL.Transaction, TRUE);
@@ -9053,7 +9120,7 @@ begin
   else
   begin
     FirstTime := uBibDb.GetFieldValue(ibdbHTInfo,
-        'SCAN_HISTORIE',['ID'],[vID],'NO_SPEC_FOUND',srtInteger) = 0;
+        'SCAN_HISTORIE',['ID'],[vID],'NO_SPEC_FOUND',srtInteger,svtNormal,uHattrick.CreateReadTransaction(ibdbHTInfo)) = 0;
   end;
 end;
 
@@ -9189,15 +9256,13 @@ var
   vValues: TFieldValues;
   vNationaliteit: String;
 begin
-  uBibDb.ExecSQL(ibdbHTInfo,'UPDATE JEUGDSPELERS SET INTERESTING = 0 WHERE INTERESTING = -1',[],[]);
-
   vNationaliteit := uBibDB.GetFieldValue(ibdbHTInfo,'JEUGD_COMPETITIES',
-    ['ID'],[aReeks],'NATIONALITEIT',srtString);
+    ['ID'],[aReeks],'NATIONALITEIT',srtString,svtNormal, uHattrick.CreateReadTransaction(ibdbHTInfo));
 
   vDatum16_75 := Date - (16 * 7) - 75;
   vDatum17 :=  Date - (16 * 7) - (16 * 7);
 
-  with uBibRuntime.CreateSQL(ibdbHTInfo) do
+  with uBibRuntime.CreateSQL(ibdbHTInfo,'',uHattrick.CreateReadTransaction(ibdbHTInfo)) do
   begin
     try
       with SQL do
@@ -9213,6 +9278,7 @@ begin
         Add('WHERE');
         Add('((J.GEBOORTE_DATUM >= :DATUM_16_75) OR ((J.GEBOORTE_DATUM >= :DATUM_17) AND (U20.U20 = -1)))');
         Add('AND COALESCE(J.IN_DOCS,0) = 0');
+        Add('AND COALESCE(J.INTERESTING,0) = 0');
         Add('AND COALESCE(J.NATIONALITEIT,:NATIONALITEIT) = :NATIONALITEIT');
         //Add('AND (J.PLAYER_ID IN (SELECT PLAYER_ID FROM JEUGD_PRESTATIES WHERE PLAYER_ID = J.PLAYER_ID AND JEUGD_COMPETITIES_ID = :REEKS))');
       end;
@@ -9230,7 +9296,7 @@ begin
   vValues := nil;
   try
     vVoortgang.Melding := 'TBS-run voorbereiden...';
-    with uBibRuntime.CreateSQL(ibdbHTInfo) do
+    with uBibRuntime.CreateSQL(ibdbHTInfo,'',uHattrick.CreateReadTransAction(ibdbHTInfo)) do
     begin
       try
         with SQL do
@@ -9246,6 +9312,7 @@ begin
           Add('WHERE');
           Add('((J.GEBOORTE_DATUM >= :DATUM_16_75) OR ((J.GEBOORTE_DATUM >= :DATUM_17) AND (U20.U20 = -1)))');
           Add('AND COALESCE(J.IN_DOCS,0) = 0');
+          Add('AND COALESCE(J.INTERESTING,0) = 0');
           Add('AND COALESCE(J.NATIONALITEIT,:NATIONALITEIT) = :NATIONALITEIT');
           //Add('AND (J.PLAYER_ID IN (SELECT PLAYER_ID FROM JEUGD_PRESTATIES WHERE PLAYER_ID = J.PLAYER_ID AND JEUGD_COMPETITIES_ID = :REEKS))');
         end;
@@ -9257,7 +9324,7 @@ begin
         while not EOF do
         begin
           vValues := uBibDb.GetSPValues(ibdbHTInfo,'GET_TALENTED_EX',[FieldByName('PLAYER_ID').asInteger,-1, -1],
-            ['TALENTED','U20_TALENTED'],[srtInteger,srtInteger]);
+            ['TALENTED','U20_TALENTED'],[srtInteger,srtInteger],svtNormal);
 
           vTalented := (vValues[0] = -1) or (vValues[1] = -1);
 
@@ -9280,7 +9347,7 @@ end;
 
 function TfrmHTScanner.IsTalented(aPlayerID: Integer):boolean;
 begin
-  with uBibRuntime.CreateSQL(frmHTScanner.ibdbHTInfo) do
+  with uBibRuntime.CreateSQL(frmHTScanner.ibdbHTInfo,'',uHattrick.CreateReadTransaction(ibdbHTInfo)) do
   begin
     try
       with SQL do
@@ -9358,7 +9425,8 @@ begin
               if (sPlayerID <> '') then
               begin
                 vPlayerID := uBibDB.GetFieldValue(ibdbHTInfo,'JEUGDSPELERS',
-                  ['PLAYER_ID'],[sPlayerID],'PLAYER_ID',srtInteger);
+                  ['PLAYER_ID'],[sPlayerID],'PLAYER_ID',srtInteger,svtNormal,
+                  uHattrick.CreateReadTransaction(ibdbHTInfo));
 
                 if (vPlayerID = 0) then
                 begin
@@ -9376,13 +9444,15 @@ begin
                 end;
 
                 vKarakterID := uBibDB.GetFieldValue(ibdbHTInfo,'JEUGDSPELERS',
-                  ['PLAYER_ID'],[sPlayerID],'KARAKTER_ID',srtInteger);
+                  ['PLAYER_ID'],[sPlayerID],'KARAKTER_ID',srtInteger,svtNormal,
+                  uHattrick.CreateReadTransaction(ibdbHTInfo));
 
                 if (vKarakterID > 0) then
                 begin
                   vUpdated.Add(Format('[%s] %s',[sPlayerID, sPlayerName]));
 
-                  with uBibRuntime.CreateSQL(ibdbHTInfo,'SELECT * FROM KARAKTER_PROFIEL WHERE ID = :ID') do
+                  with uBibRuntime.CreateSQL(ibdbHTInfo,'SELECT * FROM KARAKTER_PROFIEL WHERE ID = :ID',
+                    uHattrick.CreateReadTransaction(ibdbHTInfo)) do
                   begin
                     try
                       ParamByName('ID').asInteger := vKarakterID;
