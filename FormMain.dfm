@@ -1,9 +1,9 @@
 object frmHTScanner: TfrmHTScanner
-  Left = 82
-  Top = 33
-  Width = 1440
-  Height = 860
-  Caption = 'Hattrick scanner'
+  Left = 20
+  Top = 18
+  Width = 1441
+  Height = 861
+  Caption = ' '
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -14,6 +14,7 @@ object frmHTScanner: TfrmHTScanner
   OldCreateOrder = False
   Position = poScreenCenter
   WindowState = wsMaximized
+  OnCloseQuery = FormCloseQuery
   OnCreate = FormCreate
   OnDestroy = FormDestroy
   PixelsPerInch = 96
@@ -31,9 +32,9 @@ object frmHTScanner: TfrmHTScanner
   object pgctrlLijst: TdxPageControl
     Left = 0
     Top = 22
-    Width = 1424
-    Height = 781
-    ActivePage = tsBidwar
+    Width = 1425
+    Height = 782
+    ActivePage = tbBrowser
     Align = alClient
     HideButtons = False
     HotTrack = False
@@ -51,8 +52,8 @@ object frmHTScanner: TfrmHTScanner
       object HTBrowser: TEmbeddedWB
         Left = 0
         Top = 0
-        Width = 1424
-        Height = 758
+        Width = 1425
+        Height = 759
         Align = alClient
         TabOrder = 0
         Silent = False
@@ -84,8 +85,8 @@ object frmHTScanner: TfrmHTScanner
       object dxDBGrid1: TdxDBGrid
         Left = 0
         Top = 22
-        Width = 1424
-        Height = 736
+        Width = 1425
+        Height = 737
         Bands = <
           item
           end>
@@ -266,7 +267,7 @@ object frmHTScanner: TfrmHTScanner
       object dxBarDockControl1: TdxBarDockControl
         Left = 0
         Top = 0
-        Width = 1424
+        Width = 1425
         Height = 22
         Align = dalTop
         BarManager = dxBarManager1
@@ -277,8 +278,8 @@ object frmHTScanner: TfrmHTScanner
       object dxDBGrid2: TdxDBGrid
         Left = 0
         Top = 22
-        Width = 1424
-        Height = 573
+        Width = 1425
+        Height = 574
         Bands = <
           item
           end>
@@ -442,7 +443,7 @@ object frmHTScanner: TfrmHTScanner
       object dxBarDockControl2: TdxBarDockControl
         Left = 0
         Top = 0
-        Width = 1424
+        Width = 1425
         Height = 22
         Align = dalTop
         BarManager = dxBarManager1
@@ -450,8 +451,8 @@ object frmHTScanner: TfrmHTScanner
       object dbgrdScouting: TdxDBGrid
         Left = 0
         Top = 22
-        Width = 1424
-        Height = 573
+        Width = 1425
+        Height = 574
         Bands = <
           item
           end>
@@ -662,8 +663,8 @@ object frmHTScanner: TfrmHTScanner
       end
       object Panel1: TPanel
         Left = 0
-        Top = 595
-        Width = 1424
+        Top = 596
+        Width = 1425
         Height = 163
         Align = alBottom
         Caption = 'Panel1'
@@ -755,8 +756,8 @@ object frmHTScanner: TfrmHTScanner
       object dbgrdTalents: TsynDBGrid
         Left = 0
         Top = 24
-        Width = 1424
-        Height = 734
+        Width = 1425
+        Height = 735
         Bands = <
           item
           end>
@@ -958,7 +959,7 @@ object frmHTScanner: TfrmHTScanner
       object dxBarDockControl4: TdxBarDockControl
         Left = 0
         Top = 0
-        Width = 1424
+        Width = 1425
         Height = 24
         Align = dalTop
         BarManager = dxBarManager1
@@ -1261,15 +1262,15 @@ object frmHTScanner: TfrmHTScanner
   object dxBarDockControl3: TdxBarDockControl
     Left = 0
     Top = 0
-    Width = 1424
+    Width = 1425
     Height = 22
     Align = dalTop
     BarManager = dxBarManager1
   end
   object StatusBar1: TStatusBar
     Left = 0
-    Top = 803
-    Width = 1424
+    Top = 804
+    Width = 1425
     Height = 19
     Panels = <
       item
@@ -1707,7 +1708,7 @@ object frmHTScanner: TfrmHTScanner
       ImageIndex = 24
       OnClick = btnScoutClick
       Items.Strings = (
-        'Versterkingen'
+        'Future coaches'
         'Talenten (U20/NT potentie)'
         'Bekende talenten'
         'Internationals (NT)'
@@ -9079,5 +9080,12 @@ object frmHTScanner: TfrmHTScanner
     OnTimer = tmrAutoStartTimer
     Left = 744
     Top = 141
+  end
+  object tmrActivity: TTimer
+    Enabled = False
+    Interval = 300000
+    OnTimer = tmrActivityTimer
+    Left = 752
+    Top = 301
   end
 end

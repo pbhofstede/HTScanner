@@ -3,7 +3,7 @@ unit uHattrick;
 interface
 
 uses
-  EmbeddedWB, ContNrs, Controls, IBDatabase, classes, uBibDb;
+  EmbeddedWB, ContNrs, Controls, IBDatabase, classes, uBibDb, IBSQL, IEDownload;
 
 const
   MATCH_LINK='Club/Matches/Match.aspx?matchID=';
@@ -17,6 +17,101 @@ const
 type
   THoofdskills = (hsOnbekend,hsPositiespel,hsVerdedigen,hsKeepen,hsScoren,hsVleugelspel,hsPassen);
   TBatchlingArray = array of integer;
+
+  TDownloadThread = class (TThread)
+  private
+    FURL: String;
+    FStartTime: TDateTime;
+    procedure OnDownloadComplete(Sender: TBSCB;Stream: TStream; Result: HRESULT);
+  protected
+    FDownload: TIEDownload;
+    procedure Execute; Override;
+  public
+    property StartTime: TDateTime read FStartTime write FStartTime;
+    property URL:String read FURL;
+    destructor Destroy; override;
+    constructor Create(aUrl: String);
+  end;
+
+  TDatabasePlayer = class
+  private
+    FLoadPlayerInfo, FLoadKarakterInfo, FLoadSeniorInfo: boolean;
+    FDatabase: TIBDatabase;
+    FIsSenior: boolean;
+    FID: integer;
+    FKarakterID: integer;
+    FKeeper: boolean;
+    FPromoted: boolean;
+    FNaam: String;
+    FLastPlayerUpdate: TDateTime;
+    FSpecialiteit: String;
+    FPotKeepen: double;
+    FPotPositiespel: double;
+    FPotPassen: double;
+    FPotVleugelspel: double;
+    FPotVerdedigen: double;
+    FPotScoren: double;
+    FPotSpelhervatten: double;
+    FAllround: integer;
+    FLastKarakterUpdate: TDateTime;
+    FKarakterHTYC: boolean;
+    FCurKeepen: double;
+    FCurPositiespel: double;
+    FCurPassen: double;
+    FCurVleugelspel: double;
+    FCurVerdedigen: double;
+    FCurScoren: double;
+    FCurSpelhervatten: double;
+    FTeamID: integer;
+    FGeboorteDatum: TDate;
+    FIsU20: boolean;
+    FNationaliteit: String;
+    FTestNTAsPossibleU20: boolean;
+    procedure LoadSeniorInfo;
+    procedure LoadPlayerInfo;
+    procedure LoadKarakterInfo;
+    function GetPotentie: String;
+    function ValueToStr(aValue: double): String;
+    function GetTalented: boolean;
+    function GetPossibleTalented: boolean;
+  public
+    procedure Reload;
+    property TestNTAsPossibleU20: boolean read FTestNTAsPossibleU20 write FTestNTAsPossibleU20;
+    property Nationaliteit: String read FNationaliteit write FNationaliteit;
+    property IsU20: boolean read FIsU20 write FIsU20;
+    property GeboorteDatum: TDate read FGeboorteDatum write FGeboorteDatum;
+    property PotKeepen: double read FPotKeepen write FPotKeepen;
+    property CurKeepen: double read FCurKeepen write FCurKeepen;
+    property PotPositiespel: double read FPotPositiespel write FPotPositiespel;
+    property CurPositiespel: double read FCurPositiespel write FCurPositiespel;
+    property PotPassen: double read FPotPassen write FPotPassen;
+    property CurPassen: double read FCurPassen write FCurPassen;
+    property PotVleugelspel: double read FPotVleugelspel write FPotVleugelspel;
+    property CurVleugelspel: double read FCurVleugelspel write FCurVleugelspel;
+    property PotVerdedigen: double read FPotVerdedigen write FPotVerdedigen;
+    property CurVerdedigen: double read FCurVerdedigen write FCurVerdedigen;
+    property PotScoren: double read FPotScoren write FPotScoren;
+    property CurScoren: double read FCurScoren write FCurScoren;
+    property PotSpelhervatten: double read FPotSpelhervatten write FPotSpelhervatten;
+    property CurSpelhervatten: double read FCurSpelhervatten write FCurSpelhervatten;
+    property Specialiteit: String read FSpecialiteit write FSpecialiteit;
+    property LastPlayerUpdate: TDateTime read FLastPlayerUpdate write FLastPlayerUpdate;
+    property LastKarakterUpdate: TDateTime read FLastKarakterUpdate write FLastKarakterUpdate;
+    property Naam: String read FNaam write FNaam;
+    property Potentie:String read GetPotentie;
+    property Promoted: boolean read FPromoted write FPromoted;
+    property KarakterHTYC: boolean read FKarakterHTYC write FKarakterHTYC;
+    property PossibleTalented: boolean read GetPossibleTalented;
+    property Allround: integer read FAllround write FAllround;
+    property TeamID: integer read FTeamID write FTeamID;
+    property Keeper: boolean read FKeeper write FKeeper;
+    property Talented: boolean read GetTalented;
+    property KarakterID: integer read FKarakterID write FKarakterID;
+    property IsSenior: boolean read FIsSenior write FIsSenior;
+    property ID: integer read FID write FID;
+    property Database: TIBDatabase read FDatabase write FDatabase;
+    constructor Create(aDatabase: TIBDatabase; aPlayerID: integer;  aLoadPlayerInfo, aLoadKarakterInfo, aLoadSeniorInfo: boolean);
+  end;
 
   TTSISet = class
   private
@@ -66,6 +161,8 @@ type
     FTransferListed: boolean;
     FRestyled: boolean;
     FTransferDatum: TDate;
+    FManagerBody: String;
+    FIsTrainer: boolean;
     function GetMainSkill: integer;
     procedure ChangeMainSkill(aChange:double);
   public
@@ -74,6 +171,7 @@ type
     function GetSkill(aIndex: integer): integer;
     function OverigeSkillsMax(aSkill1, aSkill2, aSkill3, aMaxSkillValue: integer): Boolean;
   published
+    property IsTrainer: boolean read FIsTrainer write FIsTrainer;
     property Vorm:integer read FVorm write FVorm;
     property Conditie:integer read FConditie write FConditie;
     property PositieSpel:double read FPositieSPel write FPositiespel;
@@ -117,6 +215,7 @@ type
     property Hair:String read FHair write FHair;
     property Goatee:String read FGoatee write FGoatee;
     property Body:String read FBody write FBody;
+    property ManagerBody: String read FManagerBody write FManagerBody;
     property IsKeeper:Boolean read FIsKeeper write FIsKeeper;
     property Restyled: boolean read FRestyled write FRestyled;
 
@@ -201,6 +300,9 @@ type
     constructor Create(aLeagueID, aMatchID:String;aOwnPlayers:boolean=TRUE);
   end;
 
+procedure SetIndexStatistics(aDataBase:TIBDatabase;aIndexName:String);
+function CreateSQL(aDataBase:TIBDataBase;aReadOnly: boolean):TIBSQL;
+function SetIndexStatus(aDataBase:TIBdataBase;aIndexName:String;isActive:boolean):boolean;
 function GetLink(aBrowser:TEmbeddedWB; aHref: String; aForceEndsWith: Boolean = FALSE): String;
 function VerwijderSpaties(aStr: string): string;
 function NivoTextToGetal(aNivo: String): Integer;
@@ -217,7 +319,7 @@ function GetSubstituteID(vBody:TStringList;aPlayerID:integer):integer;
 function GetYouthPLayerLink(aMainURL:String;aYouthPlayerID:integer):String;
 function GetTeamLink(aMainURL:String;aTeamID:integer;aIsYouthTeam:Boolean):String;
 function AddHattrickYear(aDatum:TDate;aYears:integer):TDate;
-function SaveKarakterProfiel(aDatabase: TIBDatabase; aTSISet:TTSISet; aForce:boolean): integer;
+function SaveKarakterProfiel(aDatabase: TIBDatabase; aAutoRun: boolean; aTSISet:TTSISet): integer;
 function SaveJeugdKarakterProfiel(aDatabase: TIBDatabase;aSpeler:TJeugdspeler;aForce:boolean):integer;
 function SaveScouting(aDatabase: TIBDatabase; aTSISet:TTSISet; aTalentScouting: boolean): integer;
 function FormatSpecialiteit(aXLSSpec: String): String;
@@ -236,7 +338,10 @@ function GetVolgNummer(aDatabase:TIBDatabase; aNeus, aGezicht, aOgen, aMond,
 function GetYouthLineupLink(aMainURL: String;aTeamID, aMatchID:integer):String;
 procedure SyncNewTwins(aDatabase: TIBDatabase; aKarakterID: integer);
 function GetPossibleTwins(aDatabase: TIBDatabase; aKarakterID: Integer):TBatchlingArray;
+function CreateWriteTransAction(aDatabase: TIBDatabase; aName: String = ''): TIBTransAction;
 function CreateReadTransAction(aDatabase: TIBDatabase; aName: String = ''): TIBTransAction;
+function IsTalented(aDatabase: TIBDatabase; aPlayerID: integer):boolean;
+procedure WriteActivity(aDatabase: TIBDatabase);
 
 implementation
 uses
@@ -1253,13 +1358,72 @@ begin
   end;
 end;
 
-function SaveKarakterProfiel(aDatabase: TIBDatabase; aTSISet:TTSISet; aForce:boolean): integer;
+function CreateSQL(aDataBase:TIBDataBase;aReadOnly: boolean):TIBSQL;
+begin
+  result := TIBSQL.Create(Application);
+  with result do
+  begin
+    if (aReadOnly) then
+      Transaction := uHattrick.CreateReadTransaction(aDatabase)
+    else
+      TransAction := uHattrick.CreateWriteTransAction(aDataBase);
+  end;
+end;
+
+function SetIndexStatus(aDataBase:TIBdataBase;aIndexName:String;isActive:boolean):boolean;
+begin
+  with CreateSQL(aDatabase,FALSE) do
+  begin
+    try
+      with SQL do
+      begin
+        Clear;
+        if isActive then
+          Add('ALTER INDEX '+AnsiQuotedStr(aIndexName,'"') +' ACTIVE')
+        else
+          Add('ALTER INDEX '+AnsiQuotedStr(aIndexName,'"') +' INACTIVE');
+      end;
+      ExecQuery;
+      result := TRUE;
+    finally
+      try
+        Transaction.Commit;
+      except
+        Transaction.Rollback;
+        raise;
+      end;
+      Transaction.Free;
+      Free;
+    end;
+  end;
+end;
+
+procedure SetIndexStatistics(aDataBase:TIBDatabase;aIndexName:String);
+begin
+  with CreateSQL(aDatabase,FALSE) do
+  begin
+    try
+      with SQL do
+      begin
+        Clear;
+        Add('SET STATISTICS INDEX '+AnsiQuotedStr(aIndexName,'"'));
+      end;
+      ExecQuery;
+    finally
+      Transaction.Commit;
+      Transaction.Free;
+      Free;
+    end;
+  end;
+end;
+
+function SaveKarakterProfiel(aDatabase: TIBDatabase; aAutoRun: boolean; aTSISet:TTSISet): integer;
 const
   cKarakterSQL =
     'INSERT INTO KARAKTER_PROFIEL ' +
-    ' (ID, EERLIJKHEID, LEIDERSCHAP, AGRESSIVITEIT, KARAKTER, NEUS, GEZICHT, OGEN, MOND, HAAR, SIKJE, BODY, SPECIALITEIT, IS_KEEPER, VOLGNUMMER) '+
+    ' (ID, EERLIJKHEID, LEIDERSCHAP, AGRESSIVITEIT, KARAKTER, NEUS, GEZICHT, OGEN, MOND, HAAR, SIKJE, BODY, SPECIALITEIT, IS_KEEPER, VOLGNUMMER, MAN_BODY) '+
     ' VALUES ' +
-    ' (:ID, :EERLIJKHEID, :LEIDERSCHAP, :AGRESSIVITEIT, :KARAKTER, :NEUS, :GEZICHT, :OGEN, :MOND, :HAAR, :SIKJE, :BODY, :SPECIALITEIT, :IS_KEEPER, :VOLGNUMMER)';
+    ' (:ID, :EERLIJKHEID, :LEIDERSCHAP, :AGRESSIVITEIT, :KARAKTER, :NEUS, :GEZICHT, :OGEN, :MOND, :HAAR, :SIKJE, :BODY, :SPECIALITEIT, :IS_KEEPER, :VOLGNUMMER, :MAN_BODY)';
   cNose: array[0..10] of String = ('a','b','c','d','e','f','g','h','i','j','k');
 var
   vID, i, vYouthKarakterID: integer;
@@ -1279,6 +1443,26 @@ begin
   else
   begin
     vYouthKarakterID := -1;
+  end;
+
+  aTSISet.IsTrainer := Pos('man', aTSISet.Body) > 0;
+
+  if (aTSISet.IsTrainer) then
+  begin
+    aTSISet.ManagerBody := aTSISet.Body;
+
+    if (vYouthKarakterID > 0) then
+    begin
+      // We kennen hem van vroeger!
+      aTSISet.Body := VarToStr(uBibDb.GetFieldValue(aDatabase,'KARAKTER_PROFIEL',['ID'],[vYouthKarakterID],'BODY',srtString,
+        svtNormal, uHattrick.CreateReadTransaction(aDatabase)));
+    end
+    else
+    begin
+      // Oeps!! Niet bekend?? dan gaan we een body op proberen te zoeken.
+      aTSISet.Body := VarToStr(uBibDb.GetFieldValue(aDatabase,'KARAKTER_PROFIEL',['MAN_BODY'],[aTSISet.ManagerBody],'BODY',srtString,
+        svtNormal, uHattrick.CreateReadTransaction(aDatabase), 'AND COALESCE(MAN_BODY,'''') <> '''''));
+    end;
   end;
 
   if (aTSISet.Body <> '') then
@@ -1366,6 +1550,10 @@ begin
             ParamByName('HAAR').asString := aTSISet.Hair;
             ParamByName('SIKJE').asString := aTSISet.Goatee;
             ParamByName('BODY').asString := aTSISet.Body;
+            if (aTSISet.IsTrainer) then
+            begin
+              ParamByName('MAN_BODY').asString := aTSISet.ManagerBody;
+            end;
             ParamByName('VOLGNUMMER').asInteger := GetVolgNummer(aDatabase,
               aTSISet.Nose, aTSISet.Face, aTSISet.Eyes, aTSISet.Mouth, aTSISet.Hair,
               aTSISet.Body, aTSISet.IsKeeper);
@@ -1386,11 +1574,19 @@ begin
 
         if ((vSpecialiteit = '') or (vSpecialiteit <> aTSISet.Specialiteit)) and (aTSISet.Specialiteit <> '') then
         begin
-          if (vSpecialiteit = '') or (aForce) or (MessageBoxWarning(
+          if (vSpecialiteit = '') or (aAutoRun) or (MessageBoxWarning(
             Format('[%d] Weet je zeker dat je karakterID %d wilt wijzigen van %s in %s?',[aTSISet.PlayerID, vID,vSpecialiteit,aTSISet.Specialiteit]),'HTScanner',TRUE)) then
           begin
-            aTSISet.FSpecOntdekt := TRUE;
-            uBibDB.UpdateFieldValue(aDatabase, nil, 'KARAKTER_PROFIEL', ['ID'], [vID], ['SPECIALITEIT'], [aTSISet.Specialiteit]);
+            if (vSpecialiteit = '') or (not aAutoRun) then
+            begin
+              aTSISet.FSpecOntdekt := TRUE;
+              uBibDB.UpdateFieldValue(aDatabase, nil, 'KARAKTER_PROFIEL', ['ID'], [vID], ['SPECIALITEIT'], [aTSISet.Specialiteit]);
+            end
+            else
+            begin
+              vID := -1;
+              vOk := FALSE;
+            end;
           end
           else
           begin
@@ -1399,10 +1595,18 @@ begin
         end
         else if (aTSISet.Specialiteit = '') and (vSpecialiteit <> 'Geen') then
         begin
-          if (vSpecialiteit = '') or (aForce) or (MessageBoxWarning(
+          if (vSpecialiteit = '') or (aAutoRun) or (MessageBoxWarning(
             Format('[%d] Weet je zeker dat je karakterID %d wilt wijzigen van %s in %s?',[aTSISet.PlayerID,vID,vSpecialiteit,aTSISet.Specialiteit]),'HTScanner',TRUE)) then
           begin
-            uBibDB.UpdateFieldValue(aDatabase, nil, 'KARAKTER_PROFIEL', ['ID'], [vID], ['SPECIALITEIT'], ['Geen']);
+            if not(aAutoRun) then
+            begin
+              uBibDB.UpdateFieldValue(aDatabase, nil, 'KARAKTER_PROFIEL', ['ID'], [vID], ['SPECIALITEIT'], ['Geen']);
+            end
+            else
+            begin
+              vID := -1;
+              vOk := FALSE;
+            end;
           end
           else
           begin
@@ -1412,15 +1616,99 @@ begin
 
         if ((vOk) and (aTSISet.Karakter <> '')) then
         begin
-          uBibDb.ExecSQL(aDatabase,'UPDATE KARAKTER_PROFIEL SET EERLIJKHEID = :PARAM1, LEIDERSCHAP = :PARAM2, AGRESSIVITEIT = :PARAM3, KARAKTER = :PARAM4 WHERE ID = :ID',
-            ['ID','PARAM1','PARAM2','PARAM3','PARAM4'],
-            [vID,aTSISet.Eerlijkheid,aTSISet.Leiderschap,aTSISet.Agressiviteit,aTSISet.Karakter]);
+          if (aTSISet.IsTrainer) then
+          begin
+            uBibDb.ExecSQL(aDatabase,'UPDATE KARAKTER_PROFIEL SET EERLIJKHEID = :PARAM1, LEIDERSCHAP = :PARAM2, AGRESSIVITEIT = :PARAM3, KARAKTER = :PARAM4, MAN_BODY = :PARAM5 WHERE ID = :ID',
+              ['ID','PARAM1','PARAM2','PARAM3','PARAM4','PARAM5'],
+              [vID,aTSISet.Eerlijkheid,aTSISet.Leiderschap,aTSISet.Agressiviteit,aTSISet.Karakter,aTSISet.ManagerBody]);
+          end
+          else
+          begin
+            uBibDb.ExecSQL(aDatabase,'UPDATE KARAKTER_PROFIEL SET EERLIJKHEID = :PARAM1, LEIDERSCHAP = :PARAM2, AGRESSIVITEIT = :PARAM3, KARAKTER = :PARAM4 WHERE ID = :ID',
+              ['ID','PARAM1','PARAM2','PARAM3','PARAM4'],
+              [vID,aTSISet.Eerlijkheid,aTSISet.Leiderschap,aTSISet.Agressiviteit,aTSISet.Karakter]);
+          end;
         end;
       end;
     end;
   end;
 
   result := vID;
+end;
+
+function IsPossibleTalented(aDatabase: TIBDatabase; aPlayerID: integer):boolean;
+begin
+  with uBibRuntime.CreateSQL(aDatabase) do
+  begin
+    try
+      with SQL do
+      begin
+        Add('SELECT POSSIBLE_TALENTED FROM GET_TALENTED_EX(:PLAYERID, 0, -1)');
+      end;
+      ParamByName('PLAYERID').asInteger := aPlayerID;
+      ExecQuery;
+      result := (FieldByName('POSSIBLE_TALENTED').asInteger = -1);
+    finally
+      uBibdb.CommitTransaction(Transaction, TRUE);
+      Free;
+    end;
+  end;
+end;
+
+function IsTalented(aDatabase: TIBDatabase; aPlayerID: integer):boolean;
+begin
+  with uBibRuntime.CreateSQL(aDatabase) do
+  begin
+    try
+      with SQL do
+      begin
+        Add('SELECT * FROM GET_TALENTED_EX(:PLAYERID, 0, -1)');
+      end;
+      ParamByName('PLAYERID').asInteger := aPlayerID;
+      ExecQuery;
+      result := (FieldByName('TALENTED').asInteger = -1) or
+        (FieldByName('U20_TALENTED').asInteger = -1);
+    finally
+      uBibdb.CommitTransaction(Transaction, TRUE);
+      Free;
+    end;
+  end;
+end;
+
+{-----------------------------------------------------------------------------
+  Procedure: CreateWriteTransAction
+  Author:    Harry
+  Date:      07-okt-2012
+  Arguments: aDatabase: TIBDatabase; aName: String = ''): TIBTransAction; begin try Result := TIBTransaction.Create(nil
+  Result:    None
+-----------------------------------------------------------------------------}
+function CreateWriteTransAction(aDatabase: TIBDatabase; aName: String = ''): TIBTransAction;
+begin
+  try
+    Result := TIBTransaction.Create(nil);
+
+    with Result do
+    begin
+      if (aName <> '') then
+      begin
+        Name := aName;
+      end;
+      DefaultDatabase := aDataBase;
+
+      with Params do
+      begin
+        Clear;
+        Add('read_committed');
+        Add('rec_version');
+        Add('nowait');
+      end;
+      if DefaultDataBase.Connected then
+        StartTransaction;
+    end;
+  except
+    uBibLog.Global_AddLog(Format('Fout in %s.%s',['uBibRuntime','CreateTransAction']));
+    raise;
+  end;
 end;
 
 {-----------------------------------------------------------------------------
@@ -1478,18 +1766,18 @@ const
   '  (AGRESSIVITEIT, CONDITIE, DATUM, DEADLINE, EERLIJKHEID, ERVARING, HERKOMST, HOOGSTE_BOD, ID, '+
   '   KARAKTER, KARAKTER_PROFIEL_ID, KEEPEN, LEEFTIJD, LEIDERSCHAP, LOON, NT, PASSEN, PLAYER_ID, ' +
   '   PLAYER_NAAM, POSITIESPEL, SCOREN, SPECIALITEIT, SPELHERVATTING, SUBSKILL, TALENT_SCOUTING, TSI, '+
-  '   U20, VERDEDIGEN, VLEUGELSPEL, VORM, VRAAGPRIJS, WEKEN_BLESSURE, YOUTHPLAYER_ID, GEBOORTEDATUM ) '+
+  '   U20, VERDEDIGEN, VLEUGELSPEL, VORM, VRAAGPRIJS, WEKEN_BLESSURE, YOUTHPLAYER_ID, GEBOORTEDATUM, IS_TRAINER ) '+
   'VALUES (' +
   '   :AGRESSIVITEIT, :CONDITIE, :DATUM, :DEADLINE, :EERLIJKHEID, :ERVARING, :HERKOMST, :HOOGSTE_BOD,'+
   '   :ID, :KARAKTER, :KARAKTER_PROFIEL_ID, :KEEPEN, :LEEFTIJD, :LEIDERSCHAP, :LOON, :NT, :PASSEN, '+
   '   :PLAYER_ID, :PLAYER_NAAM, :POSITIESPEL, :SCOREN, :SPECIALITEIT, :SPELHERVATTING, :SUBSKILL, '+
-  '   :TALENT_SCOUTING, :TSI, :U20, :VERDEDIGEN, :VLEUGELSPEL, :VORM, :VRAAGPRIJS, :WEKEN_BLESSURE, :YOUTHPLAYER_ID, :GEBOORTEDATUM)';
+  '   :TALENT_SCOUTING, :TSI, :U20, :VERDEDIGEN, :VLEUGELSPEL, :VORM, :VRAAGPRIJS, :WEKEN_BLESSURE, :YOUTHPLAYER_ID, :GEBOORTEDATUM, :IS_TRAINER)';
 var
   vCurSkill:double;
 begin
   try
     result := -1;
-    if (aTSISet.PlayerID > 0) then
+    if (aTSISet.PlayerID > 0) and (aTSISet.KarakterID > 0) then
     begin
       aTSISet.FTransferListed := FALSE;
       vId := uBibDb.GetFieldValue(aDatabase,'SCOUTING',['PLAYER_ID'],[aTSISet.PlayerID],'ID',srtInteger,
@@ -1510,13 +1798,13 @@ begin
           ' LEEFTIJD = :LEEFTIJD, HERKOMST = :HERKOMST, SPECIALITEIT = :SPECIALITEIT, ERVARING = :ERVARING, KARAKTER = :KARAKTER, '+
           ' AGRESSIVITEIT = :AGRESSIVITEIT, EERLIJKHEID = :EERLIJKHEID, LEIDERSCHAP = :LEIDERSCHAP, DATUM = CURRENT_DATE,'+
           ' LOON = :LOON, WEKEN_BLESSURE = :WEKEN_BLESSURE, KARAKTER_PROFIEL_ID = :KARAKTER_PROFIEL_ID, GEBOORTEDATUM = :GEBOORTEDATUM,'+
-          ' U20 = :U20, NT = :NT WHERE ID = :ID',
+          ' U20 = :U20, NT = :NT, IS_TRAINER = :IS_TRAINER WHERE ID = :ID',
             ['ID','PLAYER_NAAM','TSI','VORM','CONDITIE','LEEFTIJD','HERKOMST','SPECIALITEIT','ERVARING','KARAKTER',
-             'AGRESSIVITEIT','EERLIJKHEID', 'LEIDERSCHAP', 'LOON', 'WEKEN_BLESSURE', 'KARAKTER_PROFIEL_ID','GEBOORTEDATUM','U20','NT'],
+             'AGRESSIVITEIT','EERLIJKHEID', 'LEIDERSCHAP', 'LOON', 'WEKEN_BLESSURE', 'KARAKTER_PROFIEL_ID','GEBOORTEDATUM','U20','NT','IS_TRAINER'],
             [vID,aTSISet.PlayerName,aTSISet.PlayerTSI,aTSISet.Vorm,aTSISet.Conditie, aTSISet.Leeftijd, aTSISet.Herkomst,
              vSpec, aTSISet.Ervaring, aTSISet.Karakter, aTSISet.Agressiviteit, aTSISet.Eerlijkheid, aTSISet.Leiderschap,
              aTSISet.Loon, aTSISet.WekenBlessure, aTSISet.KarakterID, aTSISet.GeboorteDatum, Ord(aTSISet.U20) * -1,
-             Ord(aTSISet.NT) * -1]);
+             Ord(aTSISet.NT) * -1, Ord(aTSISet.IsTrainer) * -1]);
 
         if (aTSISet.Deadline > 0) then
         begin
@@ -1608,6 +1896,7 @@ begin
               ParamByName('YOUTHPLAYER_ID').asInteger := aTSISet.YouthPlayerID;
             end;
             ParamByName('GEBOORTEDATUM').asDate := aTSISet.GeboorteDatum;
+            ParamByName('IS_TRAINER').asInteger := Ord(aTSISet.IsTrainer) * -1;
 
             ExecQuery;
           finally
@@ -1678,7 +1967,7 @@ begin
   result := Format('%shattrick.org/%s%s', [GetHattrickServer(aMainURL),MATCH_LINK,aMatchID]);
   if (aYouthMatch) then
   begin
-    result := Format('%s&isYouth=True',[result]);
+    result := Format('%s&SourceSystem=Youth',[result]);
   end;
 end;
 
@@ -2218,6 +2507,231 @@ constructor TJeugdspeler.Create;
 begin
   IsNew := TRUE;
   IsNewSpec := FALSE;
+end;
+
+{ TDatabasePlayer }
+
+constructor TDatabasePlayer.Create(aDatabase: TIBDatabase; aPlayerID: integer; aLoadPlayerInfo, aLoadKarakterInfo,
+  aLoadSeniorInfo: boolean);
+begin
+  FDatabase := aDatabase;
+  FID := aPlayerID;
+  FLoadPlayerInfo := aLoadPlayerInfo;
+  FLoadKarakterInfo := aLoadKarakterInfo;
+  FLoadSeniorInfo := aLoadSeniorInfo;
+
+  Reload;
+end;
+
+function TDatabasePlayer.ValueToStr(aValue: double): String;
+begin
+  if aValue > 0 then
+    result := Format('%.1f',[aValue])
+  else
+    result := '?';
+end;
+
+function TDatabasePlayer.GetPotentie: String;
+begin
+  result := Format('%s GK - %s DEF - %s POS - %s WNG - %s PASS - %s SC - %s SH',
+    [ValueToStr(PotKeepen), ValueToStr(PotVerdedigen), ValueToStr(PotPositiespel),
+      ValueToStr(PotVleugelspel), ValueToStr(PotPassen),
+      ValueToStr(PotScoren), ValueToStr(PotSpelhervatten)]);
+end;
+
+procedure TDatabasePlayer.LoadKarakterInfo;
+var
+  vSQL: TIBSQL;
+begin
+  vSQL := uBibRuntime.CreateSQL(FDatabase, '', uHattrick.CreateReadTransaction(FDatabase));
+
+  try
+    vSQL.SQL.Add('SELECT');
+
+    vSQL.SQL.Add('IS_KEEPER,');
+    vSQL.SQL.Add('SPECIALITEIT,');
+    vSQL.SQL.Add('POT_KEEPEN,');
+    vSQL.SQL.Add('POT_POSITIESPEL,');
+    vSQL.SQL.Add('POT_PASSEN,');
+    vSQL.SQL.Add('POT_VLEUGELSPEL,');
+    vSQL.SQL.Add('POT_VERDEDIGEN,');
+    vSQL.SQL.Add('POT_SCOREN,');
+    vSQL.SQL.Add('POT_SPELHERVATTEN,');
+    vSQL.SQL.Add('ALLROUND,');
+    vSQL.SQL.Add('LAST_UPDATE,');
+    vSQL.SQL.Add('HTYC');
+
+    vSQL.SQL.Add('FROM KARAKTER_PROFIEL');
+    vSQL.SQL.Add('WHERE');
+    vSQL.SQL.Add('ID = :ID');
+
+    vSQL.ParamByName('ID').asInteger := KarakterID;
+    vSQL.ExecQuery;
+
+    Keeper := vSQL.FieldByName('IS_KEEPER').asInteger = -1;
+    Specialiteit := vSQL.FieldByName('SPECIALITEIT').asString;
+    PotKeepen := vSQL.FieldByName('POT_KEEPEN').asFloat;
+    PotPositiespel := vSQL.FieldByName('POT_POSITIESPEL').asFloat;
+    PotPassen := vSQL.FieldByName('POT_PASSEN').asFloat;
+    PotVleugelspel := vSQL.FieldByName('POT_VLEUGELSPEL').asFloat;
+    PotVerdedigen := vSQL.FieldByName('POT_VERDEDIGEN').asFloat;
+    PotScoren := vSQL.FieldByName('POT_SCOREN').asFloat;
+    PotSpelhervatten := vSQL.FieldByName('POT_SPELHERVATTEN').asFloat;
+    Allround := vSQL.FieldByName('ALLROUND').asInteger;
+    LastKarakterUpdate := vSQL.FieldByName('LAST_UPDATE').asDateTime;
+    KarakterHTYC := vSQL.FieldByName('HTYC').asInteger = -1;
+
+  finally
+    uBibDb.CommitTransaction(vSQL.Transaction, TRUE);
+    vSQL.Free;
+  end;
+end;
+
+procedure TDatabasePlayer.LoadPlayerInfo;
+var
+  vSQL: TIBSQL;
+begin
+
+  vSQL := uBibRuntime.CreateSQL(FDatabase, '', uHattrick.CreateReadTransaction(FDatabase));
+
+  try
+    vSQL.SQL.Add('SELECT');
+
+    vSQL.SQL.Add('J.KARAKTER_ID,');
+    vSQL.SQL.Add('J.PROMOTED,');
+    vSQL.SQL.Add('J.PLAYER_NAME,');
+    vSQL.SQL.Add('J.LAST_UPDATE,');
+    vSQL.SQL.Add('J.KEEPEN,');
+    vSQL.SQL.Add('J.POSITIESPEL,');
+    vSQL.SQL.Add('J.PASSEN,');
+    vSQL.SQL.Add('J.VLEUGELSPEL,');
+    vSQL.SQL.Add('J.VERDEDIGEN,');
+    vSQL.SQL.Add('J.SCOREN,');
+    vSQL.SQL.Add('J.SPELHERVATTEN,');
+    vSQL.SQL.Add('J.TEAM_ID,');
+    vSQL.SQL.Add('J.GEBOORTE_DATUM,');
+    vSQL.SQL.Add('J.NATIONALITEIT,');
+    vSQL.SQL.Add('U20.U20');
+
+    vSQL.SQL.Add('FROM JEUGDSPELERS J');
+    vSQL.SQL.Add('LEFT JOIN GET_IS_U20(J.GEBOORTE_DATUM,1) U20 ON (0=0)');
+    vSQL.SQL.Add('WHERE');
+    vSQL.SQL.Add('J.PLAYER_ID = :ID');
+
+    vSQL.ParamByName('ID').asInteger := ID;
+    vSQL.ExecQuery;
+
+    KarakterID := vSQL.FieldByName('KARAKTER_ID').asInteger;
+    Promoted := vSQL.FieldByName('PROMOTED').asInteger = -1;
+    Naam := vSQL.FieldByName('PLAYER_NAME').asString;
+    LastPlayerUpdate := vSQL.FieldByName('LAST_UPDATE').AsDateTime;
+    CurKeepen := vSQL.FieldByName('KEEPEN').asFloat;
+    CurPositiespel := vSQL.FieldByName('POSITIESPEL').asFloat;
+    CurPassen := vSQL.FieldByName('PASSEN').asFloat;
+    CurVleugelspel := vSQL.FieldByName('VLEUGELSPEL').asFloat;
+    CurVerdedigen := vSQL.FieldByName('VERDEDIGEN').asFloat;
+    CurScoren := vSQL.FieldByName('SCOREN').asFloat;
+    CurSpelhervatten := vSQL.FieldByName('SPELHERVATTEN').asFloat;
+    TeamID := vSQL.FieldByName('TEAM_ID').asInteger;
+    GeboorteDatum := vSQL.FieldByName('GEBOORTE_DATUM').asDateTime;
+    IsU20 := vSQL.FieldByName('U20').asInteger = -1;
+    Nationaliteit := vSQL.FieldByName('NATIONALITEIT').asString;
+
+  finally
+    uBibDb.CommitTransaction(vSQL.Transaction, TRUE);
+    vSQL.Free;
+  end;
+end;
+
+procedure TDatabasePlayer.LoadSeniorInfo;
+var
+  vSQL: TIBSQL;
+begin
+  vSQL := uBibRuntime.CreateSQL(FDatabase, '', uHattrick.CreateReadTransaction(FDatabase));
+
+  try
+    vSQL.SQL.Add('SELECT');
+    vSQL.SQL.Add('ID');
+    vSQL.SQL.Add('FROM SCOUTING');
+    vSQL.SQL.Add('WHERE');
+    vSQL.SQL.Add('YOUTHPLAYER_ID = :ID');
+
+    vSQL.ParamByName('ID').asInteger := ID;
+    vSQL.ExecQuery;
+
+    IsSenior := vSQL.FieldByName('ID').asInteger > 0;
+  finally
+    uBibDb.CommitTransaction(vSQL.Transaction, TRUE);
+    vSQL.Free;
+  end;
+end;
+
+procedure TDatabasePlayer.Reload;
+begin
+  if (FLoadPlayerInfo) then
+    LoadPlayerInfo;
+
+  if (FLoadKarakterInfo) then
+    LoadKarakterInfo;
+
+  if (FLoadSeniorInfo) then
+    LoadSeniorInfo;
+end;
+
+function TDatabasePlayer.GetTalented: boolean;
+begin
+  result := uHattrick.IsTalented(FDatabase, ID);
+
+  if (FTestNTAsPossibleU20) and (not result) and (not IsU20) then
+  begin
+    // NT spelers nog even testen op mogelijke U20 talent
+    result := uBibDb.GetSPValue(FDatabase,'GET_TALENTED_BY_SKILLS',
+        [ID,-1,Specialiteit,Nationaliteit,-1, KarakterID, GeboorteDatum, 0, 0],
+        'U20_TALENTED',srtInteger) = -1;
+  end;
+end;
+
+procedure WriteActivity(aDatabase: TIBDatabase);
+begin
+  uBibDb.ExecSQL(aDatabase,'UPDATE ACTIVITY SET LAST_ACTIVITY = CURRENT_TIMESTAMP',[],[]);
+end;
+
+function TDatabasePlayer.GetPossibleTalented: boolean;
+begin
+  result := uHattrick.IsPossibleTalented(FDatabase, ID);
+end;
+
+{ TDownloadThread }
+
+constructor TDownloadThread.Create(aUrl: String);
+begin
+  inherited Create(TRUE);
+  FreeOnTerminate := TRUE;
+  FURL := aURL;
+  FDownload := TIEDownload.Create(nil);
+  FDownload.DownloadMethod := dmStream;
+  FDownload.OnDownloadComplete := OnDownloadComplete;
+end;
+
+destructor TDownloadThread.Destroy;
+begin
+  FDownload.Free;
+  inherited;
+end;
+
+procedure TDownloadThread.Execute;
+begin
+  FStartTime := Now;
+  FDownload.Go(FURL);
+  while not Terminated do
+  begin
+  end;
+end;
+
+procedure TDownloadThread.OnDownloadComplete(Sender: TBSCB;
+  Stream: TStream; Result: HRESULT);
+begin
+  Terminate;
 end;
 
 end.

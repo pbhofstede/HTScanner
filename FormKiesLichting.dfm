@@ -93,7 +93,7 @@ object frmKiesLichting: TfrmKiesLichting
     CachedUpdates = False
     SQL.Strings = (
       'SELECT D.* FROM U20_DATA D'
-      'WHERE D.DATUM - (3 * 16 * 7) > CURRENT_DATE'
+      'WHERE D.DATUM - (4 * 16 * 7) > CURRENT_DATE'
       'ORDER BY D.DATUM')
     Left = 112
     Top = 80

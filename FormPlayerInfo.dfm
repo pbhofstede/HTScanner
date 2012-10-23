@@ -1,8 +1,9 @@
 object frmPlayerInfo: TfrmPlayerInfo
-  Left = 37
-  Top = 35
-  Width = 1364
+  Left = 409
+  Top = 141
+  Width = 1239
   Height = 643
+  ActiveControl = edPlayerID
   Caption = 'Speler/manager informatie'
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -14,6 +15,7 @@ object frmPlayerInfo: TfrmPlayerInfo
   OldCreateOrder = False
   Position = poScreenCenter
   OnActivate = FormActivate
+  OnClose = FormClose
   OnCreate = FormCreate
   OnDestroy = FormDestroy
   OnKeyDown = FormKeyDown
@@ -22,7 +24,7 @@ object frmPlayerInfo: TfrmPlayerInfo
   object pcgControlInfo: TdxPageControl
     Left = 0
     Top = 0
-    Width = 1348
+    Width = 1223
     Height = 605
     ActivePage = tbPlayerinfo
     Align = alClient
@@ -43,8 +45,8 @@ object frmPlayerInfo: TfrmPlayerInfo
       object Panel1: TPanel
         Left = 0
         Top = 0
-        Width = 1348
-        Height = 61
+        Width = 1223
+        Height = 58
         Align = alTop
         BevelOuter = bvNone
         TabOrder = 0
@@ -98,7 +100,7 @@ object frmPlayerInfo: TfrmPlayerInfo
           TabOrder = 1
         end
         object Button1: TButton
-          Left = 1211
+          Left = 1086
           Top = 24
           Width = 115
           Height = 25
@@ -110,9 +112,9 @@ object frmPlayerInfo: TfrmPlayerInfo
       end
       object Panel3: TPanel
         Left = 0
-        Top = 61
-        Width = 1348
-        Height = 196
+        Top = 58
+        Width = 1223
+        Height = 212
         Align = alTop
         BevelOuter = bvNone
         TabOrder = 1
@@ -237,42 +239,34 @@ object frmPlayerInfo: TfrmPlayerInfo
           Width = 3
           Height = 13
         end
-        object dxDBEdit1: TdxDBEdit
-          Left = 131
-          Top = 71
-          Width = 349
-          TabOrder = 0
-          DataField = 'MANAGER_NAAM'
-          DataSource = dsManagerInfo
-        end
         object Button2: TButton
-          Left = 1211
+          Left = 1086
           Top = 80
           Width = 115
           Height = 25
           Anchors = [akTop, akRight]
           Caption = 'Update'
-          TabOrder = 1
+          TabOrder = 0
           OnClick = Button2Click
         end
         object btnInfo: TButton
-          Left = 1211
+          Left = 1086
           Top = 24
           Width = 115
           Height = 25
           Anchors = [akTop, akRight]
           Caption = '1e Info'
-          TabOrder = 2
+          TabOrder = 1
           OnClick = btnInfoClick
         end
         object Button4: TButton
-          Left = 1211
+          Left = 1086
           Top = 166
           Width = 115
           Height = 25
           Anchors = [akTop, akRight]
           Caption = 'Afwijzing'
-          TabOrder = 3
+          TabOrder = 2
           OnClick = Button4Click
         end
         object chckU20: TCheckBox
@@ -287,46 +281,46 @@ object frmPlayerInfo: TfrmPlayerInfo
           Font.Name = 'Tahoma'
           Font.Style = [fsBold]
           ParentFont = False
-          TabOrder = 4
+          TabOrder = 3
         end
         object Button3: TButton
-          Left = 1211
+          Left = 1086
           Top = 52
           Width = 115
           Height = 25
           Anchors = [akTop, akRight]
           Caption = '1e Info (herhaling)'
-          TabOrder = 5
+          TabOrder = 4
           OnClick = Button3Click
         end
         object Button5: TButton
-          Left = 1211
+          Left = 1086
           Top = 108
           Width = 115
           Height = 25
           Anchors = [akTop, akRight]
           Caption = 'Update (herhaling)'
-          TabOrder = 6
+          TabOrder = 5
           OnClick = Button5Click
         end
         object Button6: TButton
-          Left = 1211
+          Left = 1086
           Top = 137
           Width = 115
           Height = 25
           Anchors = [akTop, akRight]
           Caption = 'Promotie'
-          TabOrder = 7
+          TabOrder = 6
           OnClick = Button6Click
         end
         object btnScout: TButton
-          Left = 1211
+          Left = 1086
           Top = 0
           Width = 115
           Height = 25
           Anchors = [akTop, akRight]
           Caption = 'Scout!'
-          TabOrder = 8
+          TabOrder = 7
           OnClick = btnScoutClick
         end
         object chckInDocs: TCheckBox
@@ -342,7 +336,7 @@ object frmPlayerInfo: TfrmPlayerInfo
           Font.Name = 'Tahoma'
           Font.Style = [fsBold]
           ParentFont = False
-          TabOrder = 9
+          TabOrder = 8
         end
         object chckbxExported: TCheckBox
           Left = 340
@@ -351,7 +345,7 @@ object frmPlayerInfo: TfrmPlayerInfo
           Height = 17
           Alignment = taLeftJustify
           Caption = 'Exported'
-          TabOrder = 10
+          TabOrder = 9
         end
         object chckKeeper: TCheckBox
           Left = 340
@@ -360,16 +354,16 @@ object frmPlayerInfo: TfrmPlayerInfo
           Height = 17
           Alignment = taLeftJustify
           Caption = 'Keeper'
-          TabOrder = 11
+          TabOrder = 10
         end
         object Panel6: TPanel
           Left = 536
           Top = 0
           Width = 257
-          Height = 193
+          Height = 212
           Anchors = [akLeft, akTop, akBottom]
           BevelInner = bvLowered
-          TabOrder = 12
+          TabOrder = 11
           object Label15: TLabel
             Left = 128
             Top = 8
@@ -666,7 +660,7 @@ object frmPlayerInfo: TfrmPlayerInfo
           end
           object Label25: TLabel
             Left = 16
-            Top = 168
+            Top = 175
             Width = 47
             Height = 13
             Caption = 'Talented?'
@@ -783,27 +777,97 @@ object frmPlayerInfo: TfrmPlayerInfo
             Font.Style = [fsBold]
             ParentFont = False
           end
+          object Label26: TLabel
+            Left = 17
+            Top = 160
+            Width = 12
+            Height = 13
+            Caption = 'SP'
+          end
+          object lblNTSP: TLabel
+            Left = 129
+            Top = 160
+            Width = 15
+            Height = 13
+            Alignment = taRightJustify
+            Caption = 'GK'
+            Font.Charset = DEFAULT_CHARSET
+            Font.Color = clWindowText
+            Font.Height = -11
+            Font.Name = 'Tahoma'
+            Font.Style = [fsBold]
+            ParentFont = False
+          end
+          object lblCurSP: TLabel
+            Left = 186
+            Top = 160
+            Width = 15
+            Height = 13
+            Alignment = taRightJustify
+            Caption = 'GK'
+            Font.Charset = DEFAULT_CHARSET
+            Font.Color = clWindowText
+            Font.Height = -11
+            Font.Name = 'Tahoma'
+            Font.Style = [fsBold]
+            ParentFont = False
+          end
+          object lblU20SP: TLabel
+            Left = 221
+            Top = 160
+            Width = 15
+            Height = 13
+            Alignment = taRightJustify
+            Caption = 'GK'
+            Font.Charset = DEFAULT_CHARSET
+            Font.Color = clWindowText
+            Font.Height = -11
+            Font.Name = 'Tahoma'
+            Font.Style = [fsBold]
+            ParentFont = False
+          end
+          object Label27: TLabel
+            Left = 16
+            Top = 193
+            Width = 86
+            Height = 13
+            Caption = 'Possible talented?'
+          end
           object chckNTTalented: TCheckBox
             Left = 130
-            Top = 168
+            Top = 175
             Width = 33
             Height = 17
             TabOrder = 0
           end
           object chckU20Talented: TCheckBox
             Left = 223
-            Top = 168
+            Top = 175
             Width = 33
             Height = 17
             TabOrder = 1
           end
+          object chckPossible: TCheckBox
+            Left = 130
+            Top = 193
+            Width = 33
+            Height = 17
+            TabOrder = 2
+          end
+        end
+        object cxedtManager: TcxTextEdit
+          Left = 128
+          Top = 72
+          Properties.OnEditValueChanged = cxedtManagerPropertiesEditValueChanged
+          TabOrder = 12
+          Width = 313
         end
       end
       object Panel2: TPanel
         Left = 0
-        Top = 257
-        Width = 1348
-        Height = 325
+        Top = 270
+        Width = 1223
+        Height = 312
         Align = alClient
         BevelOuter = bvNone
         Caption = 'Panel2'
@@ -811,9 +875,9 @@ object frmPlayerInfo: TfrmPlayerInfo
         object dxPageControl1: TdxPageControl
           Left = 0
           Top = 0
-          Width = 1348
-          Height = 325
-          ActivePage = tbTeamSpelers
+          Width = 1223
+          Height = 312
+          ActivePage = tbBatchlings
           Align = alClient
           HideButtons = False
           HotTrack = False
@@ -831,8 +895,8 @@ object frmPlayerInfo: TfrmPlayerInfo
             object dxDBGrid1: TdxDBGrid
               Left = 0
               Top = 0
-              Width = 1348
-              Height = 302
+              Width = 1223
+              Height = 291
               Bands = <
                 item
                 end>
@@ -969,8 +1033,8 @@ object frmPlayerInfo: TfrmPlayerInfo
             object dxDBGrid2: TdxDBGrid
               Left = 0
               Top = 0
-              Width = 1348
-              Height = 302
+              Width = 1223
+              Height = 289
               Bands = <
                 item
                 end>
@@ -1050,6 +1114,12 @@ object frmPlayerInfo: TfrmPlayerInfo
                 BandIndex = 0
                 RowIndex = 0
                 FieldName = 'KARAKTER_ID'
+              end
+              object dxDBGrid2Column10: TdxDBGridColumn
+                Visible = False
+                BandIndex = 0
+                RowIndex = 0
+                FieldName = 'IS_TRAINER'
               end
             end
           end
@@ -1219,8 +1289,8 @@ object frmPlayerInfo: TfrmPlayerInfo
             object dxDBGrid6: TdxDBGrid
               Left = 0
               Top = 0
-              Width = 1348
-              Height = 302
+              Width = 1223
+              Height = 291
               Bands = <
                 item
                 end>
@@ -1310,12 +1380,12 @@ object frmPlayerInfo: TfrmPlayerInfo
         end
       end
     end
-    object dxTabSheet1: TdxTabSheet
+    object tbSTDBerichten: TdxTabSheet
       Caption = 'STD Berichten'
       object DBNavigator1: TDBNavigator
         Left = 0
         Top = 557
-        Width = 1348
+        Width = 1223
         Height = 25
         DataSource = dsSTDBerichten
         Align = alBottom
@@ -1324,7 +1394,7 @@ object frmPlayerInfo: TfrmPlayerInfo
       object Panel4: TPanel
         Left = 0
         Top = 0
-        Width = 1348
+        Width = 1223
         Height = 105
         Align = alTop
         BevelOuter = bvNone
@@ -1421,7 +1491,7 @@ object frmPlayerInfo: TfrmPlayerInfo
       object dxDBMemo1: TdxDBMemo
         Left = 0
         Top = 105
-        Width = 1348
+        Width = 1223
         Align = alClient
         TabOrder = 2
         DataField = 'BERICHT'
@@ -1446,7 +1516,7 @@ object frmPlayerInfo: TfrmPlayerInfo
       object Panel5: TPanel
         Left = 0
         Top = 222
-        Width = 1348
+        Width = 1223
         Height = 360
         Align = alBottom
         Caption = 'Panel5'
@@ -1454,7 +1524,7 @@ object frmPlayerInfo: TfrmPlayerInfo
         object dxDBGrid3: TdxDBGrid
           Left = 1
           Top = 1
-          Width = 1346
+          Width = 1221
           Height = 358
           Bands = <
             item
@@ -1520,7 +1590,7 @@ object frmPlayerInfo: TfrmPlayerInfo
       object Panel7: TPanel
         Left = 0
         Top = 0
-        Width = 1348
+        Width = 1223
         Height = 222
         Align = alTop
         BevelOuter = bvNone
@@ -1996,7 +2066,7 @@ object frmPlayerInfo: TfrmPlayerInfo
         object Panel9: TPanel
           Left = 569
           Top = 0
-          Width = 779
+          Width = 654
           Height = 222
           Align = alClient
           BevelOuter = bvNone
@@ -2004,7 +2074,7 @@ object frmPlayerInfo: TfrmPlayerInfo
           object Panel10: TPanel
             Left = 0
             Top = 0
-            Width = 648
+            Width = 523
             Height = 222
             Align = alClient
             BevelOuter = bvNone
@@ -2013,7 +2083,7 @@ object frmPlayerInfo: TfrmPlayerInfo
             object GroupBox2: TGroupBox
               Left = 0
               Top = 0
-              Width = 648
+              Width = 523
               Height = 222
               Align = alClient
               Caption = ' Huidige talenten '
@@ -2021,7 +2091,7 @@ object frmPlayerInfo: TfrmPlayerInfo
               object dxDBGrid5: TdxDBGrid
                 Left = 2
                 Top = 15
-                Width = 644
+                Width = 519
                 Height = 205
                 Bands = <
                   item
@@ -2082,7 +2152,7 @@ object frmPlayerInfo: TfrmPlayerInfo
             end
           end
           object Panel11: TPanel
-            Left = 648
+            Left = 523
             Top = 0
             Width = 131
             Height = 222
@@ -2379,7 +2449,7 @@ object frmPlayerInfo: TfrmPlayerInfo
     Top = 341
   end
   object ibqrTalenten: TIBQuery
-    Transaction = IBTransaction1
+    Transaction = IBReadTransaction
     BufferChunks = 1000
     CachedUpdates = False
     SQL.Strings = (
@@ -2411,18 +2481,20 @@ object frmPlayerInfo: TfrmPlayerInfo
         ParamType = ptUnknown
       end>
   end
-  object IBTransaction1: TIBTransaction
+  object IBWriteTransaction: TIBTransaction
     Active = False
     Params.Strings = (
       'read_committed'
       'rec_version'
       'nowait')
     AutoStopAction = saNone
-    Left = 472
-    Top = 341
+    Left = 424
+    Top = 45
   end
   object ibdtstManagerInfo: TIBDataSet
-    Transaction = IBTransaction1
+    Transaction = IBWriteTransaction
+    AfterClose = ibdtstScoutingAfterClose
+    BeforeOpen = ibdtstScoutingBeforeOpen
     BufferChunks = 1000
     CachedUpdates = False
     DeleteSQL.Strings = (
@@ -2455,8 +2527,8 @@ object frmPlayerInfo: TfrmPlayerInfo
       '  ID = :OLD_ID')
     GeneratorField.Field = 'ID'
     GeneratorField.Generator = 'GEN_MANAGER_INFO'
-    Left = 536
-    Top = 389
+    Left = 968
+    Top = 157
   end
   object dsManagerInfo: TDataSource
     DataSet = ibdtstManagerInfo
@@ -2469,8 +2541,10 @@ object frmPlayerInfo: TfrmPlayerInfo
     Top = 367
   end
   object ibdtstSTDBerichten: TIBDataSet
-    Transaction = IBTransaction1
+    Transaction = IBWriteTransaction
+    AfterClose = ibdtstScoutingAfterClose
     AfterPost = ibdtstSTDBerichtenAfterPost
+    BeforeOpen = ibdtstScoutingBeforeOpen
     BufferChunks = 1000
     CachedUpdates = False
     DeleteSQL.Strings = (
@@ -2514,11 +2588,11 @@ object frmPlayerInfo: TfrmPlayerInfo
       '  ID = :OLD_ID')
     GeneratorField.Field = 'ID'
     GeneratorField.Generator = 'GEN_STD_BERICHTEN_ID'
-    Left = 48
-    Top = 343
+    Left = 976
+    Top = 231
   end
   object ibqrBatchlings: TIBQuery
-    Transaction = IBTransaction1
+    Transaction = IBReadTransaction
     BufferChunks = 1000
     CachedUpdates = False
     SQL.Strings = (
@@ -2539,8 +2613,10 @@ object frmPlayerInfo: TfrmPlayerInfo
     Top = 340
   end
   object ibdtstScouting: TIBDataSet
-    Transaction = IBTransaction1
+    Transaction = IBWriteTransaction
+    AfterClose = ibdtstScoutingAfterClose
     AfterPost = ibdtstScoutingAfterPost
+    BeforeOpen = ibdtstScoutingBeforeOpen
     BufferChunks = 1000
     CachedUpdates = False
     DeleteSQL.Strings = (
@@ -2609,8 +2685,8 @@ object frmPlayerInfo: TfrmPlayerInfo
       '  IN_NT_DOCS = :IN_NT_DOCS'
       'where'
       '  ID = :OLD_ID')
-    Left = 680
-    Top = 422
+    Left = 968
+    Top = 86
     object ibdtstScoutingID: TIntegerField
       FieldName = 'ID'
       Origin = '"SCOUTING"."ID"'
@@ -2653,6 +2729,7 @@ object frmPlayerInfo: TfrmPlayerInfo
     Top = 463
   end
   object ibqrPotentials: TIBQuery
+    Transaction = IBReadTransaction
     BeforeOpen = ibqrPotentialsBeforeOpen
     BufferChunks = 1000
     CachedUpdates = False
@@ -2676,9 +2753,9 @@ object frmPlayerInfo: TfrmPlayerInfo
       'LEFT JOIN KARAKTER_PROFIEL K ON (J.KARAKTER_ID = K.ID)'
       'LEFT JOIN GET_LEEFTIJD(J.GEBOORTE_DATUM,CURRENT_DATE) L ON (0=0)'
       
-        'LEFT JOIN CALC_NT_POTENTIAL_OVERALL(L.AGE,L.DAYS,S.KEEPEN,S.VERD' +
-        'EDIGEN,S.POSITIESPEL,S.VLEUGELSPEL,S.PASSEN,S.SCOREN,S.SPELHERVA' +
-        'TTING) POT'
+        'LEFT JOIN CALC_NT_POTENTIAL_OVERALL(L.AGE,L.DAYS,J.KARAKTER_ID,S' +
+        '.KEEPEN,S.VERDEDIGEN,S.POSITIESPEL,S.VLEUGELSPEL,S.PASSEN,S.SCOR' +
+        'EN,S.SPELHERVATTING) POT'
       '  ON (0=0)'
       
         'LEFT JOIN GET_IS_U20(J.GEBOORTE_DATUM,CASE WHEN COALESCE(K.IS_KE' +
@@ -2741,134 +2818,6 @@ object frmPlayerInfo: TfrmPlayerInfo
         Name = 'MAX_AWIJKING'
         ParamType = ptUnknown
       end>
-    object ibqrPotentialsLEEFTIJD: TIBStringField
-      FieldName = 'LEEFTIJD'
-      Origin = '"GET_LEEFTIJD"."LEEFTIJD"'
-      Size = 100
-    end
-    object ibqrPotentialsIS_U20: TSmallintField
-      FieldName = 'IS_U20'
-      Origin = '"CALC_NT_POTENTIAL_OVERALL"."IS_U20"'
-    end
-    object ibqrPotentialsPLAYER_ID: TIntegerField
-      FieldName = 'PLAYER_ID'
-      Origin = '"SCOUTING"."PLAYER_ID"'
-    end
-    object ibqrPotentialsPLAYER_NAAM: TIBStringField
-      FieldName = 'PLAYER_NAAM'
-      Origin = '"SCOUTING"."PLAYER_NAAM"'
-      Size = 100
-    end
-    object ibqrPotentialsHERKOMST: TIBStringField
-      FieldName = 'HERKOMST'
-      Origin = '"SCOUTING"."HERKOMST"'
-      Size = 40
-    end
-    object ibqrPotentialsSPECIALITEIT: TIBStringField
-      FieldName = 'SPECIALITEIT'
-      Origin = '"SCOUTING"."SPECIALITEIT"'
-    end
-    object ibqrPotentialsTSI: TIntegerField
-      FieldName = 'TSI'
-      Origin = '"SCOUTING"."TSI"'
-    end
-    object ibqrPotentialsDEADLINE: TDateTimeField
-      FieldName = 'DEADLINE'
-      Origin = '"SCOUTING"."DEADLINE"'
-    end
-    object ibqrPotentialsHOOGSTE_BOD: TFloatField
-      FieldName = 'HOOGSTE_BOD'
-      Origin = '"SCOUTING"."HOOGSTE_BOD"'
-    end
-    object ibqrPotentialsKEEPEN: TFloatField
-      FieldName = 'KEEPEN'
-      Origin = '"SCOUTING"."KEEPEN"'
-    end
-    object ibqrPotentialsVERDEDIGEN: TFloatField
-      FieldName = 'VERDEDIGEN'
-      Origin = '"SCOUTING"."VERDEDIGEN"'
-    end
-    object ibqrPotentialsPOSITIESPEL: TFloatField
-      FieldName = 'POSITIESPEL'
-      Origin = '"SCOUTING"."POSITIESPEL"'
-    end
-    object ibqrPotentialsVLEUGELSPEL: TFloatField
-      FieldName = 'VLEUGELSPEL'
-      Origin = '"SCOUTING"."VLEUGELSPEL"'
-    end
-    object ibqrPotentialsPASSEN: TFloatField
-      FieldName = 'PASSEN'
-      Origin = '"SCOUTING"."PASSEN"'
-    end
-    object ibqrPotentialsSCOREN: TFloatField
-      FieldName = 'SCOREN'
-      Origin = '"SCOUTING"."SCOREN"'
-    end
-    object ibqrPotentialsSPELHERVATTING: TSmallintField
-      FieldName = 'SPELHERVATTING'
-      Origin = '"SCOUTING"."SPELHERVATTING"'
-    end
-    object ibqrPotentialsGK_INDEX: TIBBCDField
-      FieldName = 'GK_INDEX'
-      Origin = '"CALC_NT_POTENTIAL_OVERALL"."GK_INDEX"'
-      Precision = 9
-      Size = 2
-    end
-    object ibqrPotentialsCD_INDEX: TIBBCDField
-      FieldName = 'CD_INDEX'
-      Origin = '"CALC_NT_POTENTIAL_OVERALL"."CD_INDEX"'
-      Precision = 9
-      Size = 2
-    end
-    object ibqrPotentialsOCD_INDEX: TIBBCDField
-      FieldName = 'OCD_INDEX'
-      Origin = '"CALC_NT_POTENTIAL_OVERALL"."OCD_INDEX"'
-      Precision = 9
-      Size = 2
-    end
-    object ibqrPotentialsOWB_INDEX: TIBBCDField
-      FieldName = 'OWB_INDEX'
-      Origin = '"CALC_NT_POTENTIAL_OVERALL"."OWB_INDEX"'
-      Precision = 9
-      Size = 2
-    end
-    object ibqrPotentialsIM_INDEX: TIBBCDField
-      FieldName = 'IM_INDEX'
-      Origin = '"CALC_NT_POTENTIAL_OVERALL"."IM_INDEX"'
-      Precision = 9
-      Size = 2
-    end
-    object ibqrPotentialsWING_INDEX: TIBBCDField
-      FieldName = 'WING_INDEX'
-      Origin = '"CALC_NT_POTENTIAL_OVERALL"."WING_INDEX"'
-      Precision = 9
-      Size = 2
-    end
-    object ibqrPotentialsFW_INDEX: TIBBCDField
-      FieldName = 'FW_INDEX'
-      Origin = '"CALC_NT_POTENTIAL_OVERALL"."FW_INDEX"'
-      Precision = 9
-      Size = 2
-    end
-    object ibqrPotentialsDFW_INDEX: TIBBCDField
-      FieldName = 'DFW_INDEX'
-      Origin = '"CALC_NT_POTENTIAL_OVERALL"."DFW_INDEX"'
-      Precision = 9
-      Size = 2
-    end
-    object ibqrPotentialsLEEFTIJD1: TIBStringField
-      FieldName = 'LEEFTIJD1'
-      Origin = '"SCOUTING"."LEEFTIJD"'
-      Size = 100
-    end
-    object ibqrPotentialsYOUTHPLAYER_ID: TIntegerField
-      FieldName = 'YOUTHPLAYER_ID'
-      Origin = '"SCOUTING"."YOUTHPLAYER_ID"'
-    end
-    object ibqrPotentialsDATUM: TDateField
-      FieldName = 'DATUM'
-      Origin = '"SCOUTING"."DATUM"'
-    end
   end
   object dsTalenten: TDataSource
     DataSet = ibqrNTTalenten
@@ -2876,6 +2825,7 @@ object frmPlayerInfo: TfrmPlayerInfo
     Top = 289
   end
   object ibqrNTTalenten: TIBQuery
+    Transaction = IBReadTransaction
     BufferChunks = 1000
     CachedUpdates = False
     SQL.Strings = (
@@ -2886,8 +2836,8 @@ object frmPlayerInfo: TfrmPlayerInfo
       'SPECIALITEIT,'
       '0 POS_INDEX'
       'FROM NT_SCOUTING')
-    Left = 696
-    Top = 393
+    Left = 704
+    Top = 345
   end
   object dsPrestaties: TDataSource
     DataSet = ibqrPrestaties
@@ -2895,7 +2845,7 @@ object frmPlayerInfo: TfrmPlayerInfo
     Top = 415
   end
   object ibqrPrestaties: TIBQuery
-    Transaction = IBTransaction1
+    Transaction = IBReadTransaction
     BufferChunks = 1000
     CachedUpdates = False
     SQL.Strings = (
@@ -2927,7 +2877,7 @@ object frmPlayerInfo: TfrmPlayerInfo
       end>
   end
   object ibqrPosBatchlings: TIBQuery
-    Transaction = IBTransaction1
+    Transaction = IBReadTransaction
     BufferChunks = 1000
     CachedUpdates = False
     SQL.Strings = (
@@ -2946,5 +2896,16 @@ object frmPlayerInfo: TfrmPlayerInfo
     DataSet = ibqrPosBatchlings
     Left = 472
     Top = 463
+  end
+  object IBReadTransaction: TIBTransaction
+    Active = False
+    Params.Strings = (
+      'read'
+      'read_committed'
+      'rec_version'
+      'nowait')
+    AutoStopAction = saNone
+    Left = 296
+    Top = 85
   end
 end

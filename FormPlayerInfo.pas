@@ -7,7 +7,8 @@ uses
   ExtCtrls, StdCtrls, IBSQL, dxCntner, dxTL, dxDBCtrl, dxDBGrid, Db,
   IBCustomDataSet, IBQuery, IBDatabase, dxEditor, dxEdLib, dxDBELib,
   dxPageControl, dxExEdtr, DBCtrls, dxDBTLCl, dxGrClms, OleCtrls,
-  SHDocVw_EWB, EwbCore, EmbeddedWB;
+  SHDocVw_EWB, EwbCore, EmbeddedWB, IBUpdateSQL, cxControls, cxContainer,
+  cxEdit, cxTextEdit;
 
 type
   TSTdTekst = (stdInfo,stdUpdate,stdAfwijzing,stdPromotie);
@@ -15,7 +16,7 @@ type
   TfrmPlayerInfo = class(TForm)
     DataSource1: TDataSource;
     ibqrTalenten: TIBQuery;
-    IBTransaction1: TIBTransaction;
+    IBWriteTransaction: TIBTransaction;
     ibdtstManagerInfo: TIBDataSet;
     dsManagerInfo: TDataSource;
     pcgControlInfo: TdxPageControl;
@@ -39,13 +40,12 @@ type
     lblSpecialiteit: TLabel;
     lblAllRound: TLabel;
     lblManagerNaam: TLabel;
-    dxDBEdit1: TdxDBEdit;
     Panel2: TPanel;
     mBericht: TdxMemo;
     Button2: TButton;
     btnInfo: TButton;
     Button4: TButton;
-    dxTabSheet1: TdxTabSheet;
+    tbSTDBerichten: TdxTabSheet;
     DBNavigator1: TDBNavigator;
     Panel4: TPanel;
     dxDBMemo1: TdxDBMemo;
@@ -119,32 +119,6 @@ type
     dxDBGrid4: TdxDBGrid;
     dsPotentials: TDataSource;
     ibqrPotentials: TIBQuery;
-    ibqrPotentialsLEEFTIJD: TIBStringField;
-    ibqrPotentialsIS_U20: TSmallintField;
-    ibqrPotentialsPLAYER_ID: TIntegerField;
-    ibqrPotentialsPLAYER_NAAM: TIBStringField;
-    ibqrPotentialsHERKOMST: TIBStringField;
-    ibqrPotentialsSPECIALITEIT: TIBStringField;
-    ibqrPotentialsTSI: TIntegerField;
-    ibqrPotentialsDEADLINE: TDateTimeField;
-    ibqrPotentialsHOOGSTE_BOD: TFloatField;
-    ibqrPotentialsKEEPEN: TFloatField;
-    ibqrPotentialsVERDEDIGEN: TFloatField;
-    ibqrPotentialsPOSITIESPEL: TFloatField;
-    ibqrPotentialsVLEUGELSPEL: TFloatField;
-    ibqrPotentialsPASSEN: TFloatField;
-    ibqrPotentialsSCOREN: TFloatField;
-    ibqrPotentialsSPELHERVATTING: TSmallintField;
-    ibqrPotentialsGK_INDEX: TIBBCDField;
-    ibqrPotentialsCD_INDEX: TIBBCDField;
-    ibqrPotentialsOCD_INDEX: TIBBCDField;
-    ibqrPotentialsOWB_INDEX: TIBBCDField;
-    ibqrPotentialsIM_INDEX: TIBBCDField;
-    ibqrPotentialsWING_INDEX: TIBBCDField;
-    ibqrPotentialsFW_INDEX: TIBBCDField;
-    ibqrPotentialsDFW_INDEX: TIBBCDField;
-    ibqrPotentialsLEEFTIJD1: TIBStringField;
-    ibqrPotentialsYOUTHPLAYER_ID: TIntegerField;
     dxDBGrid4LEEFTIJD: TdxDBGridMaskColumn;
     dxDBGrid4IS_U20: TdxDBGridCheckColumn;
     dxDBGrid4PLAYER_ID: TdxDBGridMaskColumn;
@@ -173,7 +147,6 @@ type
     dxDBGrid4YOUTHPLAYER_ID: TdxDBGridMaskColumn;
     dsTalenten: TDataSource;
     ibqrNTTalenten: TIBQuery;
-    ibqrPotentialsDATUM: TDateField;
     dxDBGrid4DATUM: TdxDBGridColumn;
     ibdtstScoutingKARAKTER_PROFIEL_ID: TIntegerField;
     Panel6: TPanel;
@@ -306,6 +279,15 @@ type
     lblCurWNG: TLabel;
     lblCurFW: TLabel;
     lblCurdFW: TLabel;
+    Label26: TLabel;
+    lblNTSP: TLabel;
+    lblCurSP: TLabel;
+    lblU20SP: TLabel;
+    cxedtManager: TcxTextEdit;
+    IBReadTransaction: TIBTransaction;
+    dxDBGrid2Column10: TdxDBGridColumn;
+    Label27: TLabel;
+    chckPossible: TCheckBox;
     procedure FormKeyDown(Sender: TObject; var Key: Word;
       Shift: TShiftState);
     procedure FormCreate(Sender: TObject);
@@ -354,8 +336,13 @@ type
       var AllowChange: Boolean);
     procedure lblKeepenDblClick(Sender: TObject);
     procedure Button10Click(Sender: TObject);
+    procedure ibdtstScoutingBeforeOpen(DataSet: TDataSet);
+    procedure ibdtstScoutingAfterClose(DataSet: TDataSet);
+    procedure cxedtManagerPropertiesEditValueChanged(Sender: TObject);
+    procedure FormClose(Sender: TObject; var Action: TCloseAction);
   private
-    FCurPlayerID: integer;
+    FCurPlayerID, FCurTeamID: integer;
+    FLoaded: boolean;
     procedure GetYouthPlayerID;
     //procedure LoadPicture(aKarakterID: Integer);
     //procedure AddPart(aPart: String);
@@ -369,7 +356,7 @@ type
       var aIndex: double): boolean;
   private
     FSpelerSQL: TIBSQL;
-    FReloadTwinsEtc: boolean;
+    FReloadTwinsEtc, FNoChange: boolean;
     { Private declarations }
     procedure ParsePlayerInfo(aSQL:TIBSQL);
     procedure Zoek;
@@ -629,10 +616,10 @@ var
 begin
   vValues := uBibDb.GetSPValues(frmHTScanner.ibdbHTInfo,'GET_U20_TALENT',
     [aPlayerId, aPosition],
-    ['PLAYER_ID','CURRENT_INDEX'],[srtInteger,srtFloat]);
+    ['PLAYER_ID','CURRENT_INDEX','INDEX_BONUS'],[srtInteger,srtFloat,srtFloat]);
 
   result := vValues[1] <> 0;
-  aIndex := vValues[1];
+  aIndex := vValues[1] - vValues[2];
 end;
 
 procedure TfrmPlayerInfo.CalcPotentials(aPlayerID, aKarakterID: integer);
@@ -647,8 +634,9 @@ begin
   lblCurWNG.Caption := '';
   lblCurFW.Caption := '';
   lblCurdFW.Caption := '';
+  lblCurSP.Caption := '';
 
-  if (aPlayerID > 0) then
+  if (aPlayerID > 0) and (aKarakterID > 0) then
   begin
     uBibDb.ExecSQL(frmHTScanner.ibdbHTInfo,'EXECUTE PROCEDURE SAVE_NT_U20_POTENTIAL(:KARAKTERID)',
       ['KARAKTERID'],[aKarakterID]);
@@ -662,16 +650,9 @@ begin
         end;
         ParamByName('PLAYERID').asInteger := aPlayerID;
         ExecQuery;
-        if (FieldByName('U20_LEEFTIJD').asInteger = -1) then
-        begin
-          chckNTTalented.Checked := FieldByName('TALENTED').asInteger = -1;
-          chckU20Talented.Checked := FieldByName('U20_TALENTED').asInteger = -1;
-        end
-        else
-        begin
-          chckNTTalented.Checked := FieldByName('TALENTED').asInteger = -1;
-          chckU20Talented.Checked := FieldByName('U20_TALENTED').asInteger = -1;
-        end;
+        chckNTTalented.Checked := FieldByName('TALENTED').asInteger = -1;
+        chckU20Talented.Checked := FieldByName('U20_TALENTED').asInteger = -1;
+        chckPossible.Checked := FieldByName('POSSIBLE_TALENTED').asInteger = -1;
       finally
         uBibdb.CommitTransaction(Transaction, TRUE);
         Free;
@@ -692,6 +673,7 @@ begin
           Add('POT.WING_INDEX,');
           Add('POT.FW_INDEX ,');
           Add('POT.DFW_INDEX,');
+          Add('POT.SP_DEF_INDEX,');
           Add('P.KEEPEN_TOP3, P.VERDEDIGEN_TOP3, P.POSITIESPEL_TOP3, P.PASSEN_TOP3,');
           Add('P.VLEUGELSPEL_TOP3, P.SCOREN_TOP3');
           Add('FROM JEUGDSPELERS J');
@@ -717,6 +699,7 @@ begin
         lblNTWING.Caption := Format('%.2f',[FieldByName('WING_INDEX').asFloat]);
         lblNTFW.Caption := Format('%.2f',[FieldByName('FW_INDEX').asFloat]);
         lblNTdFW.Caption := Format('%.2f',[FieldByName('DFW_INDEX').asFloat]);
+        lblNTSP.Caption := Format('%.2f',[FieldByName('SP_DEF_INDEX').asFloat]);
       finally
         uBibdb.CommitTransaction(Transaction, TRUE);
         Free;
@@ -740,6 +723,7 @@ begin
           Add('POT.WING_INDEX,');
           Add('POT.FW_INDEX ,');
           Add('POT.DFW_INDEX,');
+          Add('POT.SP_DEF_INDEX,');
           Add('P.KEEPEN_TOP3, P.VERDEDIGEN_TOP3, P.POSITIESPEL_TOP3, P.PASSEN_TOP3,');
           Add('P.VLEUGELSPEL_TOP3, P.SCOREN_TOP3');
           Add('FROM JEUGDSPELERS J');
@@ -787,6 +771,12 @@ begin
           lblCurdFW.Caption := Format('[%.2f]',[vCurIndex]);
         end;
         lblU20dFW.Caption := Format('%.2f',[FieldByName('DFW_INDEX').asFloat]);
+
+        if (GetCurU20Index(aPlayerId,8,vCurIndex)) then
+        begin
+          lblCurSP.Caption := Format('[%.2f]',[vCurIndex]);
+        end;
+        lblU20SP.Caption := Format('%.2f',[FieldByName('SP_DEF_INDEX').asFloat]);
       finally
         uBibdb.CommitTransaction(Transaction, TRUE);
         Free;
@@ -803,6 +793,7 @@ begin
     lblNTWING.Caption := '';
     lblNTFW.Caption := '';
     lblNTdFW.Caption := '';
+    lblNTSP.Caption := '';
     lblU20GK.Caption := '';
     lblU20CD.Caption := '';
     lblU20OCD.Caption := '';
@@ -811,6 +802,7 @@ begin
     lblU20WING.Caption := '';
     lblU20FW.Caption := '';
     lblU20dFW.Caption := '';
+    lblU20SP.Caption := '';
   end;
 end;
 
@@ -854,9 +846,12 @@ end;
 procedure TfrmPlayerInfo.Zoek;
 var
   vParam:String;
-  vTeamID: integer;
 begin
+  FNoChange := TRUE;
+  cxedtManager.Text := '';
   FCurPlayerID := -1;
+  FCurTeamID := -1;
+  IBReadTransaction.CommitRetaining;
   Screen.Cursor := crSQLWait;
   if (FReloadTwinsEtc) then
   begin
@@ -865,7 +860,6 @@ begin
   end;
   
   try
-    vTeamID := 0;
     if ibdtstManagerInfo.State in [dsEdit,dsInsert] then
       ibdtstManagerInfo.Post;
 
@@ -876,10 +870,8 @@ begin
     else
     begin
       vParam := edTeamID.Text;
-      vTeamID := StrToInt(vParam);
+      FCurTeamID := StrToInt(vParam);
     end;
-
-    IBTransaction1.CommitRetaining;
 
     if (edPlayerID.Text <> '') then
     begin
@@ -889,7 +881,7 @@ begin
         Close;
         ParamByName('ID').asString := vParam;
         ExecQuery;
-        vTeamID := FieldByName('TEAM_ID').asInteger;
+        FCurTeamID := FieldByName('TEAM_ID').asInteger;
 
         ParsePlayerInfo(FSpelerSQL);
       end;
@@ -925,18 +917,18 @@ begin
       with ibqrTalenten do
       begin
         Close;
-        if vTeamID > 0 then
+        if FCurTeamID > 0 then
         begin
-          ParamByName('TEAMID').asInteger := vTeamID;
+          ParamByName('TEAMID').asInteger := FCurTeamID;
           Open;
         end;
       end;
     end;
     
-    if (vTeamID > 0) then
+    if (FCurTeamID > 0) then
     begin
       lblBlacklist.Visible := (uBibDB.GetFieldValue(frmHTScanner.ibdbHTInfo,'BLACKLIST',
-          ['TEAM_ID'],[vTeamID],'ID',srtInteger)) > 0;
+          ['TEAM_ID'],[FCurTeamID],'ID',srtInteger,svtNormal, uHattrick.CreateReadTransAction(frmHTScanner.ibdbHTInfo))) > 0;
     end
     else
     begin
@@ -945,16 +937,23 @@ begin
 
     with ibdtstManagerInfo do
     begin
-      Close;
-      if vTeamID > 0 then
+      if (Active) then
       begin
-        ParamByName('TEAMID').asInteger := vTeamID;
+        Close;
+      end;
+      if FCurTeamID > 0 then
+      begin
+        ParamByName('TEAMID').asInteger := FCurTeamID;
         Open;
+        cxedtManager.Text := FieldByName('MANAGER_NAAM').asString;
+        FNoChange := FALSE;
         if (RecordCount = 0) then
         begin
           Insert;
-          FieldByName('TEAM_ID').asInteger := vTeamID;
+          FieldByName('TEAM_ID').asInteger := FCurTeamID;
+          Post;
         end;
+        Close;
       end;
     end;
   finally
@@ -980,29 +979,32 @@ const
     'WHERE J.PLAYER_ID = :ID';
 begin
   FReloadTwinsEtc := TRUE;
-  
-  pcgControlInfo.ActivePage := tbPlayerinfo;
-  dxPageControl1.ActivePage := tbBatchlings;
+
   ibdtstScouting.Database := frmHTScanner.ibdbHTInfo;
   ibqrPotentials.Database := frmHTScanner.ibdbHTInfo;
   ibqrNTTalenten.Database := frmHTScanner.ibdbHTInfo;
   ibqrPosBatchlings.Database := frmHTScanner.ibdbHTInfo;
 
-  IBTransaction1.DefaultDatabase := frmHTScanner.ibdbHTInfo;
-  ibqrBatchlings.Transaction := IBTransaction1;
-  ibdtstScouting.Transaction := IBTransaction1;
-  ibdtstSTDBerichten.Transaction := IBTransaction1;
-  ibqrTalenten.Transaction := IBTransaction1;
-  ibdtstManagerInfo.Transaction := IBTransaction1;
-  ibqrPotentials.Transaction := IBTransaction1;
-  ibqrNTTalenten.Transaction := IBTransaction1;
-  ibqrPosBatchlings.Transaction := IBTransaction1;
+  IBWriteTransaction.DefaultDatabase := frmHTScanner.ibdbHTInfo;
+  IBReadTransaction.DefaultDatabase := frmHTScanner.ibdbHTInfo;
 
-  IBTransaction1.StartTransaction;
-  FSpelerSQL := uBibRuntime.CreateSQL(frmHTScanner.ibdbHTInfo,cSQL_PLAYERID);
-  ibdtstSTDBerichten.Open;
+  ibqrBatchlings.Transaction := IBReadTransaction;
+  ibqrTalenten.Transaction := IBReadTransaction;
+  ibqrPotentials.Transaction := IBReadTransaction;
+  ibqrNTTalenten.Transaction := IBReadTransaction;
+  ibqrPosBatchlings.Transaction := IBReadTransaction;
+  ibqrPrestaties.Transaction := IBReadTransaction;
+
+  ibdtstScouting.Transaction := IBWriteTransaction;
+  ibdtstSTDBerichten.Transaction := IBWriteTransaction;
+  ibdtstManagerInfo.Transaction := IBWriteTransaction;
+
+  IBReadTransaction.StartTransaction;
+  FSpelerSQL := uBibRuntime.CreateSQL(frmHTScanner.ibdbHTInfo,cSQL_PLAYERID,IBReadTransaction);
   CalcPotentials(0,0);
-  //ibqrPotentials.Open;
+  FLoaded := TRUE;
+  pcgControlInfo.ActivePage := tbPlayerinfo;
+  dxPageControl1.ActivePage := tbBatchlings;
 end;
 
 procedure TfrmPlayerInfo.FormDestroy(Sender: TObject);
@@ -1017,10 +1019,8 @@ begin
     ibdtstSTDBerichten.Post;
   end;
 
-  uBibDB.CommitTransaction(SpelerSQL.Transaction,TRUE);
   FSpelerSQL.Free;
-
-  IBTransaction1.Commit;
+  IBReadTransaction.Commit;
 end;
 
 function TfrmPlayerInfo.GetFieldName(aStart,aField:String):String;
@@ -1139,8 +1139,6 @@ begin
     uBibDb.ExecSQL(frmHTScanner.ibdbHTInfo,'UPDATE JEUGDSPELERS SET UPDATE_COUNT = :COUNT WHERE PLAYER_ID = :ID',
       ['ID','COUNT'],[FSpelerSQL.FieldByName('PLAYER_ID').asInteger,FSpelerSQL.FieldByName('UPDATE_COUNT').asInteger + 1]);
 
-    IBTransaction1.CommitRetaining;
-
     FSpelerSQL.Close;
     FSpelerSQL.ParamByName('ID').asInteger := vPlayerID;
     FSpelerSQL.ExecQuery;
@@ -1161,7 +1159,7 @@ end;
 
 procedure TfrmPlayerInfo.ibdtstSTDBerichtenAfterPost(DataSet: TDataSet);
 begin
-  IBTransaction1.CommitRetaining;
+  IBWriteTransaction.CommitRetaining;
 end;
 
 procedure TfrmPlayerInfo.FormActivate(Sender: TObject);
@@ -1224,33 +1222,39 @@ end;
 procedure TfrmPlayerInfo.btnScoutClick(Sender: TObject);
 var
   vTeamID: integer;
+  vFound: boolean;
 begin
   lblStatus.Caption := 'Busy...';
   edPlayerID.Visible := FALSE;
+  vFound := FALSE;
   try
     if (CurPlayerID > 0) then
     begin
       // ZOek de speler maar ff op
-      frmHTScanner.GetJeugdspelerInfoByID(CurPlayerID,0,'',TRUE, chckKeeper.Checked, TRUE);
+      vFound := frmHTScanner.GetJeugdspelerInfoByID(CurPlayerID,0,'',TRUE, chckKeeper.Checked, TRUE);
       edPlayerID.Text := IntToStr(CurPlayerID);
     end;
-    frmHTScanner.CurScan := '[post=xxx]';
 
-    vTeamID := uBibDb.GetFieldValue(frmHTScanner.ibdbHTInfo,'JEUGDSPELERS',['PLAYER_ID'],[CurPlayerID],'TEAM_ID',srtInteger);
-    if (vTeamID <= 0) then
+    if (vFound) then
     begin
-      vTeamID := StrToInt(InputBox('HTScanner','Geef het TeamID...','0'));
+      frmHTScanner.CurScan := '[post=xxx]';
 
-      uBibDb.ExecSQL(frmHTScanner.ibdbHTInfo,'UPDATE JEUGDSPELERS SET TEAM_ID = :TEAMID WHERE PLAYER_ID = :ID',
-        ['ID','TEAMID'],[CurPlayerID, vTeamID]);
-    end;
+      vTeamID := uBibDb.GetFieldValue(frmHTScanner.ibdbHTInfo,'JEUGDSPELERS',['PLAYER_ID'],[CurPlayerID],'TEAM_ID',srtInteger);
+      if (vTeamID <= 0) then
+      begin
+        vTeamID := StrToInt(InputBox('HTScanner','Geef het TeamID...','0'));
 
-    if frmHTScanner.ExtractPlayersToCSV(0,FALSE,CurPlayerID) > 0 then
-    begin
-      edPlayerID.Text := IntToStr(CurPlayerID);
-      frmHTScanner.ExtractPlayersToCSV(0,FALSE,CurPlayerID);
+        uBibDb.ExecSQL(frmHTScanner.ibdbHTInfo,'UPDATE JEUGDSPELERS SET TEAM_ID = :TEAMID WHERE PLAYER_ID = :ID',
+          ['ID','TEAMID'],[CurPlayerID, vTeamID]);
+      end;
 
-      //ShowMessage('Klaar');
+      if frmHTScanner.ExtractPlayersToCSV(0,FALSE,CurPlayerID) > 0 then
+      begin
+        edPlayerID.Text := IntToStr(CurPlayerID);
+        frmHTScanner.ExtractPlayersToCSV(0,FALSE,CurPlayerID);
+
+        //ShowMessage('Klaar');
+      end;
     end;
   finally
     lblStatus.Caption := 'Idle...';
@@ -1305,7 +1309,7 @@ begin
     ibdtstScouting.Post;
   end;
 
-  if (ibdtstScouting.FieldByName('PLAYER_NAAM').asString <> '') then
+  if (ibdtstScouting.FieldByName('PLAYER_NAAM').asString <> '') and (ibdtstScouting.FieldByName('KARAKTER_PROFIEL_ID').asInteger > 0) then
   begin
     with uBibRunTime.CreateSQL(frmHTScanner.ibdbHTInfo) do
     begin
@@ -1346,7 +1350,7 @@ end;
 
 procedure TfrmPlayerInfo.ibdtstScoutingAfterPost(DataSet: TDataSet);
 begin
-  IBTransaction1.CommitRetaining;
+  IBWriteTransaction.CommitRetaining;
 end;
 
 procedure TfrmPlayerInfo.dxDBGrid1CustomDrawCell(Sender: TObject;
@@ -1370,7 +1374,7 @@ procedure TfrmPlayerInfo.dxDBGrid2CustomDrawCell(Sender: TObject;
   var AText: String; var AColor: TColor; AFont: TFont;
   var AAlignment: TAlignment; var ADone: Boolean);
 var
-  vDeleted, vPromoted:boolean;
+  vDeleted, vPromoted, vIsTrainer:boolean;
 begin
   vDeleted := uBibGrid.GetNodeValue(aNode,'DELETED',srtInteger) = -1;
   if (vDeleted) then
@@ -1379,10 +1383,18 @@ begin
   end
   else
   begin
-    vPromoted := uBibGrid.GetNodeValue(aNode,'PROMOTED',srtInteger) = -1;
-    if (vPromoted) then
+    vIsTrainer := uBibGrid.GetNodeValue(aNode,'IS_TRAINER',srtInteger) = -1;
+    if (vIsTrainer) then
     begin
-      aFont.Color := clBlue;
+      aFont.Color := clMaroon;
+    end
+    else
+    begin
+      vPromoted := uBibGrid.GetNodeValue(aNode,'PROMOTED',srtInteger) = -1;
+      if (vPromoted) then
+      begin
+        aFont.Color := clBlue;
+      end;
     end;
   end;
 end;
@@ -1539,16 +1551,30 @@ end;
 procedure TfrmPlayerInfo.pcgControlInfoChanging(Sender: TObject;
   NewPage: TdxTabSheet; var AllowChange: Boolean);
 begin
-  if NewPage = tbPotentials then
+  if (FLoaded) then
   begin
-    if not (ibqrPotentials.Active) then
+    ibdtstScouting.Close;
+    ibdtstSTDBerichten.Close;
+
+    if NewPage = tbPotentials then
     begin
-      Screen.Cursor := crSQLWait;
-      try
-        ibqrPotentials.Open;
-      finally
-        Screen.Cursor := crDefault;
+      if not (ibqrPotentials.Active) then
+      begin
+        Screen.Cursor := crSQLWait;
+        try
+          ibqrPotentials.Open;
+        finally
+          Screen.Cursor := crDefault;
+        end;
       end;
+    end
+    else if NewPage = tbNTScouting then
+    begin
+      ibdtstScouting.Open;
+    end
+    else if NewPage = tbSTDBerichten then
+    begin
+      ibdtstSTDBerichten.Open;
     end;
   end;
 end;
@@ -1723,7 +1749,7 @@ begin
         end;
       end;
 
-      if not (vFound) then
+      if not (vFound) and (vKarakterID > 0) then
       begin
         with uBibRuntime.CreateSQL(frmHTScanner.ibdbHTInfo) do
         begin
@@ -1834,6 +1860,44 @@ begin
   finally
     vInfo.Free;
   end;
+end;
+
+procedure TfrmPlayerInfo.ibdtstScoutingBeforeOpen(DataSet: TDataSet);
+begin
+  if not (IBWriteTransaction.InTransaction) then
+  begin
+    IBWriteTransaction.StartTransaction;
+  end;
+end;
+
+procedure TfrmPlayerInfo.ibdtstScoutingAfterClose(DataSet: TDataSet);
+begin
+  IBWriteTransaction.Commit;
+end;
+
+procedure TfrmPlayerInfo.cxedtManagerPropertiesEditValueChanged(
+  Sender: TObject);
+begin
+  if (FCurTeamID > 0) and (not FNoChange) then
+  begin
+    ibdtstManagerInfo.ParamByName('TEAMID').asInteger := FCurTeamID;
+    ibdtstManagerInfo.Open;
+    if (ibdtstManagerInfo.FieldByName('ID').asInteger > 0) and
+       (ibdtstManagerInfo.FieldByName('MANAGER_NAAM').asString <> cxedtManager.Text) then
+    begin
+      ibdtstManagerInfo.Edit;
+      ibdtstManagerInfo.FieldByName('TEAM_ID').asInteger := FCurTeamID;
+      ibdtstManagerInfo.FieldByName('MANAGER_NAAM').asString := cxedtManager.Text;
+      ibdtstManagerInfo.Post;
+    end;
+    ibdtstManagerInfo.Close;
+  end;
+end;
+
+procedure TfrmPlayerInfo.FormClose(Sender: TObject;
+  var Action: TCloseAction);
+begin
+  cxedtManagerPropertiesEditValueChanged(cxedtManager);
 end;
 
 end.

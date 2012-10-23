@@ -261,6 +261,7 @@ type
     Forcesave1: TMenuItem;
     btnHTCY: TdxBarButton;
     btnAuto: TMenuItem;
+    tmrActivity: TTimer;
     procedure Button1Click(Sender: TObject);
     procedure HTBrowserDocumentComplete(ASender: TObject;
       const pDisp: IDispatch; var URL: OleVariant);
@@ -339,9 +340,15 @@ type
     procedure Forcesave1Click(Sender: TObject);
     procedure btnHTCYClick(Sender: TObject);
     procedure btnAutoClick(Sender: TObject);
+    procedure tmrActivityTimer(Sender: TObject);
+    procedure tmrDSTimer(Sender: TObject);
+    procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
   private
+    FActiveThreadCount: integer;
+    FCurCheckPlayer, FCurCheckVaardigheid: String;
+    FAftermatchCheck: boolean;
     FStartParsing: TDateTime;
-    FISU20, FFullAuto: boolean;
+    FISU20, FFullAuto, FNoTalentCheck: boolean;
     FAutoStart: boolean;
     FOpnieuw: boolean;
     FDocumentCompleted: boolean;
@@ -381,7 +388,7 @@ type
     FCompetitieReeks: integer;
     FLeeftijden:array of TDate;
     FCurScan: String;
-    FCheckBatchlings: boolean;
+    FCheckBatchlings, FWriteActivitiy: boolean;
     FScanAll: boolean;
     FOnbekendeSpelers: integer;
     FBekendeSpelers: integer;
@@ -392,10 +399,10 @@ type
     FCurLeiderschap: String;
     FTransferListed: integer;
     FHT_URL: String;
-    FAutoTBSReeks: integer;
     FScanDate: TDate;
     FNextBidwarCheck: TDateTime;
     FFirstTime: boolean;
+    procedure WriteActivity;
     function BrowseTo(aBrowser:TEmbeddedWB;aURL: String;aMaxWait:Integer=0):boolean;
     procedure LogIn;
     function BrowserClick(aBrowser:TEmbeddedWB;const aBrowserObjectNames:array of String;
@@ -496,7 +503,7 @@ type
     procedure AddOHW(aPlayerFile, aOHWList: TStringList);
     procedure RemoveFiles(aDir,aFileMask: String);
     function GetScout(aDoc, aSheet, aPlayerName: String): String;
-    procedure ScoutAll17yo;
+    function ScoutAll17yo:boolean;
     procedure ScoutBigScoutPlayers(aReeks: integer);
     procedure SetBekendeSpelers(const Value: integer);
     procedure SetOnbekendeSpelers(const Value: integer);
@@ -517,7 +524,7 @@ type
     procedure GetHoogsteRating(aGK, aCD, aOCD, aOWB, aIM, aWing, aFW,
       aDFW: double; var aRating: double; var aPos: string);
     procedure SaveScanHistorie(aSpecCount, aSpecLoos:integer);
-    procedure DoAutoStart(aTBSReeks: integer);
+    procedure DoAutoStart;
     procedure SetNextBidwarCheck(const Value: TDateTime);
     function GetForceSave: boolean;
     procedure ReadInifile;
@@ -534,6 +541,14 @@ type
     procedure BubbleSort(aList: TObjectList);
     function SaveCSVFile(vList: TStringList;aTitle, aDir, aFileName: String): boolean;
     procedure BubbleSortByPlayerID(aList: TObjectList);
+    procedure ScoutFC;
+    procedure OnThreadTerminate(Sender: TObject);
+    procedure GetPlayersByKarakter(aKarakterID: Integer; aIsKeeper: boolean);
+    procedure GetFutureCoaches(aList: TStringList; aKarakterID: integer);
+    procedure RebuildIndexes;
+    procedure DoAfterMatchCheck;
+    procedure BrowseToDS;
+    procedure ThreadBrowseTo(aURL: String);
     { Private declarations }
   public
     { Public declarations }
@@ -571,7 +586,6 @@ type
     property CurLeiderschap: String read FCurLeiderschap write SetCurLeiderschap;
     property DownloadErrors:integer read FDownloadErrors write SetDownloadErrors;
     property TransferListed: integer read FTransferListed write FTransferListed;
-    property AutoTBSReeks:integer read FAutoTBSReeks write FAutoTBSReeks;
     property AutoStart:boolean read FAutoStart write SetAutoStart;
     property ScanDate:TDate read FScanDate write FScanDate;
     property NextBidwarCheck:TDateTime read FNextBidwarCheck write SetNextBidwarCheck;
@@ -598,7 +612,7 @@ implementation
 uses
   Math, IniFiles, uBIBDb, uBibGrid, uBibRuntime, uBibIO, IBHeader, ClipBrd, ESBDates, uBibConv, uGlobalVars,
   uBibString, uBibDateTime, uBibMath, uBibMessageBox, formAutoScout, FileCtrl, ComObj, formKiesJeudCompetities,
-  FormPlayerInfo, FormNTScouting, uBibEmail, ShellApi, FormKiesLichting;
+  FormPlayerInfo, FormNTScouting, uBibEmail, ShellApi, FormKiesLichting, uBib;
 
 {$R *.DFM}
 
@@ -731,18 +745,21 @@ begin
     begin
       Wait(15 * 60, 25 * 60);
       DownloadErrors := 0;
-      LogIn;
+      Login;
     end
     else
     begin
-      if MessageBoxQuestion('Stoppen?','HTScanner') then
+      if (DownloadErrors > 0) then
       begin
-        Abort;
-      end
-      else
-      begin
-        btnStopScouting.Down := FALSE;
-        DownloadErrors := 0;
+        if MessageBoxQuestion('Stoppen?','HTScanner') then
+        begin
+          Abort;
+        end
+        else
+        begin
+          btnStopScouting.Down := FALSE;
+          DownloadErrors := 0;
+        end;
       end;
     end;
   end;
@@ -759,7 +776,7 @@ begin
     begin
       Wait(1,5);
     end;
-    result := BrowseTo(aBrowser,aURL);
+    result := BrowseTo(aBrowser,aURL, aMaxWait + 20);
   end
   else
   begin
@@ -879,11 +896,11 @@ begin
     if (FUserName <> '') then
     begin
       SetValue(HTBrowser,['ctl00$ucSubMenu$txtUserName','ctl00$ucSubMenu$ucLogin$txtUserName',
-        'ctl00_ctl00_CPContent_ucSubMenu_ucLogin_txtUserName'], FUserName);
+        'ctl00_ctl00_CPContent_ucSubMenu_ucLogin_txtUserName','ctl00$CPHeader$ucLogin$txtUserName'], FUserName);
       SetValue(HTBrowser,['ctl00$ucSubMenu$txtPassword', 'ctl00$ucSubMenu$ucLogin$txtPassword',
-        'ctl00_ctl00_CPContent_ucSubMenu_ucLogin_txtPassword'], FPassWord);
+        'ctl00_ctl00_CPContent_ucSubMenu_ucLogin_txtPassword','ctl00$CPHeader$ucLogin$txtPassword'], FPassWord);
       BrowserClick(HTBrowser, ['ctl00$ucSubMenu$butLogin', 'ctl00$ucSubMenu$ucLogin$butLogin',
-        'ctl00$ctl00$CPContent$ucSubMenu$ucLogin$butLogin']);
+        'ctl00$ctl00$CPContent$ucSubMenu$ucLogin$butLogin','ctl00$CPHeader$ucLogin$butLogin']);
     end;
     btnScanLijst.Enabled := TRUE;
     btnStartScouting.Enabled := TRUE;
@@ -1580,6 +1597,7 @@ begin
 
   ScanDate := Date;
 
+  FActiveThreadCount := 0;
   uGlobalVars.aGlobalIsUserApplication := TRUE;
   pgctrlLijst.ActivePage := tbBrowser;
   FDocumentCompleted := FALSE;
@@ -1592,8 +1610,21 @@ begin
   DownloadErrors := 0;
   FLoggedIn := FALSE;
   AutoStart := FALSE;
+  FFullAuto := FALSE;
 
   ReadIniFile;
+
+  if (ParamCount > 0) then
+  begin
+    if UpperCase(ParamStr(1)) = '-AUTO' then
+    begin
+      FFullAuto := TRUE;
+      if not (GetServiceIsRunning('srvProcessLoader')) then
+      begin
+        StartWinService('srvProcessLoader');
+      end;
+    end;
+  end;
 
   if (ibdbHTInfo.DatabaseName <> '') then
   begin
@@ -1609,44 +1640,27 @@ begin
     uBibDB.CommitTransaction(FScoutingHistorySQL.Transaction,FALSE);
     uBibDB.CommitTransaction(FJeugdspelersSQL.Transaction,FALSE);
     uBibDB.CommitTransaction(FJeugdPrestatiesSQL.Transaction,FALSE);
-
-
+    FWriteActivitiy := FFullAuto;
+    WriteActivity;
     WriteScanHistorie;
   end;
 
-  if (ParamCount > 0) then
+  if (FFullAuto) then
   begin
-    if UpperCase(ParamStr(1)) = '-AUTO' then
-    begin
-      FFullAuto := TRUE;
-      if (ParamCount > 1) and (ParamStr(2) <> '') then
-      begin
-        AutoTBSReeks := StrToInt(ParamStr(2));
-      end
-      else
-        AutoTBSReeks := 0;
-
-      tmrAutoStart.Enabled := TRUE;
-    end;
-  end
-  else
-  begin
-    AutoStart := TRUE;
+    tmrAutoStart.Enabled := TRUE;
   end;
 end;
 
-procedure TfrmHTScanner.DoAutoStart(aTBSReeks:integer);
+procedure TfrmHTScanner.DoAutoStart;
 begin
-  BringToFront;
-  Application.ProcessMessages;
   AutoStart := TRUE;
   mLogging.Lines.Add('AutoStart');
   try
-    Wait(60*4, 60*17);
+    BrowseTo(HTBrowser,HT_URL);
+    Wait(60*1, 60*6);
     LogIn;
-
     mLogging.Lines.Add('Logged in...');
-    mLogging.Lines.Add(Format('Scanning 17yo+ en TBSReeks %d',[aTBSReeks]));
+    mLogging.Lines.Add(Format('Scanning 17yo+',[]));
 
     ScoutAll17yo;
     Wait(5*60,20*60);
@@ -1656,7 +1670,7 @@ begin
     begin
       SendStatusMail(Format('Error! '+#13+'%s',
           [E.Message]), FALSE);
-      DoAutoStart(aTBSReeks);
+      DoAutoStart;
     end;
   end;
 end;
@@ -2306,9 +2320,15 @@ begin
   end; }
 
   // karakter en rest van kenmerken opslaan
-  aTSISet.KarakterID := uHattrick.SaveKarakterProfiel(ibdbHTInfo, aTSISet,ForceSave);
-
+  aTSISet.KarakterID := uHattrick.SaveKarakterProfiel(ibdbHTInfo, AutoStart, aTSISet);
   Result := uHattrick.SaveScouting(ibdbHTInfo, aTSISet, not(aDeleteOldScouting));
+
+  if (AutoStart) and (result = -1) and (aTSISet.YouthPlayerID > 0) then
+  begin
+    // Geen geldig karakter! Dan jeugdspeler ook verwijderen.
+    uBibDb.ExecSQL(ibdbHTInfo, 'DELETE FROM JEUGDSPELERS WHERE PLAYER_ID = :ID',
+      ['ID'], [aTSISet.YouthPlayerID]);
+  end;
 end;
 
 function TfrmHTScanner.SaveKarakterProfiel(aSpeler:TJeugdspeler; aForce: boolean):integer;
@@ -3313,8 +3333,7 @@ end;
 procedure TfrmHTScanner.btnScoutClick(Sender: TObject);
 begin
   case btnScout.ItemIndex of
-    0:
-      ShowMessage(Format('%d nieuwe spelers gescout!',[ScoutPlayers(FALSE)]));
+    0: ScoutFC;
     1:
     begin
       ShowMessage(Format('%d nieuwe spelers gescout!',[ScoutPlayers(TRUE)]));
@@ -3331,6 +3350,185 @@ begin
     11: DoMiniTBS;
     12: GetU20Lijstjes;
     13: GetNTLijstjes;
+  end;
+end;
+
+procedure TfrmHTScanner.GetPlayersByKarakter(aKarakterID: Integer; aIsKeeper: boolean);
+begin
+  with uBibRuntime.CreateSQL(ibdbHTInfo, '', uHattrick.CreateReadTransAction(ibdbHTInfo)) do
+  begin
+    try
+      with SQL do
+      begin
+        Add('SELECT');
+        Add('PLAYER_ID,');
+        Add('TEAM_ID,');
+        Add('PLAYER_NAME,');
+        Add('LAST_UPDATE');
+        Add('FROM JEUGDSPELERS');
+        Add('WHERE');
+        Add('KARAKTER_ID = :KARAKTERID');
+        Add('AND COALESCE(NATIONALITEIT,''Nederland'') = :NATIONALITEIT');
+        Add('AND GEBOORTE_DATUM <= :DATUM17');
+        Add('AND COALESCE(DELETED,0) = 0');
+      end;
+      ParamByName('KARAKTERID').asInteger := aKarakterID;
+      ParamByName('NATIONALITEIT').asString := 'Nederland';
+      ParamByName('DATUM17').asDateTime := Date - (2 * 16 * 7);
+      ExecQuery;
+      while not EOF do
+      begin
+        if (FieldByName('LAST_UPDATE').asDateTime < Date) then
+        begin
+          GetJeugdSpelerInfoByID(
+            FieldByName('PLAYER_ID').asInteger,
+            FieldByName('TEAM_ID').asInteger,
+            FieldByName('PLAYER_NAME').asString,
+            TRUE,
+            aIsKeeper,
+            TRUE);
+        end;
+        Next;
+      end;
+    finally
+      uBibDb.CommitTransaction(Transaction, TRUE);
+      Free;
+    end;
+  end;
+end;
+
+procedure TfrmHTScanner.ScoutFC;
+var
+  vList: TStringList;
+  vMax, vCount: Integer;
+begin
+  vCount := 0;
+
+  btnDoubleSpeed.Checked := FALSE;
+  btnWarpspeed.Checked := FALSE;
+  btnTripleSpeed.Checked := FALSE;
+  Quadspeed1.Checked := TRUE;
+
+  
+  vList := TStringList.Create;
+  try
+    with uBibRuntime.CreateSQL(ibdbHTInfo, '', uHattrick.CreateReadTransAction(ibdbHTInfo)) do
+    begin
+      try
+        with SQL do
+        begin
+          Add('SELECT');
+          Add('COUNT(ID) AANTAL');
+          Add('FROM KARAKTER_PROFIEL');
+          Add('WHERE');
+          Add('KARAKTER = :KARAKTER');
+          Add('AND LEIDERSCHAP = :LEIDERSCHAP');
+        end;
+        ParamByName('KARAKTER').asString := 'gemeen';
+        ParamByName('LEIDERSCHAP').asString := 'goed';
+        ExecQuery;
+        vMax := FieldByName('AANTAL').asInteger;
+      finally
+        uBibDb.CommitTransaction(Transaction, TRUE);
+        Free;
+      end;
+    end;
+
+
+    with uBibRuntime.CreateSQL(ibdbHTInfo, '', uHattrick.CreateReadTransAction(ibdbHTInfo)) do
+    begin
+      try
+        with SQL do
+        begin
+          Add('SELECT');
+          Add('ID,');
+          Add('IS_KEEPER');
+          Add('FROM KARAKTER_PROFIEL');
+          Add('WHERE');
+          Add('KARAKTER = :KARAKTER');
+          Add('AND LEIDERSCHAP = :LEIDERSCHAP');
+        end;
+        ParamByName('KARAKTER').asString := 'gemeen';
+        ParamByName('LEIDERSCHAP').asString := 'goed';
+        ExecQuery;
+        while not EOF do
+        begin
+          inc(vCount);
+          GetPlayersByKarakter(FieldByName('ID').asInteger, FieldByName('IS_KEEPER').asInteger = -1);
+          GetFutureCoaches(vList,FieldByName('ID').asInteger);
+
+          lblStatus.Caption := Format('%d/%d',[vCount, vMax]);
+
+          if (Length(vList.Text) > 2500) then
+          begin
+            SaveCSVFile(vList, 'Future Coaches',ExtractFilePath(Application.ExeName)+'Scouting\',
+              'FC.csv' );
+
+            vList.Clear;
+          end;
+          Next;
+        end;
+      finally
+        uBibDb.CommitTransaction(Transaction, TRUE);
+        Free;
+      end;
+    end;
+    SaveCSVFile(vList, 'Future Coaches',ExtractFilePath(Application.ExeName)+'Scouting\',
+      'FC.csv' );
+  finally
+    vList.Free;
+  end;
+end;
+
+procedure TfrmHTScanner.GetFutureCoaches(aList: TStringList; aKarakterID: integer);
+
+function ErvaringOk(aErvaring: String):boolean;
+begin
+  if (aErvaring = 'niet-bestaand') or (aErvaring = 'rampzalig') or (aErvaring = 'waardeloos') or
+    (aErvaring = 'slecht') then
+  begin
+    result := FALSE;
+  end
+  else
+  begin
+    result := TRUE;
+  end;
+end;
+
+begin
+  with uBibRuntime.CreateSQL(ibdbHTInfo, '', uHattrick.CreateReadTransAction(ibdbHTInfo)) do
+  begin
+    try
+      with SQL do
+      begin
+        Add('SELECT');
+        Add('S.PLAYER_ID,');
+        Add('S.PLAYER_NAAM,');
+        Add('S.ERVARING');
+        Add('FROM SCOUTING S');
+        Add('LEFT JOIN JEUGDSPELERS J ON (S.YOUTHPLAYER_ID = J.PLAYER_ID)');
+        Add('WHERE');
+        Add('S.KARAKTER_PROFIEL_ID = :KARAKTER_PROFIEL_ID');
+        Add('AND COALESCE(J.DELETED,0) = 0');
+        Add('AND COALESCE(J.NATIONALITEIT,''Nederland'') = :NATIONALITEIT');
+      end;
+      ParamByName('KARAKTER_PROFIEL_ID').asInteger := aKarakterID;
+      ParamByName('NATIONALITEIT').asString := 'Nederland';
+      ExecQuery;
+      while not EOF do
+      begin
+        if (ErvaringOk(FieldByName('ERVARING').asString)) then
+        begin
+          aList.Add(Format('[playerid=%d];%s;%s XP',
+            [FieldByName('PLAYER_ID').asInteger, FieldByName('PLAYER_NAAM').asString,
+            FieldByName('ERVARING').asString]));
+        end;
+        Next;
+      end;
+    finally
+      uBibDb.CommitTransaction(Transaction, TRUE);
+      Free;
+    end;
   end;
 end;
 
@@ -3504,12 +3702,12 @@ end;
 
 var
   i, vCount:integer;
-  vKwalificatie, vSortbyPotentie: boolean;
+  vKwalificatie: boolean;
   vLichting, vKarakter, vDummy, vInfo, vSortField, vPos, vDir: String;
   vList: TStringList;
   vVoortgang: TfrmVoortgang;
   vPlayerList: TObjectList;
-  vSpeler: TJeugdspeler;
+  vSpeler, vNextPlayer: TJeugdspeler;
 begin
   vPlayerList := TObjectList.Create(FALSE);
   vDir := ExtractFilePath(Application.ExeName)+'Scouting\U20\';
@@ -3527,21 +3725,13 @@ begin
             RemoveFiles(vDir, '.csv');
           end;
 
-          vSortbyPotentie := uBibMessageBox.MessageBoxQuestion('Sorteren op potentie?',
-            'U20 shortlists');
+          vSortField := 'TOTAL_INDEX';
 
-          if (vSortbyPotentie) then
-          begin
-            vSortField := 'TOTAL_INDEX';
-          end
-          else
-          begin
-            vSortField := 'CURRENT_INDEX';
-          end;
           vVoortgang.Melding := 'Bezig met genereren U20 lijsten...';
-          for i:=0 to 7 do
+          for i:=0 to 8 do
           begin
             case i of
+              0: vPos := 'GK';
               1: vPos := 'OWB';
               2: vPos := 'IM';
               3: vPos := 'WNG';
@@ -3549,7 +3739,9 @@ begin
               5: vPos := 'OCD';
               6: vPos := 'CD';
               7: vPos := 'DFW';
+              8: vPos := 'SP-DEF';
             end;
+
 
             vList.Clear;
             vCount := 0;
@@ -3658,6 +3850,7 @@ begin
                     5: SaveCSVFile(vList,'U20 OCD',vDir,'U20_PMVerdedigers.csv');
                     6: SaveCSVFile(vList,'U20 CD',vDir,'U20_Verdedigers.csv');
                     7: SaveCSVFile(vList,'U20 DFW',vDir,'U20_DFW.csv');
+                    8: SaveCSVFile(vList,'U20 SP-DEF',vDir,'U20_SP.csv');
                   end;
 
                   Next;
@@ -3677,6 +3870,7 @@ begin
               5: SaveCSVFile(vList,'U20 OCD',vDir,'U20_PMVerdedigers.csv');
               6: SaveCSVFile(vList,'U20 CD',vDir,'U20_Verdedigers.csv');
               7: SaveCSVFile(vList,'U20 DFW',vDir,'U20_DFW.csv');
+              8: SaveCSVFile(vList,'U20 SP-DEF',vDir,'U20_SP.csv');
             end;
 
             vVoortgang.StepIt;
@@ -3715,8 +3909,18 @@ begin
           vList.Add(Format('%s - [youthplayerid=%s] %s [%s] [%s]',[FormatDateTime('dd-mm-yyyy',vSpeler.GeboorteDatum),
             vSpeler.ID, vSpeler.Naam, uHattrick.GetPlayerSkills(ibdbHTInfo, StrToInt(vSpeler.ID)), vSpeler.Herkomst]));
 
-          vList.Add('');
-
+          if (i < vPlayerList.Count - 1) then
+          begin
+            vNextPlayer := TJeugdSpeler(vPlayerList[i + 1]);
+            if (vSpeler.GeboorteDatum = vNextPlayer.GeboorteDatum) then
+            begin
+              vList.Add('');
+            end
+            else
+            begin
+              vList.Add('[hr]');
+            end;
+          end;
           if (Length(vList.Text) >= MAX_FORUM_LENGTH) then
           begin
             SaveCSVFile(vList,'U20-XTC prospects op promotiedatum',vDir,'U20_Promotiedatum.csv');
@@ -3801,26 +4005,46 @@ begin
   ShowMessage('klaar');
 end;
 
-procedure TfrmHTScanner.ScoutAll17yo;
+procedure TfrmHTScanner.ThreadBrowseTo(aURL: String);
+var
+  vDL : TDownloadThread;
+begin
+  mLogging.Lines.Add('Thread download started for '+aURL);
+  vDL := TDownloadThread.Create(aURL);
+  vDL.OnTerminate := OnThreadTerminate;
+
+  vDL.Resume;
+
+  inc(FActiveThreadCount);
+end;
+
+procedure TfrmHTScanner.BrowseToDS;
+begin
+  ThreadBrowseTo('http://www.dutchscouts.nl/web/NTSpy.php');
+  if (FirstTime) then
+  begin
+    if (DayOfWeek(Date) = 2) then
+    begin
+      ThreadBrowseTo('http://www.dutchscouts.nl/scan/scanGespeeld.php');
+    end;
+    FFirstTime := FALSE;
+  end;
+end;
+
+function TfrmHTScanner.ScoutAll17yo:boolean;
 var
   vMax, vCount, vSpecCount,vSpecloos: Integer;
   vSQL:TIBSQL;
   vValues:TFieldValues;
 begin
-  if (FirstTime) then
+  FWriteActivitiy := TRUE;
+  AutoStart := TRUE;
+
+  if (FFirstTime) then
   begin
-    pgctrlLijst.ActivePage := tbTSI;
-    BrowseTo(TSIBrowser,'http://www.dutchscouts.nl/web/getNTPlayerInfo.php?NT=0');
-    BrowseTo(TSIBrowser,'http://www.dutchscouts.nl/web/getNTPlayerInfo.php?NT=1');
-    if (DayOfWeek(Date) = 2) then
-    begin
-      BrowseTo(TSIBrowser,'http://www.dutchscouts.nl/scan/scanGespeeld.php',30*60 {half uurtje wachten max.});
-    end;
-
-    pgctrlLijst.ActivePage := tbBrowser;
-
-    FFirstTime := FALSE;
+    BrowseToDS;
   end;
+  WriteActivity;
   
   btnStopScouting.Visible := ivAlways;
   btnDoubleSpeed.Checked := FALSE;
@@ -3839,37 +4063,32 @@ begin
   vSpecloos := vValues[1];
   vMax := 0;
   try
-
-    with uBibRuntime.CreateSQL(ibdbHTInfo, '', uHattrick.CreateReadTransAction(ibdbHTInfo)) do
-    begin
-      try
-        with SQL do
-        begin
-          Add('SELECT');
-          Add('COUNT(PLAYER_ID) AANTAL');
-          Add('FROM GET_17YO_PLUS');
+    Screen.Cursor := crSQLWait;
+    try
+      with uBibRuntime.CreateSQL(ibdbHTInfo, '', uHattrick.CreateReadTransAction(ibdbHTInfo)) do
+      begin
+        try
+          with SQL do
+          begin
+            Add('SELECT');
+            Add('COUNT(PLAYER_ID) AANTAL');
+            Add('FROM GET_17YO_PLUS');
+          end;
+          ExecQuery;
+          vMax := FieldByName('AANTAL').asInteger;
+        finally
+          uBibDb.CommitTransaction(Transaction, TRUE);
+          Free;
         end;
-        ExecQuery;
-        vMax := FieldByName('AANTAL').asInteger;
-      finally
-        uBibDb.CommitTransaction(Transaction, TRUE);
-        Free;
       end;
+    finally
+      Screen.Cursor := crDefault;
     end;
+    Quadspeed1.Checked := TRUE;
 
-    if (vMax >= 13000) then
-    begin
-      Quadspeed1.Checked := TRUE;
-    end
-    else if (vMax >= 10000) then
-    begin
-      btnTripleSpeed.Checked := TRUE;
-    end
-    else
-      btnDoubleSpeed.Checked := TRUE;
-
-
+    result := vMax > 0;
     vCount := 0;
+    WriteActivity;
 
     SendStatusMail(Format('Scan started. %d spelers te controleren...',
         [vMax]), FALSE);
@@ -3883,8 +4102,18 @@ begin
           Add('*');
           Add('FROM GET_17YO_PLUS');
         end;
+        Screen.Cursor := crSQLWait;
+        try
+          ExecQuery;
+        finally
+          Screen.Cursor := crDefault;
+        end;
 
-        ExecQuery;
+        if not (GetServiceIsRunning('srvProcessLoader')) then
+        begin
+          StartWinService('srvProcessLoader');
+        end;
+
         while not EOF do
         begin
           if btnStopScouting.Down then
@@ -3972,7 +4201,11 @@ begin
     btnTripleSpeedClick(btnTripleSpeed);
   end;
 
-  Wait(10 * 60,18 * 60);
+  if (result) then
+  begin
+    Wait(10 * 60,18 * 60);
+  end;
+  
   with uBibRuntime.CreateSQL(ibdbHTInfo,'',uHattrick.CreateReadTransAction(ibdbHTInfo)) do
   begin
     try
@@ -3980,6 +4213,7 @@ begin
       begin
         Add('SELECT ID FROM GET_TBS_INFO');
         Add('WHERE PLAYERS_TODO > 0 AND ID < -1');
+        Add('AND COALESCE(EXPORTEREN,0) = 0');
         Add('ORDER BY LAATSTE_SCAN');
       end;
       ExecQuery;
@@ -4174,14 +4408,21 @@ begin
       minSeconden := Round(minSeconden / 4);
       MaxSeconden := Round(MaxSeconden / 4);
     end;
-
-    vAantal := Random((MaxSeconden - MinSeconden) * 1000) + (minSeconden * 1000);
-    vStart := Time2Msec(Now);
-    repeat
-      vVerstreken := Time2Msec(Now) - vStart;
-      StatusBar1.Panels[0].Text := Format('%d seconden',[Round((vAantal - vVerstreken)/1000)]);
-      Application.Handlemessage;
-    until vVerstreken > vAantal;
+    tmrActivity.Enabled := FFullAuto;
+    try
+      vAantal := Random((MaxSeconden - MinSeconden) * 1000) + (minSeconden * 1000);
+      vStart := Time2Msec(Now);
+      repeat
+        vVerstreken := Time2Msec(Now) - vStart;
+        StatusBar1.Panels[0].Text := Format('%d seconden',[Round((vAantal - vVerstreken)/1000)]);
+        Application.Handlemessage;
+      until vVerstreken > vAantal;
+    finally
+      if (tmrActivity.Enabled) then
+      begin
+        tmrActivity.Enabled := FALSE;
+      end;
+    end;
   end;
 
   vTime1 := EncodeTime(23,55,0,0);
@@ -4191,6 +4432,23 @@ begin
   begin
     // Niet rond middernacht ivm de berekening van de leeftijd
     Wait(60,240);
+  end;
+
+  if not (FAftermatchCheck) then
+  begin
+    DoAfterMatchCheck;
+  end;
+end;
+
+procedure TfrmHTScanner.DoAfterMatchCheck;
+var
+  vTime : TTime;
+begin
+  vTime := EncodeTime(22,0,0,0);
+  if (DayOfWeek(Date) = 6) and (Time >= vTime) then
+  begin
+    BrowseToDS;
+    FAftermatchCheck := TRUE;
   end;
 end;
 
@@ -5134,21 +5392,15 @@ begin
                     end;
                   end;
 
-                  vCount := uBibDb.GetFieldValue(ibdbHTInfo,'JEUGDSPELERS',
-                    ['KARAKTER_ID'],[FieldByName('KARAKTER_ID').asInteger],'PLAYER_ID',srtInteger,svtCount,
-                    uHattrick.CreateReadTransaction(ibdbHTInfo));
 
                   vBatchLine := '';
-                  if (vCount > 1) then
-                  begin
-                    vBatchlingList := GetBatchlings(vBatchLings,FieldByName('KARAKTER_ID').asInteger,
-                      FieldByName('PLAYER_ID').asInteger,
-                      CompetitieReeks, vCount, FALSE, TRUE);
+                  vBatchlingList := GetBatchlings(vBatchLings,FieldByName('KARAKTER_ID').asInteger,
+                    FieldByName('PLAYER_ID').asInteger,
+                    CompetitieReeks, vCount, FALSE, TRUE);
 
-                    if (vCount > 1) or (vBatchlingList <> '') then
-                    begin
-                      vBatchLine := Format('%s',[FieldByName('PLAYER_NAME').asString]) + vBatchlingList;
-                    end;
+                  if (vCount > 1) or (vBatchlingList <> '') then
+                  begin
+                    vBatchLine := Format('%s',[FieldByName('PLAYER_NAME').asString]) + vBatchlingList;
                   end;
 
                   if (FieldByName('LEIDERSCHAP').asString = 'goed') then
@@ -5896,6 +6148,7 @@ var
 begin
   vDatum := Date - (16 * 7) - 75;
   vRetry := FALSE;
+  WriteActivity;
 
   vURL := uHattrick.GetYouthPlayerLink(CurrentURL,aPlayerID);
   if (aBrowseToYouthPlayer) and (BrowseTo(HTBrowser,vURL)) then
@@ -6036,7 +6289,7 @@ begin
 
       if (vLinie <> -1) then
       begin
-        vSenior.IsKeeper := vLinie = 0;
+        vSenior.IsKeeper := (vLinie = 0) or (aIsKeeper);
         vSenior.Restyled := vRestyled;
                                 
         SaveScouting(vSenior,TRUE);
@@ -6048,7 +6301,7 @@ begin
         else
         begin
           // Speler gevonden??
-          result := (vSenior.PlayerName <> '');
+          result := (vSenior.PlayerName <> '') and (vSenior.KarakterID > 0);
         end;
       end
       else
@@ -6200,6 +6453,7 @@ var
   vMelding:String;
   vStop : boolean;
   vScanID : integer;
+  vToDo: integer;
 begin
   vStop := FALSE;
   if (FFullAuto) then
@@ -6222,26 +6476,17 @@ begin
     OnbekendeSpelers := uBiBDb.GetFieldValue(ibdbHTInfo,'COMPETITIES_SCANNED',
       ['ID'],[vScanID],'ONBEKEND',srtInteger,svtNormal,uHattrick.CreateReadTransaction(ibdbHTInfo));
 
-    with uBibRuntime.CreateSQL(ibdbHTInfo,'',uHattrick.CreateReadTransAction(ibdbHTInfo)) do
+    vMax := GetTotalPlayers(aReeks);
+
+    vTodo := uBibDb.GetFieldValue(ibdbHTInfo, 'GET_TBS_INFO' , ['ID'], [aReeks],
+      'PLAYERS_TODO', srtInteger, svtNormal, uHattrick.CreateReadTransAction(ibdbHTInfo));
+
+    if (vToDO <> vMax) then
     begin
-      try
-       with SQL do
-        begin
-          Add('SELECT');
-          Add('COUNT(DISTINCT(P.PLAYER_ID)) AANTAL');
-          Add('FROM JEUGD_PRESTATIES P');
-          Add('LEFT JOIN JEUGDSPELERS J ON (P.PLAYER_ID = J.PLAYER_ID)');
-          Add('WHERE P.JEUGD_COMPETITIES_ID = :REEKS');
-          Add('AND J.PLAYER_ID IS NULL AND P.STERREN >= 6.0');
-        end;
-        ParamByName('REEKS').asInteger := aReeks;
-        ExecQuery;
-        vMax := FieldByName('AANTAL').asInteger;
-      finally
-        uBibDb.CommitTransaction(Transaction,TRUE);
-        Free;
-      end;
+      uBibDB.ExecSQL(ibdbHTInfo, 'UPDATE COMPETITIES_SCANNED SET TOTAL_PLAYERS = (TOTAL_PLAYERS - :VERSCHIL) WHERE ID = :ID',
+        ['ID','VERSCHIL'], [vScanID, vTodo - vMax]);
     end;
+    
     vCount := 0;
     with uBibRuntime.CreateSQL(ibdbHTInfo,'',uHattrick.CreateReadTransAction(ibdbHTInfo)) do
     begin
@@ -6250,14 +6495,14 @@ begin
         begin
           Add('SELECT');
           Add('P.PLAYER_ID,');
-          Add('P.PLAYER_NAME,');
+          Add('MAX(P.PLAYER_NAME) PLAYER_NAME,');
           Add('P.TEAM_ID,');
           Add('J.ID');
           Add('FROM JEUGD_PRESTATIES P');
           Add('LEFT JOIN JEUGDSPELERS J ON (P.PLAYER_ID = J.PLAYER_ID)');
           Add('WHERE P.JEUGD_COMPETITIES_ID = :REEKS');
           Add('AND J.PLAYER_ID IS NULL AND P.STERREN >= 6.0');
-          Add('GROUP BY P.PLAYER_ID,P.PLAYER_NAME,P.TEAM_ID,J.ID');
+          Add('GROUP BY P.PLAYER_ID,P.TEAM_ID,J.ID');
         end;
         ParamByName('REEKS').asInteger := aReeks;
         ExecQuery;
@@ -6283,8 +6528,6 @@ begin
               end
               else
               begin
-                uBibDb.ExecSQL(ibdbHTInfo,'UPDATE COMPETITIES_SCANNED SET TOTAL_PLAYERS = TOTAL_PLAYERS -1 WHERE ID = :ID',
-                    ['ID'],[vScanID]);
                 vMelding := 'Speler(s) niet aangetroffen!';
               end;
             end;
@@ -6319,6 +6562,18 @@ begin
         Free;
       end;
     end;
+
+    vMax := GetTotalPlayers(aReeks);
+
+    vTodo := uBibDb.GetFieldValue(ibdbHTInfo, 'GET_TBS_INFO' , ['ID'], [aReeks],
+      'PLAYERS_TODO', srtInteger, svtNormal, uHattrick.CreateReadTransAction(ibdbHTInfo));
+
+    if (vToDO <> vMax) then
+    begin
+      uBibDB.ExecSQL(ibdbHTInfo, 'UPDATE COMPETITIES_SCANNED SET TOTAL_PLAYERS = (TOTAL_PLAYERS - :VERSCHIL) WHERE ID = :ID',
+        ['ID','VERSCHIL'], [vScanID, vTodo - vMax]);
+    end;
+    
     if (vMelding <> '') and not(FAutoStart) then
     begin
       ShowMessage(vMelding);
@@ -6897,7 +7152,7 @@ begin
     vPlayerInfo.Goatee := RemoveYouthKenmerk(vPlayerInfo.Goatee);
     vPlayerInfo.Body := RemoveYouthKenmerk(vPlayerInfo.Body);
 
-    vPlayerInfo.KarakterID := uHattrick.SaveKarakterProfiel(ibdbHTInfo,vPlayerInfo,FALSE);
+    vPlayerInfo.KarakterID := uHattrick.SaveKarakterProfiel(ibdbHTInfo,FALSE,vPlayerInfo);
   end;
   
   vCount := uBibDb.GetFieldValue(ibdbHTInfo,'JEUGDSPELERS',
@@ -7124,6 +7379,15 @@ var
   vOk, vdoParse: boolean;
   vDoDownload: boolean;
 begin
+  if (aScanAll) then
+  begin
+    if not (Quadspeed1.Checked) then
+    begin
+      Quadspeed1Click(Quadspeed1);
+    end;
+  end;
+
+  FNoTalentCheck := aScanAll;
   FChangeLog.Clear;
   FErrorList.Clear;
   vFormVoortgang := TfrmVoortgang.Create(nil, 5);
@@ -7182,9 +7446,9 @@ begin
 
       UrlDownloadToFile(TSIBrowser,
         PChar(Format('https://spreadsheets.google.com/ccc?key=%s&output=xls', [KEY_VERDEDIGERS])),
-        PChar(vMap + '\VERDEDIGERS.xls'), 0, nil);
+        PChar(vMap + '\VERDEDIGERS.xlsx'), 0, nil);
 
-      vOk := FileExists(vMap + '\VERDEDIGERS.xls');
+      vOk := FileExists(vMap + '\VERDEDIGERS.xlsx');
 
       if not(vOk) and (vErrorCount >= MAX_DOWNLOADERRORS) then
       begin
@@ -7203,9 +7467,9 @@ begin
 
       UrlDownloadToFile(TSIBrowser,
         PChar(Format('https://spreadsheets.google.com/ccc?key=%s&output=xls', [KEY_SPITSEN])),
-        PChar(vMap + '\SPITSEN.xls'), 0, nil);
+        PChar(vMap + '\SPITSEN.xlsx'), 0, nil);
 
-      vOk := FileExists(vMap + '\SPITSEN.xls');
+      vOk := FileExists(vMap + '\SPITSEN.xlsx');
 
       if not(vOk) and (vErrorCount >= MAX_DOWNLOADERRORS) then
       begin
@@ -7223,9 +7487,9 @@ begin
 
       UrlDownloadToFile(TSIBrowser,
         PChar(Format('https://spreadsheets.google.com/ccc?key=%s&output=xls', [KEY_VLEUGELSPELERS])),
-        PChar(vMap + '\VLEUGELSPELERS.xls'), 0, nil);
+        PChar(vMap + '\VLEUGELSPELERS.xlsx'), 0, nil);
 
-      vOk := FileExists(vMap + '\VLEUGELSPELERS.xls');
+      vOk := FileExists(vMap + '\VLEUGELSPELERS.xlsx');
 
       if not(vOk) and (vErrorCount >= MAX_DOWNLOADERRORS) then
       begin
@@ -7243,9 +7507,9 @@ begin
 
       UrlDownloadToFile(TSIBrowser,
         PChar(Format('https://spreadsheets.google.com/ccc?key=%s&output=xls', [KEY_MIDDENVELDERS])),
-        PChar(vMap + '\MIDDENVELDERS.xls'), 0, nil);
+        PChar(vMap + '\MIDDENVELDERS.xlsx'), 0, nil);
 
-      vOk := FileExists(vMap + '\MIDDENVELDERS.xls');
+      vOk := FileExists(vMap + '\MIDDENVELDERS.xlsx');
 
       if not(vOk) and (vErrorCount >= MAX_DOWNLOADERRORS) then
       begin
@@ -7263,9 +7527,9 @@ begin
 
       UrlDownloadToFile(TSIBrowser,
         PChar(Format('https://spreadsheets.google.com/ccc?key=%s&output=xls', [KEY_KEEPERS])),
-        PChar(vMap + '\KEEPERS.xls'), 0, nil);
+        PChar(vMap + '\KEEPERS.xlsx'), 0, nil);
 
-      vOk := FileExists(vMap + '\KEEPERS.xls');
+      vOk := FileExists(vMap + '\KEEPERS.xlsx');
 
       if not(vOk) and (vErrorCount >= MAX_DOWNLOADERRORS) then
       begin
@@ -7291,14 +7555,14 @@ begin
 
       FCheckBatchlings := aScanAll;
       
-      SaveXlsToDB('Verdedigers',vMap + '\VERDEDIGERS.xls', vFormVoortgang);
-      SaveXlsToDB('Spitsen',vMap + '\SPITSEN.xls', vFormVoortgang);
-      SaveXlsToDB('Vleugelspelers',vMap + '\VLEUGELSPELERS.xls', vFormVoortgang);
-      SaveXlsToDB('Middenvelders',vMap + '\MIDDENVELDERS.xls', vFormVoortgang);
+      SaveXlsToDB('Verdedigers',vMap + '\VERDEDIGERS.xlsx', vFormVoortgang);
+      SaveXlsToDB('Spitsen',vMap + '\SPITSEN.xlsx', vFormVoortgang);
+      SaveXlsToDB('Vleugelspelers',vMap + '\VLEUGELSPELERS.xlsx', vFormVoortgang);
+      SaveXlsToDB('Middenvelders',vMap + '\MIDDENVELDERS.xlsx', vFormVoortgang);
       FCheckBatchlings := FALSE;
       ScanAll := FALSE;
       // Bij keepers niet op batchlingen testen
-      SaveXlsToDB('Keepers',vMap + '\KEEPERS.xls', vFormVoortgang);
+      SaveXlsToDB('Keepers',vMap + '\KEEPERS.xlsx', vFormVoortgang);
 
       WritetoIni('SCOUTING','LAST_BATCHLING_CHECK', Date);
       FErrorList.SaveToFile(ExtractFilePath(Application.ExeName)+'SCOUTING\DocErrors.csv');
@@ -7311,23 +7575,10 @@ begin
 end;
        
 procedure TfrmHTScanner.btnParseU17DocsClick(Sender: TObject);
-var
-  vDoControl: boolean;
 begin
-  vDoControl := FALSE;
-
   ScanAll := uBibMessageBox.MessageBoxQuestion('Moeten alle spelers in de docs gecontroleerd worden?','HTScanner');
 
-  if (ScanAll) then
-  begin
-    vDoControl := uBibMessageBox.MessageBoxQuestion('Wil je aansluitend de 17+ spelers controleren?','HTScanner');
-  end;
-
   ParseDocs(ScanAll);
-  if (vDoControl) then
-  begin
-    ScoutAll17yo;
-  end;
 end;
 
 procedure TfrmHTScanner.SaveXlsToDB(aLinie,aFileName: String; vFormVoortgang: TfrmVoortgang);
@@ -7417,7 +7668,7 @@ begin
         CurLeiderschap := uBibDb.GetFieldValue(ibdbHTInfo,'KARAKTER_PROFIEL',['ID'],[vKarakterID],'LEIDERSCHAP',srtString,
           svtNormal,uHattrick.CreateReadTransaction(ibdbHTInfo));
         WriteScanResults(vKarakterID,'~');
-        
+
         if (vSpecialiteit = '') then
         begin
           vURL := uHattrick.GetYouthPlayerLink(CurrentURL, aPlayerID);
@@ -7491,6 +7742,8 @@ var
   vValues: TFieldValues;
   vScout: String;
 begin
+  aDoc := ChangeFileExt(aDoc,'.xls');
+
   vValues := uBibDb.GetFieldValues(ibdbHTInfo,'DOCS',['DOC_NAME','SHEET_NAME'],
     [aDoc, aSheet],['ID','SCOUT','ACTIEF'],[srtInteger,srtString,srtInteger],
     svtNormal,uHattrick.CreateReadTransaction(ibdbHTInfo));
@@ -7580,21 +7833,15 @@ var
   vCount,
   vAantalRows,
   vPlayerID,
-  vKarakterProfielID,
   vAllround: integer;
   vSpecialiteitXLS,
   vSpecialiteit,
   vURL, sPlayerID, sTeamID: String;
   vKeepen,vVerdedigen,vPositiespel,vPassen,vScoren,vSpelhervatten, vVleugelspel:double;
-  vFieldValues, vCurValues: TFieldValues;
   vSpeler: TJeugdspeler;
-  vTeamID: integer;
-  vSpec, vNaam, vScout, vPotentie, vCurNivo: String;
+  vScout, vPotentie, vCurNivo: String;
   vDummy:integer;
-  vPromoted: boolean;
-  vIsSenior: boolean;
-  vChanged, vCurChanged, vPlayerChanged: integer;
-  vLastUpdate, vLastPlayerUpdate: TDateTime;
+  vChanged, vCurChanged, vPlayerChanged, i, vCountNotChecked: integer;
   vOpmerking: String;
   vKeepenPot,
   vPositiespelPot,
@@ -7603,425 +7850,435 @@ var
   vVerdedigenPot,
   vScorenPot,
   vSpelhervattenPot: double;
-  vIsHTYC: boolean;
+  vNoTalentList: TStringList;
+  vDbPlayer: TDatabasePlayer;
+  vTalented: boolean;
 begin
-  vChanged := 0;
-  vPlayerChanged := 0;
-  vFieldValues := nil;
-  vCurValues := nil;
+  mLogging.Lines.Add(vExcelFunctions.ExcelApp.ActiveWorkbook.Name + ' ['+vExcelFunctions.ExcelApp.ActiveSheet.Name+']');
 
-  vExcelFunctions.ExcelApp.ActiveSheet.Range['A1'].Select;
+  vNoTalentList := TStringList.Create;
+  try
+    vChanged := 0;
+    vPlayerChanged := 0;
+    vCountNotChecked := 0;
 
-  vAantalRows := vExcelFunctions.ExcelApp.ActiveSheet.UsedRange.Rows.Count;
+    vExcelFunctions.ExcelApp.ActiveSheet.Range['A1'].Select;
 
-  vFormVoortgang.Progress := 1;
-  vFormVoortgang.Max := vAantalRows;
+    vAantalRows := vExcelFunctions.ExcelApp.ActiveSheet.UsedRange.Rows.Count;
 
-  for vCount := 2 to vAantalRows do
-  begin
-    vPlayerID := 0;
-    vCurChanged := vChanged;
-    
-    sPlayerID := VarToStr(vExcelFunctions.GetCellRange(Format('%s%d', [Y_PLAYERID, vCount])));
-    sTeamID := VarToStr(vExcelFunctions.GetCellRange(Format('%s%d', [TEAMID, vCount])));
-    vTeamID := uBibConv.AnyStrToInt(sTeamID);
+    vFormVoortgang.Progress := 1;
+    vFormVoortgang.Max := vAantalRows;
 
-    if uBibConv.StringIsInteger(sPlayerID) then
+    for vCount := 2 to vAantalRows do
     begin
-      vPlayerID := StrToInt(sPlayerID);
-    end;
+      vPlayerID := 0;
+      vCurChanged := vChanged;
 
-    if (vPlayerID > 0) then
-    begin
-      vIsSenior := uBibDB.GetFieldValue(ibdbHTInfo, 'SCOUTING', ['YOUTHPLAYER_ID'], [vPlayerID], 'ID', srtInteger,
-        svtNormal,uHattrick.CreateReadTransaction(ibdbHTInfo)) > 0;
+      sPlayerID := VarToStr(vExcelFunctions.GetCellRange(Format('%s%d', [Y_PLAYERID, vCount])));
+      sTeamID := VarToStr(vExcelFunctions.GetCellRange(Format('%s%d', [TEAMID, vCount])));
 
-      if not(vIsSenior) then
+      if uBibConv.StringIsInteger(sPlayerID) then
       begin
-        if (ScanAll) then
-        begin
-          CheckSpecialiteit(vPlayerID);
-        end;
+        vPlayerID := StrToInt(sPlayerID);
+      end;
 
-        vKarakterProfielID := uBibDB.GetFieldValue(ibdbHTInfo, 'JEUGDSPELERS', ['PLAYER_ID'], [vPlayerID], 'KARAKTER_ID', srtInteger,
-          svtNormal,uHattrick.CreateReadTransaction(ibdbHTInfo));
+      if (vPlayerID > 0) then
+      begin
+        vDbPlayer := TDatabasePlayer.Create(ibdbHTInfo, vPlayerID, TRUE, TRUE, TRUE);
+        try
+          if (vDbPlayer.TeamID = 0) then
+            vDbPlayer.TeamID := StrToInt(sTeamID);
 
-        // Foutieve keepers verwijderen!
-        if GetBestLinie(IntToStr(vPlayerID)) = 0 then
-        begin
-          if (uBibDb.GetFieldValue(ibdbHTInfo,'KARAKTER_PROFIEL',['ID'],
-            [vKarakterProfielID],'IS_KEEPER',srtInteger,svtNormal,uHattrick.CreateReadTransaction(ibdbHTInfo)) = 0) then
+          if not(vDBPlayer.IsSenior) then
           begin
-            vPromoted :=
-              (uBibDb.GetFieldValue(ibdbHTInfo,'JEUGDSPELERS',['PLAYER_ID'],[vPlayerID],'PROMOTED',srtInteger,
-              svtNormal,uHattrick.CreateReadTransaction(ibdbHTInfo)) = -1);
-
-            if not(vPromoted) then
+            if (ScanAll) then
             begin
-              uBibDb.ExecSQL(ibdbHTInfo,'DELETE FROM JEUGDSPELERS WHERE PLAYER_ID = :ID AND PROMOTED = 0',
-                ['ID'],[vPlayerID]);
-              // Opnieuw opslaan ?
-              vKarakterProfielID := uBibDb.GetFieldValue(ibdbHTInfo,'JEUGDSPELERS',
-                ['PLAYER_ID'],[vPlayerID],'KARAKTER_ID',srtInteger,svtNormal,uHattrick.CreateReadTransaction(ibdbHTInfo));
+              CheckSpecialiteit(vPlayerID);
             end;
-          end;
-        end;
 
-        if (vKarakterProfielID = -1) then
-        begin
-          //karakterID staat op -1, speler bestaat dus niet meer in jeugd!
-          vNaam := uBibDb.GetFieldValue(ibdbHTInfo,'JEUGDSPELERS',['PLAYER_ID'],[vPlayerID],
-            'PLAYER_NAME',srtString,svtNormal,uHattrick.CreateReadTransaction(ibdbHTInfo));
-
-          FErrorList.Add(Format('[youthplayerid=%d] %s [?]',[vPlayerID, vNaam]));
-        end
-        else if (vKarakterProfielID <= 0) then
-        begin
-          //eerst naar HT-website gaan en daar de basisinfo vandaan halen
-          vURL := uHattrick.GetYouthPlayerLink(CurrentURL, vPlayerID);
-          if BrowseTo(HTBrowser,vURL) then
-          begin
-            vSpeler := TJeugdspeler.Create;
-            try
-              vSpeler.ID := IntToStr(vPlayerID);
-              vSpeler.TeamID := vTeamID;
-
-              GetJeugdSpelerInfo(vSpeler, TRUE);
-
-              vSpeler.Exported := TRUE;
-
-              SaveJeugdspeler(vSpeler);
-
-              vKarakterProfielID := vSpeler.KarakterID;
-            finally
-              vSpeler.Free;
-            end;
-          end;
-        end;
-
-        //het zou kunnen zijn dat een speler nog niet in de DB stond en nu is gepromoveerd.
-        //alleen dan zou het id 0 zijn.
-        if (vKarakterProfielID > 0) then
-        begin
-          vPromoted :=
-              (uBibDb.GetFieldValue(ibdbHTInfo,'JEUGDSPELERS',['PLAYER_ID'],[vPlayerID],'PROMOTED',srtInteger,
-              svtNormal,uHattrick.CreateReadTransaction(ibdbHTInfo)) = -1);
-
-          if (CheckBatchlings) then
-          begin
-            GetBatchlings(nil,vKarakterProfielID,vPlayerID,0,vDummy, TRUE, ScanAll);
-          end;
-
-          vLastPlayerUpdate :=
-            uBibDb.GetFieldValue(ibdbHTInfo,'JEUGDSPELERS',['PLAYER_ID'],[vPlayerID],'LAST_UPDATE',srtDateTime,
-            svtNormal,uHattrick.CreateReadTransaction(ibdbHTInfo));
-
-          if (vLastPlayerUpdate < FStartParsing) or (Pos(UpperCase('VERWIJDERD'),UpperCase(vExcelFunctions.ExcelApp.ActiveSheet.Name)) = 0) then
-          begin
-
-            // Player sowieso op exported zetten, speler komt n.l. al voor in de scouting docs.
-            vNaam := uBibDb.GetFieldValue(ibdbHTInfo,'JEUGDSPELERS',['PLAYER_ID'],[vPlayerID],
-                  'PLAYER_NAME',srtString,svtNormal,uHattrick.CreateReadTransaction(ibdbHTInfo));
-
-            vScout := GetScout(vExcelFunctions.ExcelApp.ActiveWorkbook.Name, vExcelFunctions.ExcelApp.ActiveSheet.Name, vNaam);
-            vOpmerking := vExcelFunctions.GetCellRange(Format('%s%d', [OPMERKING_SCOUT, vCount]));
-
-            uBibDb.ExecSQL(ibdbHTInfo,'UPDATE JEUGDSPELERS SET EXPORTED = -1, IN_DOCS = -1, GOOGLE_DOC = :DOC, TABSHEET = :SHEET, OPMERKING_SCOUT = :OPMERKING, LAST_UPDATE = CURRENT_TIMESTAMP WHERE PLAYER_ID = :PLAYERID',
-              ['PLAYERID','SHEET','DOC','OPMERKING'],[vPlayerID,vExcelFunctions.ExcelApp.ActiveSheet.Name,
-                vExcelFunctions.ExcelApp.ActiveWorkbook.Name, vOpmerking]);
-
-            vPotentie := vExcelFunctions.GetCellRange(Format('%s%d', [KEEPEN_POT, vCount]));
-            if Pos('*',vPotentie) > 0 then
+            if (vDbPlayer.KarakterID = -1) then
             begin
-              uBibDb.ExecSQL(ibdbHTInfo,'UPDATE KARAKTER_PROFIEL SET KEEPEN_TOP3 = -1 WHERE ID = :ID',
-                ['ID'],[vKarakterProfielID]);
-            end;
-            vKeepenPot        := XLSValueToFloat(vPotentie);
-
-            vPotentie := vExcelFunctions.GetCellRange(Format('%s%d', [POSITIESPEL_POT, vCount]));
-            if Pos('*',vPotentie) > 0 then
+              //karakterID staat op -1, speler bestaat dus niet meer in jeugd!
+              FErrorList.Add(Format('[youthplayerid=%d] %s [?]',[vPlayerID, vDBPlayer.Naam]));
+            end
+            else if (vDbPlayer.KarakterID <= 0) then
             begin
-              uBibDb.ExecSQL(ibdbHTInfo,'UPDATE KARAKTER_PROFIEL SET POSITIESPEL_TOP3 = -1 WHERE ID = :ID',
-                ['ID'],[vKarakterProfielID]);
-            end;
-            vPositiespelPot   := XLSValueToFloat(vPotentie);
-
-            vPotentie := vExcelFunctions.GetCellRange(Format('%s%d', [PASSEN_POT, vCount]));
-            if Pos('*',vPotentie) > 0 then
-            begin
-              uBibDb.ExecSQL(ibdbHTInfo,'UPDATE KARAKTER_PROFIEL SET PASSEN_TOP3 = -1 WHERE ID = :ID',
-                ['ID'],[vKarakterProfielID]);
-            end;
-            vPassenPot        := XLSValueToFloat(vPotentie);
-
-            vPotentie := vExcelFunctions.GetCellRange(Format('%s%d', [VLEUGELSPEL_POT, vCount]));
-            if Pos('*',vPotentie) > 0 then
-            begin
-              uBibDb.ExecSQL(ibdbHTInfo,'UPDATE KARAKTER_PROFIEL SET VLEUGELSPEL_TOP3 = -1 WHERE ID = :ID',
-                ['ID'],[vKarakterProfielID]);
-            end;
-            vVleugelspelPot   := XLSValueToFloat(vPotentie);
-
-            vPotentie := vExcelFunctions.GetCellRange(Format('%s%d', [VERDEDIGEN_POT, vCount]));
-            if Pos('*',vPotentie) > 0 then
-            begin
-              uBibDb.ExecSQL(ibdbHTInfo,'UPDATE KARAKTER_PROFIEL SET VERDEDIGEN_TOP3 = -1 WHERE ID = :ID',
-                ['ID'],[vKarakterProfielID]);
-            end;
-            vVerdedigenPot    := XLSValueToFloat(vPotentie);
-
-            vPotentie := vExcelFunctions.GetCellRange(Format('%s%d', [SCOREN_POT, vCount]));
-            if Pos('*',vPotentie) > 0 then
-            begin
-              uBibDb.ExecSQL(ibdbHTInfo,'UPDATE KARAKTER_PROFIEL SET SCOREN_TOP3 = -1 WHERE ID = :ID',
-                ['ID'],[vKarakterProfielID]);
-            end;
-            vScorenPot        := XLSValueToFloat(vPotentie);
-
-            vSpelhervattenPot := XLSValueToFloat(vExcelFunctions.GetCellRange(Format('%s%d', [SPELHERVATTEN_POT, vCount])));
-            vSpecialiteitXLS  := vExcelFunctions.GetCellRange(Format('%s%d', [SPECIALITEIT, vCount]));
-            vSpecialiteit := uHattrick.FormatSpecialiteit(vSpecialiteitXLS);
-
-            vSpec := UBibDb.getfieldValue(ibdbHTInfo,'KARAKTER_PROFIEL',['ID'],[vKarakterProfielID],
-              'SPECIALITEIT', srtString,svtNormal,uHattrick.CreateReadTransaction(ibdbHTInfo));
-
-            if (GetLinie(IntToStr(vPlayerID)) <> 0) then
-            begin
-              if (vSpec <> vSpecialiteit) then
+              //eerst naar HT-website gaan en daar de basisinfo vandaan halen
+              vURL := uHattrick.GetYouthPlayerLink(CurrentURL, vPlayerID);
+              if BrowseTo(HTBrowser,vURL) then
               begin
-                if (vSpec = '') then
-                begin
-                  FErrorList.Add(Format('[youthplayerid=%d] %s [onbekend]',[vPlayerID, vNaam]));
-                end
-                else
-                begin
-                  FErrorList.Add(Format('[youthplayerid=%d] %s [%s]',[vPlayerID, vNaam, vSpec]));
+                vSpeler := TJeugdspeler.Create;
+                try
+                  vSpeler.ID := IntToStr(vPlayerID);
+                  vSpeler.TeamID := vDbPlayer.TeamID;
+
+                  GetJeugdSpelerInfo(vSpeler, TRUE);
+
+                  vSpeler.Exported := TRUE;
+
+                  SaveJeugdspeler(vSpeler);
+
+                  vDbPlayer.Reload;
+                finally
+                  vSpeler.Free;
                 end;
-              end
-              else if (vSpec = '') and (vPromoted) then
-              begin
-                FErrorList.Add(Format('[youthplayerid=%d] %s [?]',[vPlayerID, vNaam]));
               end;
             end;
 
-            try
-              vCurNivo := vExcelFunctions.GetCellRange(Format('%s%d', [KEEPEN, vCount]));
-              if Pos('*',vCurNivo) > 0 then
+            //het zou kunnen zijn dat een speler nog niet in de DB stond en nu is gepromoveerd.
+            //alleen dan zou het id 0 zijn.
+            if (vDbPlayer.KarakterID > 0) then
+            begin
+              if (CheckBatchlings) then
               begin
-                uBibDb.ExecSQL(ibdbHTInfo,'UPDATE KARAKTER_PROFIEL SET KEEPEN_TOP3 = -1 WHERE ID = :ID',
-                  ['ID'],[vKarakterProfielID]);
+                GetBatchlings(nil,vDbPlayer.KarakterID,vPlayerID,0,vDummy, TRUE, ScanAll);
               end;
-              vKeepen := XLSValueToFloat(vCurNivo);
-            except
-              vKeepen := 0;
-            end;
-            try
-              vCurNivo := vExcelFunctions.GetCellRange(Format('%s%d', [VERDEDIGEN, vCount]));
-              if Pos('*',vCurNivo) > 0 then
+
+              if (vDbPlayer.LastPlayerUpdate < FStartParsing) or (Pos(UpperCase('VERWIJDERD'),UpperCase(vExcelFunctions.ExcelApp.ActiveSheet.Name)) = 0) then
               begin
-                uBibDb.ExecSQL(ibdbHTInfo,'UPDATE KARAKTER_PROFIEL SET VERDEDIGEN_TOP3 = -1 WHERE ID = :ID',
-                  ['ID'],[vKarakterProfielID]);
+                // Player sowieso op exported zetten, speler komt n.l. al voor in de scouting docs.
+                vScout := GetScout(vExcelFunctions.ExcelApp.ActiveWorkbook.Name, vExcelFunctions.ExcelApp.ActiveSheet.Name, vDBPlayer.Naam);
+                vOpmerking := vExcelFunctions.GetCellRange(Format('%s%d', [OPMERKING_SCOUT, vCount]));
+
+                uBibDb.ExecSQL(ibdbHTInfo,'UPDATE JEUGDSPELERS SET EXPORTED = -1, IN_DOCS = -1, GOOGLE_DOC = :DOC, TABSHEET = :SHEET, OPMERKING_SCOUT = :OPMERKING, LAST_UPDATE = CURRENT_TIMESTAMP WHERE PLAYER_ID = :PLAYERID',
+                  ['PLAYERID','SHEET','DOC','OPMERKING'],[vPlayerID,vExcelFunctions.ExcelApp.ActiveSheet.Name,
+                    vExcelFunctions.ExcelApp.ActiveWorkbook.Name, vOpmerking]);
+
+                vPotentie := vExcelFunctions.GetCellRange(Format('%s%d', [KEEPEN_POT, vCount]));
+                if Pos('*',vPotentie) > 0 then
+                begin
+                  uBibDb.ExecSQL(ibdbHTInfo,'UPDATE KARAKTER_PROFIEL SET KEEPEN_TOP3 = -1 WHERE ID = :ID',
+                    ['ID'],[vDbPlayer.KarakterID]);
+                end;
+                vKeepenPot        := XLSValueToFloat(vPotentie);
+
+                vPotentie := vExcelFunctions.GetCellRange(Format('%s%d', [POSITIESPEL_POT, vCount]));
+                if Pos('*',vPotentie) > 0 then
+                begin
+                  uBibDb.ExecSQL(ibdbHTInfo,'UPDATE KARAKTER_PROFIEL SET POSITIESPEL_TOP3 = -1 WHERE ID = :ID',
+                    ['ID'],[vDbPlayer.KarakterID]);
+                end;
+                vPositiespelPot   := XLSValueToFloat(vPotentie);
+
+                vPotentie := vExcelFunctions.GetCellRange(Format('%s%d', [PASSEN_POT, vCount]));
+                if Pos('*',vPotentie) > 0 then
+                begin
+                  uBibDb.ExecSQL(ibdbHTInfo,'UPDATE KARAKTER_PROFIEL SET PASSEN_TOP3 = -1 WHERE ID = :ID',
+                    ['ID'],[vDbPlayer.KarakterID]);
+                end;
+                vPassenPot        := XLSValueToFloat(vPotentie);
+
+                vPotentie := vExcelFunctions.GetCellRange(Format('%s%d', [VLEUGELSPEL_POT, vCount]));
+                if Pos('*',vPotentie) > 0 then
+                begin
+                  uBibDb.ExecSQL(ibdbHTInfo,'UPDATE KARAKTER_PROFIEL SET VLEUGELSPEL_TOP3 = -1 WHERE ID = :ID',
+                    ['ID'],[vDbPlayer.KarakterID]);
+                end;
+                vVleugelspelPot   := XLSValueToFloat(vPotentie);
+
+                vPotentie := vExcelFunctions.GetCellRange(Format('%s%d', [VERDEDIGEN_POT, vCount]));
+                if Pos('*',vPotentie) > 0 then
+                begin
+                  uBibDb.ExecSQL(ibdbHTInfo,'UPDATE KARAKTER_PROFIEL SET VERDEDIGEN_TOP3 = -1 WHERE ID = :ID',
+                    ['ID'],[vDbPlayer.KarakterID]);
+                end;
+                vVerdedigenPot    := XLSValueToFloat(vPotentie);
+
+                vPotentie := vExcelFunctions.GetCellRange(Format('%s%d', [SCOREN_POT, vCount]));
+                if Pos('*',vPotentie) > 0 then
+                begin
+                  uBibDb.ExecSQL(ibdbHTInfo,'UPDATE KARAKTER_PROFIEL SET SCOREN_TOP3 = -1 WHERE ID = :ID',
+                    ['ID'],[vDbPlayer.KarakterID]);
+                end;
+                vScorenPot        := XLSValueToFloat(vPotentie);
+
+                vSpelhervattenPot := XLSValueToFloat(vExcelFunctions.GetCellRange(Format('%s%d', [SPELHERVATTEN_POT, vCount])));
+                vSpecialiteitXLS  := vExcelFunctions.GetCellRange(Format('%s%d', [SPECIALITEIT, vCount]));
+                vSpecialiteit := uHattrick.FormatSpecialiteit(vSpecialiteitXLS);
+
+                if (GetLinie(IntToStr(vPlayerID)) <> 0) then
+                begin
+                  if (vDbPlayer.Specialiteit <> vSpecialiteit) then
+                  begin
+                    if (vDbPlayer.Specialiteit = '') then
+                    begin
+                      FErrorList.Add(Format('[youthplayerid=%d] %s [onbekend]',[vPlayerID, vDBPlayer.Naam]));
+                    end
+                    else
+                    begin
+                      FErrorList.Add(Format('[youthplayerid=%d] %s [%s]',[vPlayerID, vDBPlayer.Naam, vDBPlayer.Specialiteit]));
+                    end;
+                  end
+                  else if (vDbPlayer.Specialiteit = '') and (vDbPlayer.Promoted) then
+                  begin
+                    FErrorList.Add(Format('[youthplayerid=%d] %s [?]',[vPlayerID, vDBPlayer.Naam]));
+                  end;
+                end;
+
+                try
+                  vCurNivo := vExcelFunctions.GetCellRange(Format('%s%d', [KEEPEN, vCount]));
+                  if Pos('*',vCurNivo) > 0 then
+                  begin
+                    uBibDb.ExecSQL(ibdbHTInfo,'UPDATE KARAKTER_PROFIEL SET KEEPEN_TOP3 = -1 WHERE ID = :ID',
+                      ['ID'],[vDbPlayer.KarakterID]);
+                  end;
+                  vKeepen := XLSValueToFloat(vCurNivo);
+                except
+                  vKeepen := 0;
+                end;
+                try
+                  vCurNivo := vExcelFunctions.GetCellRange(Format('%s%d', [VERDEDIGEN, vCount]));
+                  if Pos('*',vCurNivo) > 0 then
+                  begin
+                    uBibDb.ExecSQL(ibdbHTInfo,'UPDATE KARAKTER_PROFIEL SET VERDEDIGEN_TOP3 = -1 WHERE ID = :ID',
+                      ['ID'],[vDbPlayer.KarakterID]);
+                  end;
+                  vVerdedigen    := XLSValueToFloat(vCurNivo);
+                except
+                  vVerdedigen := 0;
+                end;
+                try
+                  vCurNivo := vExcelFunctions.GetCellRange(Format('%s%d', [SCOREN, vCount]));
+                  if Pos('*',vCurNivo) > 0 then
+                  begin
+                    uBibDb.ExecSQL(ibdbHTInfo,'UPDATE KARAKTER_PROFIEL SET SCOREN_TOP3 = -1 WHERE ID = :ID',
+                      ['ID'],[vDbPlayer.KarakterID]);
+                  end;
+                  vScoren        := XLSValueToFloat(vCurNivo);
+                except
+                  vScoren := 0;
+                end;
+                try
+                  vCurNivo := vExcelFunctions.GetCellRange(Format('%s%d', [POSITIESPEL, vCount]));
+                  if Pos('*',vCurNivo) > 0 then
+                  begin
+                    uBibDb.ExecSQL(ibdbHTInfo,'UPDATE KARAKTER_PROFIEL SET POSITIESPEL_TOP3 = -1 WHERE ID = :ID',
+                      ['ID'],[vDbPlayer.KarakterID]);
+                  end;
+                  vPositiespel   := XLSValueToFloat(vCurNivo);
+                except
+                  vPositiespel := 0;
+                end;
+                try
+                  vCurNivo := vExcelFunctions.GetCellRange(Format('%s%d', [PASSEN, vCount]));
+                  if Pos('*',vCurNivo) > 0 then
+                  begin
+                    uBibDb.ExecSQL(ibdbHTInfo,'UPDATE KARAKTER_PROFIEL SET PASSEN_TOP3 = -1 WHERE ID = :ID',
+                      ['ID'],[vDbPlayer.KarakterID]);
+                  end;
+                  vPassen        := XLSValueToFloat(vCurNivo);
+                except
+                  vPassen := 0;
+                end;
+                try
+                  vCurNivo := vExcelFunctions.GetCellRange(Format('%s%d', [VLEUGELSPEL, vCount]));
+                  if Pos('*',vCurNivo) > 0 then
+                  begin
+                    uBibDb.ExecSQL(ibdbHTInfo,'UPDATE KARAKTER_PROFIEL SET VLEUGELSPEL_TOP3 = -1 WHERE ID = :ID',
+                      ['ID'],[vDbPlayer.KarakterID]);
+                  end;
+                  vVleugelspel   := XLSValueToFloat(vCurNivo);
+                except
+                  vVleugelspel := 0;
+                end;
+                try
+                  vSpelhervatten := XLSValueToFloat(vExcelFunctions.GetCellRange(Format('%s%d', [SPELHERVATTEN, vCount])));
+                except
+                  vSpelhervatten := 0;
+                end;
+                vAllround         := uBibConv.AnyStrToInt(vExcelFunctions.GetCellRange(Format('%s%d', [ALLROUND, vCount])));
+
+                FCurCheckPlayer := Format('[youthplayerid=%d] %s',[vDbPlayer.ID, vDbPlayer.Naam]);
+
+                if (DoChangeValue(vDbPlayer.PotKeepen, vKeepenPot, vDbPlayer.KarakterHTYC, 7.9)) then
+                begin
+                  FCurCheckVaardigheid := 'Keepen (pot)';
+                  uBibDB.UpdateFieldValue(ibdbHTInfo, nil, 'KARAKTER_PROFIEL', ['ID'], [vDbPlayer.KarakterID],
+                    ['POT_KEEPEN'], [vKeepenPot]);
+
+                  inc(vChanged);
+                end;
+
+                if (DoChangeValue(vDbPlayer.CurKeepen, vKeepen, False, 7.9)) then
+                begin
+                  FCurCheckVaardigheid := 'Keepen';
+                  uBibDB.UpdateFieldValue(ibdbHTInfo, nil, 'JEUGDSPELERS', ['PLAYER_ID'], [vPlayerID],
+                    ['KEEPEN'], [vKeepen]);
+                  inc(vPlayerChanged);
+                end;
+
+                if (DoChangeValue(vDbPlayer.PotPositiespel, vPositiespelPot, vDbPlayer.KarakterHTYC)) then
+                begin
+                  FCurCheckVaardigheid := 'Positiespel (pot)';
+                  uBibDB.UpdateFieldValue(ibdbHTInfo, nil, 'KARAKTER_PROFIEL', ['ID'], [vDbPlayer.KarakterID],
+                    ['POT_POSITIESPEL'], [vPositiespelPot]);
+
+                  inc(vChanged);
+                end;
+
+                if (DoChangeValue(vDBPlayer.CurPositiespel, vPositiespel, FALSE)) then
+                begin
+                  FCurCheckVaardigheid := 'Positiespel';
+                  uBibDB.UpdateFieldValue(ibdbHTInfo, nil, 'JEUGDSPELERS', ['PLAYER_ID'], [vPlayerID],
+                    ['POSITIESPEL'], [vPositiespel]);
+
+                  inc(vPlayerChanged);
+                end;
+
+                if (DoChangeValue(vDbPlayer.PotPassen, vPassenPot, vDbPlayer.KarakterHTYC)) then
+                begin
+                  FCurCheckVaardigheid := 'Passen (pot)';
+                  uBibDB.UpdateFieldValue(ibdbHTInfo, nil, 'KARAKTER_PROFIEL', ['ID'], [vDbPlayer.KarakterID],
+                    ['POT_PASSEN'], [vPassenPot]);
+
+                  inc(vChanged);
+                end;
+
+                if (DoChangeValue(vDBPlayer.CurPassen, vPassen, FALSE)) then
+                begin
+                  FCurCheckVaardigheid := 'Passen';
+                  uBibDB.UpdateFieldValue(ibdbHTInfo, nil, 'JEUGDSPELERS', ['PLAYER_ID'], [vPlayerID],
+                    ['PASSEN'], [vPassen]);
+
+                  inc(vPlayerChanged);
+                end;
+
+                if (DoChangeValue(vDBPlayer.PotVleugelspel, vVleugelspelPot, vDbPlayer.KarakterHTYC)) then
+                begin
+                  FCurCheckVaardigheid := 'Vleugelspel (pot)';
+                  uBibDB.UpdateFieldValue(ibdbHTInfo, nil, 'KARAKTER_PROFIEL', ['ID'], [vDbPlayer.KarakterID],
+                    ['POT_VLEUGELSPEL'], [vVleugelspelPot]);
+
+                  inc(vChanged);
+                end;
+
+                if (DoChangeValue(vDBPlayer.CurVleugelspel, vVleugelspel, FALSE)) then
+                begin
+                  FCurCheckVaardigheid := 'Vleugelspel';
+                  uBibDB.UpdateFieldValue(ibdbHTInfo, nil, 'JEUGDSPELERS', ['PLAYER_ID'], [vPlayerID],
+                    ['VLEUGELSPEL'], [vVleugelspel]);
+
+                  inc(vPlayerChanged);
+                end;
+
+                if (DoChangeValue(vDbPlayer.PotVerdedigen, vVerdedigenPot, vDbPlayer.KarakterHTYC)) then
+                begin
+                  FCurCheckVaardigheid := 'Verdedigen (pot)';
+                  uBibDB.UpdateFieldValue(ibdbHTInfo, nil, 'KARAKTER_PROFIEL', ['ID'], [vDbPlayer.KarakterID],
+                    ['POT_VERDEDIGEN'], [vVerdedigenPot]);
+
+                  inc(vChanged);
+                end;
+
+                if (DoChangeValue(vDbPlayer.CurVerdedigen, vVerdedigen, FALSE)) then
+                begin
+                  FCurCheckVaardigheid := 'Verdedigen';
+                  uBibDB.UpdateFieldValue(ibdbHTInfo, nil, 'JEUGDSPELERS', ['PLAYER_ID'], [vPlayerID],
+                    ['VERDEDIGEN'], [vVerdedigen]);
+
+                  inc(vPlayerChanged);
+                end;
+
+                if (DoChangeValue(vDbPlayer.PotScoren, vScorenPot, vDbPlayer.KarakterHTYC)) then
+                begin
+                  FCurCheckVaardigheid := 'Scoren (pot)';
+                  uBibDB.UpdateFieldValue(ibdbHTInfo, nil, 'KARAKTER_PROFIEL', ['ID'], [vDbPlayer.KarakterID],
+                    ['POT_SCOREN'], [vScorenPot]);
+
+                  inc(vChanged);
+                end;
+
+                if (DoChangeValue(vDbPlayer.CurScoren, vScoren, FALSE)) then
+                begin
+                  FCurCheckVaardigheid := 'Scoren';
+                  uBibDB.UpdateFieldValue(ibdbHTInfo, nil, 'JEUGDSPELERS', ['PLAYER_ID'], [vPlayerID],
+                    ['SCOREN'], [vScoren]);
+
+                  inc(vPlayerChanged);
+                end;
+
+                if (DoChangeValue(vDbPlayer.PotSpelhervatten, vSpelhervattenPot, vDbPlayer.KarakterHTYC)) then
+                begin
+                  FCurCheckVaardigheid := 'Spelhervatten (pot)';
+                  uBibDB.UpdateFieldValue(ibdbHTInfo, nil, 'KARAKTER_PROFIEL', ['ID'], [vDbPlayer.KarakterID],
+                    ['POT_SPELHERVATTEN'], [vSpelhervattenPot]);
+
+                  inc(vChanged);
+                end;
+
+                if (DoChangeValue(vDbPlayer.CurSpelhervatten, vSpelhervatten, FALSE)) then
+                begin
+                  FCurCheckVaardigheid := 'Spelhervatten';
+                  uBibDB.UpdateFieldValue(ibdbHTInfo, nil, 'JEUGDSPELERS', ['PLAYER_ID'], [vPlayerID],
+                    ['SPELHERVATTEN'], [vSpelhervatten]);
+
+                  inc(vPlayerChanged);
+                end;
+
+                if (DoChangeValue(vDbPlayer.Allround, vAllround, vDbPlayer.KarakterHTYC, 7)) then
+                begin
+                  FCurCheckVaardigheid := 'Allround';
+                  uBibDB.UpdateFieldValue(ibdbHTInfo, nil, 'KARAKTER_PROFIEL', ['ID'], [vDbPlayer.KarakterID],
+                    ['ALLROUND'], [vAllround]);
+
+                  inc(vChanged);
+                end;
+
+                if (vChanged > vCurChanged) and (vDbPlayer.LastKarakterUpdate > FStartParsing) then
+                begin
+                  FChangeLog.Add(Format('Karakter ID %d changed again',[vDbPlayer.KarakterID]));
+                end;
               end;
-              vVerdedigen    := XLSValueToFloat(vCurNivo);
-            except
-              vVerdedigen := 0;
-            end;
-            try
-              vCurNivo := vExcelFunctions.GetCellRange(Format('%s%d', [SCOREN, vCount]));
-              if Pos('*',vCurNivo) > 0 then
-              begin
-                uBibDb.ExecSQL(ibdbHTInfo,'UPDATE KARAKTER_PROFIEL SET SCOREN_TOP3 = -1 WHERE ID = :ID',
-                  ['ID'],[vKarakterProfielID]);
-              end;
-              vScoren        := XLSValueToFloat(vCurNivo);
-            except
-              vScoren := 0;
-            end;
-            try
-              vCurNivo := vExcelFunctions.GetCellRange(Format('%s%d', [POSITIESPEL, vCount]));
-              if Pos('*',vCurNivo) > 0 then
-              begin
-                uBibDb.ExecSQL(ibdbHTInfo,'UPDATE KARAKTER_PROFIEL SET POSITIESPEL_TOP3 = -1 WHERE ID = :ID',
-                  ['ID'],[vKarakterProfielID]);
-              end;
-              vPositiespel   := XLSValueToFloat(vCurNivo);
-            except
-              vPositiespel := 0;
-            end;
-            try
-              vCurNivo := vExcelFunctions.GetCellRange(Format('%s%d', [PASSEN, vCount]));
-              if Pos('*',vCurNivo) > 0 then
-              begin
-                uBibDb.ExecSQL(ibdbHTInfo,'UPDATE KARAKTER_PROFIEL SET PASSEN_TOP3 = -1 WHERE ID = :ID',
-                  ['ID'],[vKarakterProfielID]);
-              end;
-              vPassen        := XLSValueToFloat(vCurNivo);
-            except
-              vPassen := 0;
-            end;
-            try
-              vCurNivo := vExcelFunctions.GetCellRange(Format('%s%d', [VLEUGELSPEL, vCount]));
-              if Pos('*',vCurNivo) > 0 then
-              begin
-                uBibDb.ExecSQL(ibdbHTInfo,'UPDATE KARAKTER_PROFIEL SET VLEUGELSPEL_TOP3 = -1 WHERE ID = :ID',
-                  ['ID'],[vKarakterProfielID]);
-              end;
-              vVleugelspel   := XLSValueToFloat(vCurNivo);
-            except
-              vVleugelspel := 0;
-            end;
-            try
-              vSpelhervatten := XLSValueToFloat(vExcelFunctions.GetCellRange(Format('%s%d', [SPELHERVATTEN, vCount])));
-            except
-              vSpelhervatten := 0;
-            end;
-            vAllround         := uBibConv.AnyStrToInt(vExcelFunctions.GetCellRange(Format('%s%d', [ALLROUND, vCount])));
-
-            vFieldValues := uBibDB.GetFieldValues(ibdbHTInfo, 'KARAKTER_PROFIEL', ['ID'], [vKarakterProfielID],
-              ['POT_KEEPEN', 'POT_POSITIESPEL', 'POT_PASSEN', 'POT_VLEUGELSPEL', 'POT_VERDEDIGEN', 'POT_SCOREN', 'POT_SPELHERVATTEN',
-               'SPECIALITEIT', 'ALLROUND', 'LAST_UPDATE','HTYC'],
-              [srtFloat, srtFloat, srtFloat, srtFloat, srtFloat, srtFloat, srtFloat, srtString, srtInteger, srtDateTime, srtInteger],
-              svtNormal,uHattrick.CreateReadTransaction(ibdbHTInfo));
-
-            vLastUpdate := VarToDateTime(vFieldValues[9]);
-            vIsHTYC := vFieldValues[10] = -1;
-
-            vCurValues :=  uBibDB.GetFieldValues(ibdbHTInfo, 'JEUGDSPELERS', ['PLAYER_ID'], [vPlayerID],
-              ['KEEPEN', 'POSITIESPEL', 'PASSEN', 'VLEUGELSPEL', 'VERDEDIGEN', 'SCOREN', 'SPELHERVATTEN'],
-              [srtFloat, srtFloat, srtFloat, srtFloat, srtFloat, srtFloat, srtFloat],
-              svtNormal, uHattrick.CreateReadTransaction(ibdbHTInfo));
-
-            if (DoChangeValue(vFieldValues[0], vKeepenPot, vIsHTYC, 7.9)) then
-            begin
-              uBibDB.UpdateFieldValue(ibdbHTInfo, nil, 'KARAKTER_PROFIEL', ['ID'], [vKarakterProfielID],
-                ['POT_KEEPEN'], [vKeepenPot]);
-
-              inc(vChanged);
-            end;
-
-            if (DoChangeValue(vCurValues[0], vKeepen, False, 7.9)) then
-            begin
-              uBibDB.UpdateFieldValue(ibdbHTInfo, nil, 'JEUGDSPELERS', ['PLAYER_ID'], [vPlayerID],
-                ['KEEPEN'], [vKeepen]);
-              inc(vPlayerChanged);
-            end;
-
-            if (DoChangeValue(vFieldValues[1], vPositiespelPot, vIsHTYC)) then
-            begin
-              uBibDB.UpdateFieldValue(ibdbHTInfo, nil, 'KARAKTER_PROFIEL', ['ID'], [vKarakterProfielID],
-                ['POT_POSITIESPEL'], [vPositiespelPot]);
-
-              inc(vChanged);
-            end;
-
-            if (DoChangeValue(vCurValues[1], vPositiespel, FALSE)) then
-            begin
-              uBibDB.UpdateFieldValue(ibdbHTInfo, nil, 'JEUGDSPELERS', ['PLAYER_ID'], [vPlayerID],
-                ['POSITIESPEL'], [vPositiespel]);
-
-              inc(vPlayerChanged);
-            end;
-
-            if (DoChangeValue(vFieldValues[2], vPassenPot, vIsHTYC)) then
-            begin
-              uBibDB.UpdateFieldValue(ibdbHTInfo, nil, 'KARAKTER_PROFIEL', ['ID'], [vKarakterProfielID],
-                ['POT_PASSEN'], [vPassenPot]);
-
-              inc(vChanged);
-            end;
-
-            if (DoChangeValue(vCurValues[2], vPassen, FALSE)) then
-            begin
-              uBibDB.UpdateFieldValue(ibdbHTInfo, nil, 'JEUGDSPELERS', ['PLAYER_ID'], [vPlayerID],
-                ['PASSEN'], [vPassen]);
-
-              inc(vPlayerChanged);
-            end;
-
-            if (DoChangeValue(vFieldValues[3], vVleugelspelPot, vIsHTYC)) then
-            begin
-              uBibDB.UpdateFieldValue(ibdbHTInfo, nil, 'KARAKTER_PROFIEL', ['ID'], [vKarakterProfielID],
-                ['POT_VLEUGELSPEL'], [vVleugelspelPot]);
-
-              inc(vChanged);
-            end;
-
-            if (DoChangeValue(vCurValues[3], vVleugelspel, FALSE)) then
-            begin
-              uBibDB.UpdateFieldValue(ibdbHTInfo, nil, 'JEUGDSPELERS', ['PLAYER_ID'], [vPlayerID],
-                ['VLEUGELSPEL'], [vVleugelspel]);
-
-              inc(vPlayerChanged);
-            end;
-
-            if (DoChangeValue(vFieldValues[4], vVerdedigenPot, vIsHTYC)) then
-            begin
-              uBibDB.UpdateFieldValue(ibdbHTInfo, nil, 'KARAKTER_PROFIEL', ['ID'], [vKarakterProfielID],
-                ['POT_VERDEDIGEN'], [vVerdedigenPot]);
-
-              inc(vChanged);
-            end;
-
-            if (DoChangeValue(vCurValues[4], vVerdedigen, FALSE)) then
-            begin
-              uBibDB.UpdateFieldValue(ibdbHTInfo, nil, 'JEUGDSPELERS', ['PLAYER_ID'], [vPlayerID],
-                ['VERDEDIGEN'], [vVerdedigen]);
-
-              inc(vPlayerChanged);
-            end;
-
-            if (DoChangeValue(vFieldValues[5], vScorenPot, vIsHTYC)) then
-            begin
-              uBibDB.UpdateFieldValue(ibdbHTInfo, nil, 'KARAKTER_PROFIEL', ['ID'], [vKarakterProfielID],
-                ['POT_SCOREN'], [vScorenPot]);
-
-              inc(vChanged);
-            end;
-
-            if (DoChangeValue(vCurValues[5], vScoren, FALSE)) then
-            begin
-              uBibDB.UpdateFieldValue(ibdbHTInfo, nil, 'JEUGDSPELERS', ['PLAYER_ID'], [vPlayerID],
-                ['SCOREN'], [vScoren]);
-
-              inc(vPlayerChanged);
-            end;
-
-            if (DoChangeValue(vFieldValues[6], vSpelhervattenPot, vIsHTYC)) then
-            begin
-              uBibDB.UpdateFieldValue(ibdbHTInfo, nil, 'KARAKTER_PROFIEL', ['ID'], [vKarakterProfielID],
-                ['POT_SPELHERVATTEN'], [vSpelhervattenPot]);
-
-              inc(vChanged);
-            end;
-
-            if (DoChangeValue(vCurValues[6], vSpelhervatten, FALSE)) then
-            begin
-              uBibDB.UpdateFieldValue(ibdbHTInfo, nil, 'JEUGDSPELERS', ['PLAYER_ID'], [vPlayerID],
-                ['SPELHERVATTEN'], [vSpelhervatten]);
-
-              inc(vPlayerChanged);
-            end;
-
-            if (DoChangeValue(vFieldValues[8], vAllround, vIsHTYC, 7)) then
-            begin
-              uBibDB.UpdateFieldValue(ibdbHTInfo, nil, 'KARAKTER_PROFIEL', ['ID'], [vKarakterProfielID],
-                ['ALLROUND'], [vAllround]);
-
-              inc(vChanged);
-            end;
-
-            if (vChanged > vCurChanged) and (vLastUpdate > FStartParsing) then
-            begin
-              FChangeLog.Add(Format('Karakter ID %d changed again',[vKarakterProfielID]));
             end;
           end;
+          inc(vCountNotChecked);
+
+          if ((FNoTalentCheck) and (Pos(UpperCase('VERWIJDERD'),UpperCase(vExcelFunctions.ExcelApp.ActiveSheet.Name)) = 0) and
+            (Pos(UpperCase('GEPROMOVEERD'),UpperCase(vExcelFunctions.ExcelApp.ActiveSheet.Name)) = 0) and
+            (vDbPlayer.GeboorteDatum >= Date - 2* 16 * 7))
+            or
+            ((FNoTalentCheck) and (vCountNotChecked > 50)) then
+          begin
+            vDbPlayer.TestNTAsPossibleU20 := TRUE;
+            
+            vTalented := vDbPlayer.PossibleTalented;
+            if (not vTalented) or (vCountNotChecked > 50) then
+            begin
+              if ((vDbPlayer.LastPlayerUpdate < Date) or (vCountNotChecked > 50)) and (GetJeugdspelerInfoByID(vDbPlayer.ID, vDbPlayer.TeamID, vDbPlayer.Naam,
+                TRUE, vDbPlayer.Keeper, TRUE)) then
+              begin
+                vTalented := vDbPlayer.PossibleTalented;
+                vCountNotChecked := 0;
+              end;
+
+              if not vTalented  then
+              begin
+                vNoTalentList.Add(Format('[youthplayerid=%d] %s %s',
+                  [vDBPlayer.ID, vDBPlayer.Naam, vDBPlayer.Potentie]));
+              end;
+            end;
+          end;
+        finally
+          vDbPlayer.Free;
         end;
       end;
+
+      vFormVoortgang.StepIt;
     end;
 
-    vFormVoortgang.StepIt;
+    if (vNoTalentList.Count > 0) then
+    begin
+      FErrorList.Add('');
+      FErrorList.Add('Afwijzen');
+      FErrorList.Add('');
+      for i:=0 to vNoTalentList.Count - 1 do
+      begin
+        FErrorList.Add(vNoTalentList[i]);
+      end;
+    end;
+  finally
+    vNoTalentList.free;
   end;
-
   FChangeLog.Add(Format('%s: %d changes',[vExcelFunctions.ExcelApp.ActiveSheet.Name, vChanged + vPlayerChanged]));
 end;
 
@@ -8058,29 +8315,34 @@ begin
       end;
     end;
   end;
+
+  if not(result) and (aNewValue > 0) and (Floor(aNewValue) <> Floor(aOldValue)) then
+  begin
+    mLogging.Lines.Add(Format('%s: %s NO %.2f to %.2f',[FCurCheckPlayer, FCurCheckVaardigheid,
+      aOldValue, aNewValue]));
+  end;
 end;
 
 procedure TfrmHTScanner.btnTestClick(Sender: TObject);
-var
-  vMax, vCur: integer;
-
 procedure ScoutPlayers(aKarakterID: Integer);
 begin
-  with uBibRuntime.CreateSQL(ibdbHTInfo, 'SELECT * FROM JEUGDSPELERS WHERE KARAKTER_ID = :ID AND GEBOORTE_DATUM <= :DATUM AND COALESCE(DELETED,0) = 0 AND LAST_UPDATE < :LAST_UPDATE') do
+  with uBibRuntime.CreateSQL(ibdbHTInfo, '') do
   begin
     try
-      ParamByName('ID').asInteger := aKarakterID;
-      ParamByName('DATUM').asDate := Date - (2 * 16 * 7);
-      ParamByName('LAST_UPDATE').asDate := EncodeDate(2012,4,29);
+      with SQL do
+      begin
+        Add('SELECT J.*');
+        Add('FROM JEUGDSPELERS J');
+        Add('LEFT JOIN KARAKTER_PROFIEL P ON (J.KARAKTER_ID = P.ID)');
+        Add('WHERE J.PROMOTED = -1 AND CAST(J.LAST_UPDATE AS DATE) = CURRENT_DATE AND');
+        Add('COALESCE(P.SPECIALITEIT,'''') = ''''');
+      end;
       ExecQuery;
       while not EOF do
       begin
-        if (FieldByName('LAST_UPDATE').asDateTime < Date) then
-        begin
-          GetJeugdspelerInfoByID(FieldByName('PLAYER_ID').asInteger,
-            FieldByName('TEAM_ID').asInteger,FieldByName('PLAYER_NAME').asString,
-            TRUE,FALSE,TRUE);
-        end;
+        GetJeugdspelerInfoByID(FieldByName('PLAYER_ID').asInteger,
+          FieldByName('TEAM_ID').asInteger,FieldByName('PLAYER_NAME').asString,
+          TRUE,FALSE,TRUE);
         Next;
       end;
     finally
@@ -8091,32 +8353,7 @@ begin
 end;
 
 begin
-  vMax := uBibDb.GetFieldValue(ibdbHTInfo,'JEUGDSPELERS',[],[],'ID',srtInteger, svtCount,uHattrick.CreateReadTransaction(ibdbHTInfo),
-    'GEBOORTE_DATUM < ''01.01.1970'' AND KARAKTER_ID > 0');
-  vCur := 0;
-  btnTripleSpeedClick(btnTripleSpeed);
-  btnStopScouting.Visible := ivAlways;
-  with uBibRuntime.CreateSQL(ibdbHTInfo,'SELECT * FROM JEUGDSPELERS WHERE GEBOORTE_DATUM < ''01.01.1970'' AND KARAKTER_ID > 0',
-    uHattrick.CreateReadTransaction(ibdbHTInfo)) do
-  begin
-    try
-      ExecQuery;
-      while not EOF do
-      begin
-        inc(vCur);
-        lblStatus.Caption := Format('%d/%d',[vCur, vMax]);
-
-        GetJeugdspelerInfoByID(FieldByName('PLAYER_ID').asInteger,
-            FieldByName('TEAM_ID').asInteger,FieldByName('PLAYER_NAME').asString,
-            TRUE,FALSE,TRUE);
-            
-        Next;
-      end;
-    finally
-      uBibDb.CommitTransaction(Transaction, TRUE);
-      Free;
-    end;
-  end;
+  ThreadBrowseTo('http://www.dutchscouts.nl/web/NTSpy.php');  
 end;
 
 function TfrmHTScanner.VertaalPositie(aPosition:String):String;
@@ -8490,7 +8727,7 @@ begin
           begin
             vNextURL := '';
             vDoorgaan := TRUE;
-            BrowseTo(TSIBrowser, vURL);
+            BrowseTo(TSIBrowser, vURL, 120);
             while not (FTSIBrowserDocumentCompleted) do
             begin
               Sleep(2000);
@@ -9015,21 +9252,21 @@ begin
     vFormVoortgang := TfrmVoortgang.Create(nil, 1);
     try
       vFormVoortgang.Melding := 'Bezig met downloaden NTDOC.XLS...';
-      StatusBar1.Panels[4].Text := 'NTDoc.xls';
+      StatusBar1.Panels[4].Text := 'NTDoc.xlsx';
 
       UrlDownloadToFile(TSIBrowser,
         PChar(Format('https://spreadsheets.google.com/ccc?key=%s&output=xls', [vDoc])),
-        PChar(vMap + '\NTDoc.xls'), 0, nil);
+        PChar(vMap + '\NTDoc.xlsx'), 0, nil);
 
       vFormVoortgang.StepIt;
-      vOk := FileExists(vMap + '\NTDoc.xls');
+      vOk := FileExists(vMap + '\NTDoc.xlsx');
     finally
       vFormVoortgang.Release;
     end;
 
     if (vOk) then
     begin
-      VerwerkNTDoc(vMap + '\NTDoc.xls', vU20);
+      VerwerkNTDoc(vMap + '\NTDoc.xlsx', vU20);
     end
     else
     begin
@@ -9055,6 +9292,78 @@ begin
     ['SPECS','NO_SPECS','DATUM'],[aSpecCount, aSpecLoos, ScanDate]);
 end;
 
+procedure TfrmHTScanner.RebuildIndexes;
+var
+  vIndexName, vFkey: String;
+  vMax: Integer;
+  vVoortgang: TfrmVoortgang;
+begin
+  if (DayOfWeek(Date) = 7) then
+  begin
+    // Iedere zaterdag herindexeren
+    with uHattrick.CreateSQL(ibdbHTInfo, TRUE) do
+    begin
+      try
+        with SQL do
+        begin
+          Add('select count(i.rdb$index_name) aantal');
+          Add('from rdb$indices i');
+          Add('left outer join rdb$relation_constraints c on (i.rdb$index_name = c.rdb$index_name and c.rdb$index_name is not null)');
+          Add('where (i.rdb$system_flag is null or i.rdb$system_flag = 0)');
+          Add('and (i.rdb$foreign_key is not null or c.rdb$index_name is null)');
+        end;
+        ExecQuery;
+        vMax := FieldByName('AANTAL').asInteger;
+      finally
+        Transaction.Commit;
+        Transaction.Free;
+        Free;
+      end;
+    end;
+
+
+    vVoortgang := TfrmVoortgang.Create(nil,vMax);
+    try
+      with uHattrick.CreateSQL(ibdbHTInfo, TRUE) do
+      begin
+        try
+          with SQL do
+          begin
+            Add('select i.rdb$index_name indexname,');
+            Add('i.rdb$foreign_key fkey');
+            Add('from rdb$indices i');
+            Add('left outer join rdb$relation_constraints c on (i.rdb$index_name = c.rdb$index_name and c.rdb$index_name is not null)');
+            Add('where (i.rdb$system_flag is null or i.rdb$system_flag = 0)');
+            Add('and (i.rdb$foreign_key is not null or c.rdb$index_name is null)');
+          end;
+          ExecQuery;
+          while not EOF do
+          begin
+            vIndexName := FieldByName('indexname').asTrimString;
+            vFkey := FieldByName('fkey').asTrimString;
+
+            vVoortgang.Melding := Format('Rebuilding index %s...',[vIndexName]);
+
+            //uHattrick.SetIndexStatus(ibdbHTInfo, vIndexName , FALSE);
+            uHattrick.SetIndexStatus(ibdbHTInfo, vIndexName, TRUE);
+            uHattrick.SetIndexStatistics(ibdbHTInfo, vIndexName);
+
+
+            vVoortgang.StepIt;
+            Next;
+          end;
+        finally
+          Transaction.Commit;
+          Transaction.Free;
+          Free;
+        end;
+      end;
+    finally
+      vVoortgang.Free;
+    end;
+  end;
+end;
+
 procedure TfrmHTScanner.WriteScanHistorie;
 var
   vID: Integer;
@@ -9066,6 +9375,7 @@ begin
   if (vID = 0) then
   begin
     FirstTime := TRUE;
+    RebuildIndexes;
     
     vSQL := uBibDB.CreateInsertSQL(ibdbHTInfo,'SCAN_HISTORIE');
     try
@@ -9164,7 +9474,7 @@ end;
 procedure TfrmHTScanner.tmrAutoStartTimer(Sender: TObject);
 begin
   tmrAutoStart.Enabled := FALSE;
-  DoAutoStart(AutoTBSReeks);
+  DoAutoStart;
 end;
 
 procedure TfrmHTScanner.FormDestroy(Sender: TObject);
@@ -9376,7 +9686,7 @@ var
   vWaarde: double;
   vVoortgang: TfrmVoortgang;
   vGewijzigd, vSpelerGewijzigdCount:integer;
-  vSpelerChanged, vTalented, vTalentedNew: boolean;
+  vSpelerChanged, vTalented, vTalentedNew, vIsKeeper: boolean;
   vUpdated: TStringList;
 const
   COL_PLAYERID = 'A';
@@ -9428,15 +9738,26 @@ begin
                   ['PLAYER_ID'],[sPlayerID],'PLAYER_ID',srtInteger,svtNormal,
                   uHattrick.CreateReadTransaction(ibdbHTInfo));
 
+                sWaarde := vExcelFunctions.GetCellRange(Format('%s%d', [COL_KEEPEN, i]));
+                if (sWaarde <> '') then
+                begin
+                  vIsKeeper := StrToFloat(sWaarde) > 5;
+                end
+                else
+                begin
+                  vIsKeeper := FALSE;
+                end;
+
                 if (vPlayerID = 0) then
                 begin
+
                   vTalented := FALSE;
 
                   GetJeugdSpelerInfoByID(
                     StrToInt(sPlayerID),
                     0,
                     sPlayerName,
-                    TRUE,FALSE,TRUE)
+                    TRUE,vIsKeeper,TRUE)
                 end
                 else
                 begin
@@ -9457,148 +9778,152 @@ begin
                     try
                       ParamByName('ID').asInteger := vKarakterID;
                       ExecQuery;
-                      // Allround
-                      sWaarde := vExcelFunctions.GetCellRange(Format('%s%d', [COL_ALLROUND,i]));
-                      if (sWaarde <> '') then
-                      begin
-                        if (FieldByName('ALLROUND').asString <> sWaarde) then
-                        begin
-                          vUpdated.Add(Format('Allround van %s naar %s',[FieldByName('ALLROUND').asString, sWaarde]));
-                          uBibDb.ExecSQL(ibdbHTInfo,'UPDATE KARAKTER_PROFIEL SET ALLROUND = :WAARDE WHERE ID = :ID',
-                            ['ID','WAARDE'],[vKarakterID, StrToInt(sWaarde)]);
-                        end;
-                      end;
 
-                      // Keepen
-                      sWaarde := vExcelFunctions.GetCellRange(Format('%s%d', [COL_KEEPEN, i]));
-                      if (sWaarde <> '') then
+                      if (FieldByName('IS_KEEPER').asInteger = Ord(vIsKeeper) * -1) then
                       begin
-                        vWaarde := StrToFloat(sWaarde);
-                        if (FieldByName('POT_KEEPEN').asFloat < vWaarde) or
-                           (
-                            (Floor(FieldByName('POT_KEEPEN').asFloat) > Floor(vWaarde)) and
-                            (uBibMessageBox.MessageBoxWarning(Format('Keepen van %s naar %.1f wijzigen?!',[FieldByName('POT_KEEPEN').asString, vWaarde]),'HTScanner',TRUE))
-                            ) then
+                        // Allround
+                        sWaarde := vExcelFunctions.GetCellRange(Format('%s%d', [COL_ALLROUND,i]));
+                        if (sWaarde <> '') then
                         begin
-                          inc(vGewijzigd);
-                          vSpelerChanged := TRUE;
-                          vUpdated.Add(Format('Keepen van %s naar %.1f',[FieldByName('POT_KEEPEN').asString, vWaarde]));
-                          uBibDb.ExecSQL(ibdbHTInfo,'UPDATE KARAKTER_PROFIEL SET POT_KEEPEN = :WAARDE WHERE ID = :ID',
-                            ['ID','WAARDE'],[vKarakterID, vWaarde]);
+                          if (FieldByName('ALLROUND').asString <> sWaarde) then
+                          begin
+                            vUpdated.Add(Format('Allround van %s naar %s',[FieldByName('ALLROUND').asString, sWaarde]));
+                            uBibDb.ExecSQL(ibdbHTInfo,'UPDATE KARAKTER_PROFIEL SET ALLROUND = :WAARDE WHERE ID = :ID',
+                              ['ID','WAARDE'],[vKarakterID, StrToInt(sWaarde)]);
+                          end;
                         end;
-                      end;
 
-                      // Verdedigen
-                      sWaarde := vExcelFunctions.GetCellRange(Format('%s%d', [COL_VERDEDIGEN, i]));
-                      if (sWaarde <> '') then
-                      begin
-                        vWaarde := StrToFloat(sWaarde);
-                        if (FieldByName('POT_VERDEDIGEN').asFloat < vWaarde) or
-                           (
-                            (Floor(FieldByName('POT_VERDEDIGEN').asFloat) > Floor(vWaarde)) and
-                            (uBibMessageBox.MessageBoxWarning(Format('Verdedigen van %s naar %.1f wijzigen?!',[FieldByName('POT_VERDEDIGEN').asString, vWaarde]),'HTScanner',TRUE))
-                            ) then
+                        // Keepen
+                        sWaarde := vExcelFunctions.GetCellRange(Format('%s%d', [COL_KEEPEN, i]));
+                        if (sWaarde <> '') then
                         begin
-                          inc(vGewijzigd);
-                          vSpelerChanged := TRUE;
-                          vUpdated.Add(Format('Verdedigen van %s naar %.1f',[FieldByName('POT_VERDEDIGEN').asString, vWaarde]));
-                          uBibDb.ExecSQL(ibdbHTInfo,'UPDATE KARAKTER_PROFIEL SET POT_VERDEDIGEN = :WAARDE WHERE ID = :ID',
-                            ['ID','WAARDE'],[vKarakterID, vWaarde]);
+                          vWaarde := StrToFloat(sWaarde);
+                          if ((vIsKeeper) or (vWaarde < 5)) and ((FieldByName('POT_KEEPEN').asFloat < vWaarde) or
+                             (
+                              (Floor(FieldByName('POT_KEEPEN').asFloat) > Floor(vWaarde)) and
+                              (uBibMessageBox.MessageBoxWarning(Format('Keepen van %s naar %.1f wijzigen?!',[FieldByName('POT_KEEPEN').asString, vWaarde]),'HTScanner',TRUE))
+                              )) then
+                          begin
+                            inc(vGewijzigd);
+                            vSpelerChanged := TRUE;
+                            vUpdated.Add(Format('Keepen van %s naar %.1f',[FieldByName('POT_KEEPEN').asString, vWaarde]));
+                            uBibDb.ExecSQL(ibdbHTInfo,'UPDATE KARAKTER_PROFIEL SET POT_KEEPEN = :WAARDE WHERE ID = :ID',
+                              ['ID','WAARDE'],[vKarakterID, vWaarde]);
+                          end;
                         end;
-                      end;
 
-                      // Vleugelspel
-                      sWaarde := vExcelFunctions.GetCellRange(Format('%s%d', [COL_VLEUGELSPEL,i]));
-                      if (sWaarde <> '') then
-                      begin
-                        vWaarde := StrToFloat(sWaarde);
-                        if (FieldByName('POT_VLEUGELSPEL').asFloat < vWaarde) or
-                           (
-                            (Floor(FieldByName('POT_VLEUGELSPEL').asFloat) > Floor(vWaarde)) and
-                            (uBibMessageBox.MessageBoxWarning(Format('Vleugelspel van %s naar %.1f wijzigen?!',[FieldByName('POT_VLEUGELSPEL').asString, vWaarde]),'HTScanner',TRUE))
-                            ) then
+                        // Verdedigen
+                        sWaarde := vExcelFunctions.GetCellRange(Format('%s%d', [COL_VERDEDIGEN, i]));
+                        if (sWaarde <> '') then
                         begin
-                          inc(vGewijzigd);
-                          vSpelerChanged := TRUE;
-                          vUpdated.Add(Format('Vleugelspel van %s naar %.1f',[FieldByName('POT_VLEUGELSPEL').asString, vWaarde]));
-                          uBibDb.ExecSQL(ibdbHTInfo,'UPDATE KARAKTER_PROFIEL SET POT_VLEUGELSPEL = :WAARDE WHERE ID = :ID',
-                            ['ID','WAARDE'],[vKarakterID, vWaarde]);
+                          vWaarde := StrToFloat(sWaarde);
+                          if (FieldByName('POT_VERDEDIGEN').asFloat < vWaarde) or
+                             (
+                              (Floor(FieldByName('POT_VERDEDIGEN').asFloat) > Floor(vWaarde)) and
+                              (uBibMessageBox.MessageBoxWarning(Format('Verdedigen van %s naar %.1f wijzigen?!',[FieldByName('POT_VERDEDIGEN').asString, vWaarde]),'HTScanner',TRUE))
+                              ) then
+                          begin
+                            inc(vGewijzigd);
+                            vSpelerChanged := TRUE;
+                            vUpdated.Add(Format('Verdedigen van %s naar %.1f',[FieldByName('POT_VERDEDIGEN').asString, vWaarde]));
+                            uBibDb.ExecSQL(ibdbHTInfo,'UPDATE KARAKTER_PROFIEL SET POT_VERDEDIGEN = :WAARDE WHERE ID = :ID',
+                              ['ID','WAARDE'],[vKarakterID, vWaarde]);
+                          end;
                         end;
-                      end;
 
-                      // Positiespel
-                      sWaarde := vExcelFunctions.GetCellRange(Format('%s%d', [COL_POSITIESPEL, i]));
-                      if (sWaarde <> '') then
-                      begin
-                        vWaarde := StrToFloat(sWaarde);
-                        if (FieldByName('POT_POSITIESPEL').asFloat < vWaarde) or
-                           (
-                            (Floor(FieldByName('POT_POSITIESPEL').asFloat) > Floor(vWaarde)) and
-                            (uBibMessageBox.MessageBoxWarning(Format('Positiespel van %s naar %.1f wijzigen?!',[FieldByName('POT_POSITIESPEL').asString, vWaarde]),'HTScanner',TRUE))
-                            ) then
+                        // Vleugelspel
+                        sWaarde := vExcelFunctions.GetCellRange(Format('%s%d', [COL_VLEUGELSPEL,i]));
+                        if (sWaarde <> '') then
                         begin
-                          inc(vGewijzigd);
-                          vSpelerChanged := TRUE;
-                          vUpdated.Add(Format('Positiespel van %s naar %.1f',[FieldByName('POT_POSITIESPEL').asString, vWaarde]));
-                          uBibDb.ExecSQL(ibdbHTInfo,'UPDATE KARAKTER_PROFIEL SET POT_POSITIESPEL = :WAARDE WHERE ID = :ID',
-                            ['ID','WAARDE'],[vKarakterID, vWaarde]);
+                          vWaarde := StrToFloat(sWaarde);
+                          if (FieldByName('POT_VLEUGELSPEL').asFloat < vWaarde) or
+                             (
+                              (Floor(FieldByName('POT_VLEUGELSPEL').asFloat) > Floor(vWaarde)) and
+                              (uBibMessageBox.MessageBoxWarning(Format('Vleugelspel van %s naar %.1f wijzigen?!',[FieldByName('POT_VLEUGELSPEL').asString, vWaarde]),'HTScanner',TRUE))
+                              ) then
+                          begin
+                            inc(vGewijzigd);
+                            vSpelerChanged := TRUE;
+                            vUpdated.Add(Format('Vleugelspel van %s naar %.1f',[FieldByName('POT_VLEUGELSPEL').asString, vWaarde]));
+                            uBibDb.ExecSQL(ibdbHTInfo,'UPDATE KARAKTER_PROFIEL SET POT_VLEUGELSPEL = :WAARDE WHERE ID = :ID',
+                              ['ID','WAARDE'],[vKarakterID, vWaarde]);
+                          end;
                         end;
-                      end;
 
-                      // Scoren
-                      sWaarde := vExcelFunctions.GetCellRange(Format('%s%d', [COL_SCOREN, i]));
-                      if (sWaarde <> '') then
-                      begin
-                        vWaarde := StrToFloat(sWaarde);
-                        if (FieldByName('POT_SCOREN').asFloat < vWaarde) or
-                           (
-                            (Floor(FieldByName('POT_SCOREN').asFloat) > Floor(vWaarde)) and
-                            (uBibMessageBox.MessageBoxWarning(Format('Scoren van %s naar %.1f wijzigen?!',[FieldByName('POT_SCOREN').asString, vWaarde]),'HTScanner',TRUE))
-                            ) then
+                        // Positiespel
+                        sWaarde := vExcelFunctions.GetCellRange(Format('%s%d', [COL_POSITIESPEL, i]));
+                        if (sWaarde <> '') then
                         begin
-                          inc(vGewijzigd);
-                          vSpelerChanged := TRUE;
-                          vUpdated.Add(Format('Scoren van %s naar %.1f',[FieldByName('POT_SCOREN').asString, vWaarde]));
-                          uBibDb.ExecSQL(ibdbHTInfo,'UPDATE KARAKTER_PROFIEL SET POT_SCOREN = :WAARDE WHERE ID = :ID',
-                            ['ID','WAARDE'],[vKarakterID, vWaarde]);
+                          vWaarde := StrToFloat(sWaarde);
+                          if (FieldByName('POT_POSITIESPEL').asFloat < vWaarde) or
+                             (
+                              (Floor(FieldByName('POT_POSITIESPEL').asFloat) > Floor(vWaarde)) and
+                              (uBibMessageBox.MessageBoxWarning(Format('Positiespel van %s naar %.1f wijzigen?!',[FieldByName('POT_POSITIESPEL').asString, vWaarde]),'HTScanner',TRUE))
+                              ) then
+                          begin
+                            inc(vGewijzigd);
+                            vSpelerChanged := TRUE;
+                            vUpdated.Add(Format('Positiespel van %s naar %.1f',[FieldByName('POT_POSITIESPEL').asString, vWaarde]));
+                            uBibDb.ExecSQL(ibdbHTInfo,'UPDATE KARAKTER_PROFIEL SET POT_POSITIESPEL = :WAARDE WHERE ID = :ID',
+                              ['ID','WAARDE'],[vKarakterID, vWaarde]);
+                          end;
                         end;
-                      end;
 
-                      // Passen
-                      sWaarde := vExcelFunctions.GetCellRange(Format('%s%d', [COL_PASSEN, i]));
-                      if (sWaarde <> '') then
-                      begin
-                        vWaarde := StrToFloat(sWaarde);
-                        if (FieldByName('POT_PASSEN').asFloat < vWaarde) or
-                           (
-                            (Floor(FieldByName('POT_PASSEN').asFloat) > Floor(vWaarde)) and
-                            (uBibMessageBox.MessageBoxWarning(Format('Passen van %s naar %.1f wijzigen?!',[FieldByName('POT_PASSEN').asString, vWaarde]),'HTScanner',TRUE))
-                            ) then
+                        // Scoren
+                        sWaarde := vExcelFunctions.GetCellRange(Format('%s%d', [COL_SCOREN, i]));
+                        if (sWaarde <> '') then
                         begin
-                          inc(vGewijzigd);
-                          vSpelerChanged := TRUE;
-                          vUpdated.Add(Format('Passen van %s naar %.1f',[FieldByName('POT_PASSEN').asString, vWaarde]));
-                          uBibDb.ExecSQL(ibdbHTInfo,'UPDATE KARAKTER_PROFIEL SET POT_PASSEN = :WAARDE WHERE ID = :ID',
-                            ['ID','WAARDE'],[vKarakterID, vWaarde]);
+                          vWaarde := StrToFloat(sWaarde);
+                          if (FieldByName('POT_SCOREN').asFloat < vWaarde) or
+                             (
+                              (Floor(FieldByName('POT_SCOREN').asFloat) > Floor(vWaarde)) and
+                              (uBibMessageBox.MessageBoxWarning(Format('Scoren van %s naar %.1f wijzigen?!',[FieldByName('POT_SCOREN').asString, vWaarde]),'HTScanner',TRUE))
+                              ) then
+                          begin
+                            inc(vGewijzigd);
+                            vSpelerChanged := TRUE;
+                            vUpdated.Add(Format('Scoren van %s naar %.1f',[FieldByName('POT_SCOREN').asString, vWaarde]));
+                            uBibDb.ExecSQL(ibdbHTInfo,'UPDATE KARAKTER_PROFIEL SET POT_SCOREN = :WAARDE WHERE ID = :ID',
+                              ['ID','WAARDE'],[vKarakterID, vWaarde]);
+                          end;
                         end;
-                      end;
 
-                      // Spelhervatting
-                      sWaarde := vExcelFunctions.GetCellRange(Format('%s%d', [COL_SPELHERVATTEN, i]));
-                      if (sWaarde <> '') then
-                      begin
-                        vWaarde := StrToFloat(sWaarde);
-                        if (FieldByName('POT_SPELHERVATTEN').asFloat < vWaarde) or
-                           (
-                            (Floor(FieldByName('POT_SPELHERVATTEN').asFloat) > Floor(vWaarde)) and
-                            (uBibMessageBox.MessageBoxWarning(Format('Spelhervatting van %s naar %.1f wijzigen?!',[FieldByName('POT_SPELHERVATTEN').asString, vWaarde]),'HTScanner',TRUE))
-                            ) then
+                        // Passen
+                        sWaarde := vExcelFunctions.GetCellRange(Format('%s%d', [COL_PASSEN, i]));
+                        if (sWaarde <> '') then
                         begin
-                          inc(vGewijzigd);
-                          vSpelerChanged := TRUE;
-                          vUpdated.Add(Format('Spelhervatting van %s naar %.1f',[FieldByName('POT_SPELHERVATTEN').asString, vWaarde]));
-                          uBibDb.ExecSQL(ibdbHTInfo,'UPDATE KARAKTER_PROFIEL SET POT_SPELHERVATTEN = :WAARDE WHERE ID = :ID',
-                            ['ID','WAARDE'],[vKarakterID, vWaarde]);
+                          vWaarde := StrToFloat(sWaarde);
+                          if (FieldByName('POT_PASSEN').asFloat < vWaarde) or
+                             (
+                              (Floor(FieldByName('POT_PASSEN').asFloat) > Floor(vWaarde)) and
+                              (uBibMessageBox.MessageBoxWarning(Format('Passen van %s naar %.1f wijzigen?!',[FieldByName('POT_PASSEN').asString, vWaarde]),'HTScanner',TRUE))
+                              ) then
+                          begin
+                            inc(vGewijzigd);
+                            vSpelerChanged := TRUE;
+                            vUpdated.Add(Format('Passen van %s naar %.1f',[FieldByName('POT_PASSEN').asString, vWaarde]));
+                            uBibDb.ExecSQL(ibdbHTInfo,'UPDATE KARAKTER_PROFIEL SET POT_PASSEN = :WAARDE WHERE ID = :ID',
+                              ['ID','WAARDE'],[vKarakterID, vWaarde]);
+                          end;
+                        end;
+
+                        // Spelhervatting
+                        sWaarde := vExcelFunctions.GetCellRange(Format('%s%d', [COL_SPELHERVATTEN, i]));
+                        if (sWaarde <> '') then
+                        begin
+                          vWaarde := StrToFloat(sWaarde);
+                          if (FieldByName('POT_SPELHERVATTEN').asFloat < vWaarde) or
+                             (
+                              (Floor(FieldByName('POT_SPELHERVATTEN').asFloat) > Floor(vWaarde)) and
+                              (uBibMessageBox.MessageBoxWarning(Format('Spelhervatting van %s naar %.1f wijzigen?!',[FieldByName('POT_SPELHERVATTEN').asString, vWaarde]),'HTScanner',TRUE))
+                              ) then
+                          begin
+                            inc(vGewijzigd);
+                            vSpelerChanged := TRUE;
+                            vUpdated.Add(Format('Spelhervatting van %s naar %.1f',[FieldByName('POT_SPELHERVATTEN').asString, vWaarde]));
+                            uBibDb.ExecSQL(ibdbHTInfo,'UPDATE KARAKTER_PROFIEL SET POT_SPELHERVATTEN = :WAARDE WHERE ID = :ID',
+                              ['ID','WAARDE'],[vKarakterID, vWaarde]);
+                          end;
                         end;
                       end;
                     finally
@@ -9690,6 +10015,42 @@ procedure TfrmHTScanner.SetAutoStart(const Value: boolean);
 begin
   FAutoStart := Value;
   btnAuto.Checked := Value;
+end;
+
+procedure TfrmHTScanner.tmrActivityTimer(Sender: TObject);
+begin
+  uHattrick.WriteActivity(ibdbHTInfo);
+end;
+
+procedure TfrmHTScanner.WriteActivity;
+begin
+  if (FWriteActivitiy) then
+  begin
+    uHattrick.WriteActivity(ibdbHTInfo);
+  end;
+end;
+
+procedure TfrmHTScanner.tmrDSTimer(Sender: TObject);
+begin
+  BrowseToDS;
+end;
+
+procedure TfrmHTScanner.OnThreadTerminate(Sender: TObject);
+begin
+  mLogging.Lines.Add(
+    Format('Thread '+TDownloadThread(Sender).URL+' terminated after %s',
+      [FormatDateTime('hh:nn',Now - TDownloadThread(Sender).StartTime)]));
+
+  dec(FActiveThreadCount);
+end;
+
+procedure TfrmHTScanner.FormCloseQuery(Sender: TObject;
+  var CanClose: Boolean);
+begin
+  CanClose := ( (FActiveThreadCount = 0) or
+                (MessageBoxWarning(Format('Er zijn nog %d downloadthreads!',[FActiveThreadCount])+#13+#13+
+    'Doorgaan met afsluiten?','HTScanner',TRUE))
+               );
 end;
 
 end.
