@@ -1272,44 +1272,44 @@ function GetVolgNummer(aDatabase:TIBDatabase; aNeus, aGezicht, aOgen, aMond,
   aHaar, aBody: String; aIsKeeper:boolean):integer;
 var
   i:integer;
+  vID : integer;
 begin
   i:=-1;
-  with uHTDB.CreateSQL(aDatabase,'',uHattrick.CreateReadTransAction(aDatabase)) do
-  begin
-    try
-      with SQL do
-      begin
-        Add('SELECT P.ID');
-        Add('FROM KARAKTER_PROFIEL P');
-        Add('WHERE');
-        Add('P.NEUS = :NEUS AND');
-        Add('P.GEZICHT = :GEZICHT AND');
-        Add('P.OGEN = :OGEN AND');
-        Add('P.MOND = :MOND AND');
-        Add('P.HAAR = :HAAR AND');
-        Add('P.BODY = :BODY AND');
-        Add('P.IS_KEEPER = :IS_KEEPER AND');
-        Add('P.VOLGNUMMER = :VOLGNUMMER');
-      end;
-      ParamByName('NEUS').asString := aNeus;
-      ParamByName('GEZICHT').asString := aGezicht;
-      ParamByName('OGEN').asString := aOgen;
-      ParamByName('MOND').asString := aMond;
-      ParamByName('HAAR').asString := aHaar;
-      ParamByName('BODY').asString := aBody;
-      ParamByName('IS_KEEPER').asInteger := Ord(aISKeeper) * -1;
-      repeat
-        inc(i);
-        Close;
+  repeat
+    inc(i);
+    with uHTDB.CreateSQL(aDatabase,'',uHattrick.CreateReadTransAction(aDatabase)) do
+    begin
+      try
+        with SQL do
+        begin
+          Add('SELECT P.ID');
+          Add('FROM KARAKTER_PROFIEL P');
+          Add('WHERE');
+          Add('P.NEUS = :NEUS AND');
+          Add('P.GEZICHT = :GEZICHT AND');
+          Add('P.OGEN = :OGEN AND');
+          Add('P.MOND = :MOND AND');
+          Add('P.HAAR = :HAAR AND');
+          Add('P.BODY = :BODY AND');
+          Add('P.IS_KEEPER = :IS_KEEPER AND');
+          Add('P.VOLGNUMMER = :VOLGNUMMER');
+        end;
+        ParamByName('NEUS').asString := aNeus;
+        ParamByName('GEZICHT').asString := aGezicht;
+        ParamByName('OGEN').asString := aOgen;
+        ParamByName('MOND').asString := aMond;
+        ParamByName('HAAR').asString := aHaar;
+        ParamByName('BODY').asString := aBody;
+        ParamByName('IS_KEEPER').asInteger := Ord(aISKeeper) * -1;
         ParamByName('VOLGNUMMER').asInteger := i;
         ExecQuery;
-      until FieldByName('ID').asInteger = 0;
-    finally
-      CommitTransaction(Transaction,dbaFree);
-      Free;
+        vID := FieldByName('ID').asInteger;
+      finally
+        CommitTransaction(Transaction,dbaFree);
+        Free;
+      end;
     end;
-  end;
-
+  until vId = 0;
   result := i;
 end;
 
