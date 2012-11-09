@@ -552,8 +552,6 @@ begin
     (Pos('Server Error',vBody.Text) = 0) and (Pos('The service is unavailable',vBody.Text) = 0) and
     (Pos('Applicatiefout',vBody.Text) = 0) and (Pos('The page cannot be found',vBody.Text) = 0) then
   begin
-    Result.Parsed := TRUE;
-
 
     vPos := Pos('Mijn Hattrick', vBody.Text);
     if (vPos > 0) then
@@ -1014,6 +1012,8 @@ begin
       vPos := Pos('</a>',vBody.Text);
       vLine := Trim(Copy(vBody.Text,1,vPos - 1));
       result.Spelhervatting := NivoTextToGetal(vLine);
+
+      Result.Parsed := TRUE;
     end;
   end;
 end;

@@ -762,7 +762,11 @@ begin
 
   result := not (vError) and (Pos(WideString(aUrl), aBrowser.LocationURL) > 0);
 
-  if not IgnoreErrors then
+  if (IgnoreErrors) and (vError) then
+  begin
+    Wait(2,4);
+  end
+  else
   begin
     if (DownloadErrors > 30) or (btnStopScouting.Down) then
     begin
@@ -2353,7 +2357,8 @@ begin
 
     if (AutoStart) and (result = -1) and (aTSISet.YouthPlayerID > 0) then
     begin
-      mLogging.Lines.Add(Format('Should have deleted %d',[aTSISet.YouthPlayerID]));
+      mLogging.Lines.Add(Format('Should have deleted youthlayerID %d [%s characterID %s, seniorID %d]',
+        [aTSISet.YouthPlayerID, aTSISet.PlayerName, aTSISet.KarakterID, aTSISet.PLayerID]));
       //Geen geldig karakter! Dan jeugdspeler ook verwijderen.
       //ExecSQL(ibdbHTInfo, 'DELETE FROM JEUGDSPELERS WHERE PLAYER_ID = :ID',
       //  ['ID'], [aTSISet.YouthPlayerID]);
