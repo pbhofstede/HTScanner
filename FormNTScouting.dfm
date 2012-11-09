@@ -1,9 +1,9 @@
 object frmNTScouting: TfrmNTScouting
   Left = 399
   Top = 192
-  Width = 1277
-  Height = 639
   Caption = 'NT Scouting'
+  ClientHeight = 601
+  ClientWidth = 1261
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -26,6 +26,10 @@ object frmNTScouting: TfrmNTScouting
     TabOrder = 0
     object tbNTPlayers: TTabSheet
       Caption = 'NT Spelers'
+      ExplicitLeft = 0
+      ExplicitTop = 0
+      ExplicitWidth = 0
+      ExplicitHeight = 0
       object dxDBGrid1: TdxDBGrid
         Left = 0
         Top = 0
@@ -321,6 +325,10 @@ object frmNTScouting: TfrmNTScouting
     object TabSheet2: TTabSheet
       Caption = 'DutchScouts'
       ImageIndex = 1
+      ExplicitLeft = 0
+      ExplicitTop = 0
+      ExplicitWidth = 0
+      ExplicitHeight = 0
       object Panel1: TPanel
         Left = 0
         Top = 0
@@ -335,6 +343,12 @@ object frmNTScouting: TfrmNTScouting
           Width = 1251
           Height = 174
           Align = alClient
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -11
+          Font.Name = 'Tahoma'
+          Font.Style = []
+          ParentFont = False
           TabOrder = 0
         end
         object Panel3: TPanel
@@ -381,8 +395,6 @@ object frmNTScouting: TfrmNTScouting
   end
   object ibdtstNTScouting: TIBDataSet
     Transaction = IBTransaction1
-    BufferChunks = 1000
-    CachedUpdates = False
     DeleteSQL.Strings = (
       'delete from NT_SCOUTING'
       'where'
@@ -475,12 +487,10 @@ object frmNTScouting: TfrmNTScouting
     Top = 240
   end
   object IBTransaction1: TIBTransaction
-    Active = False
     Params.Strings = (
       'read_committed'
       'rec_version'
       'nowait')
-    AutoStopAction = saNone
     Left = 584
     Top = 176
   end

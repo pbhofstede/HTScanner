@@ -1,9 +1,9 @@
 object frmHTScanner: TfrmHTScanner
   Left = 20
   Top = 18
-  Width = 1441
-  Height = 861
   Caption = ' '
+  ClientHeight = 588
+  ClientWidth = 889
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -19,41 +19,29 @@ object frmHTScanner: TfrmHTScanner
   OnDestroy = FormDestroy
   PixelsPerInch = 96
   TextHeight = 13
-  object vMemo: TTntMemo
-    Left = 472
-    Top = 400
-    Width = 185
-    Height = 89
-    Lines.WideStrings = (
-      'vMemo')
-    TabOrder = 0
-    Visible = False
-  end
-  object pgctrlLijst: TdxPageControl
+  object pgctrlLijst: TcxPageControl
     Left = 0
     Top = 22
-    Width = 1425
-    Height = 782
-    ActivePage = tbBrowser
+    Width = 889
+    Height = 547
     Align = alClient
-    HideButtons = False
-    HotTrack = False
-    MultiLine = False
-    OwnerDraw = False
-    RaggedRight = False
-    ScrollOpposite = False
-    TabHeight = 0
     TabOrder = 1
-    TabPosition = dxtpTop
-    TabStop = True
-    TabWidth = 0
-    object tbBrowser: TdxTabSheet
+    Properties.ActivePage = tbTSI
+    ClientRectBottom = 543
+    ClientRectLeft = 4
+    ClientRectRight = 885
+    ClientRectTop = 24
+    object tbBrowser: TcxTabSheet
       Caption = 'Browser'
+      ExplicitLeft = 0
+      ExplicitTop = 0
+      ExplicitWidth = 0
+      ExplicitHeight = 0
       object HTBrowser: TEmbeddedWB
         Left = 0
         Top = 0
-        Width = 1425
-        Height = 759
+        Width = 881
+        Height = 519
         Align = alClient
         TabOrder = 0
         Silent = False
@@ -63,15 +51,11 @@ object frmHTScanner: TfrmHTScanner
         DisableCtrlShortcuts = 'N'
         UserInterfaceOptions = [EnablesFormsAutoComplete, EnableThemes]
         About = ' EmbeddedWB http://bsalsa.com/'
-        PrintOptions.Margins.Left = 19.05
-        PrintOptions.Margins.Right = 19.05
-        PrintOptions.Margins.Top = 19.05
-        PrintOptions.Margins.Bottom = 19.05
-        PrintOptions.Header = '&w&bpagina &p van &P'
         PrintOptions.HTMLHeader.Strings = (
           '<HTML></HTML>')
-        PrintOptions.Footer = '&u&b&d'
         PrintOptions.Orientation = poPortrait
+        ExplicitWidth = 1425
+        ExplicitHeight = 759
         ControlData = {
           4C0000001B4A0000A43500000000000000000000000000000000000000000000
           000000004C000000000000000000000001000000E0D057007335CF11AE690800
@@ -80,13 +64,13 @@ object frmHTScanner: TfrmHTScanner
           00000000000000000100000000000000000000000000000000000000}
       end
     end
-    object tbWaardes: TdxTabSheet
+    object tbWaardes: TcxTabSheet
       Caption = 'Waardes'
       object dxDBGrid1: TdxDBGrid
         Left = 0
         Top = 22
-        Width = 1425
-        Height = 737
+        Width = 881
+        Height = 497
         Bands = <
           item
           end>
@@ -267,19 +251,19 @@ object frmHTScanner: TfrmHTScanner
       object dxBarDockControl1: TdxBarDockControl
         Left = 0
         Top = 0
-        Width = 1425
+        Width = 881
         Height = 22
         Align = dalTop
         BarManager = dxBarManager1
       end
     end
-    object tbScouting: TdxTabSheet
+    object tbScouting: TcxTabSheet
       Caption = 'Scouting'
       object dxDBGrid2: TdxDBGrid
         Left = 0
         Top = 22
-        Width = 1425
-        Height = 574
+        Width = 881
+        Height = 334
         Bands = <
           item
           end>
@@ -443,7 +427,7 @@ object frmHTScanner: TfrmHTScanner
       object dxBarDockControl2: TdxBarDockControl
         Left = 0
         Top = 0
-        Width = 1425
+        Width = 881
         Height = 22
         Align = dalTop
         BarManager = dxBarManager1
@@ -451,8 +435,8 @@ object frmHTScanner: TfrmHTScanner
       object dbgrdScouting: TdxDBGrid
         Left = 0
         Top = 22
-        Width = 1425
-        Height = 574
+        Width = 881
+        Height = 334
         Bands = <
           item
           end>
@@ -663,8 +647,8 @@ object frmHTScanner: TfrmHTScanner
       end
       object Panel1: TPanel
         Left = 0
-        Top = 596
-        Width = 1425
+        Top = 356
+        Width = 881
         Height = 163
         Align = alBottom
         Caption = 'Panel1'
@@ -672,7 +656,7 @@ object frmHTScanner: TfrmHTScanner
         object dbgrdTransferprijzen: TdxDBGrid
           Left = 1
           Top = 1
-          Width = 1422
+          Width = 879
           Height = 161
           Bands = <
             item
@@ -751,13 +735,13 @@ object frmHTScanner: TfrmHTScanner
         end
       end
     end
-    object dxTabSheet1: TdxTabSheet
+    object dxTabSheet1: TcxTabSheet
       Caption = 'Talents (U20/NT)'
-      object dbgrdTalents: TsynDBGrid
+      object dbgrdTalents: TdxDBGrid
         Left = 0
         Top = 24
-        Width = 1425
-        Height = 735
+        Width = 881
+        Height = 495
         Bands = <
           item
           end>
@@ -769,7 +753,7 @@ object frmHTScanner: TfrmHTScanner
         Align = alClient
         TabOrder = 0
         OnDblClick = dbgrdTalentsDblClick
-        Datasource = dsTalents
+        DataSource = dsTalents
         Filter.Active = True
         Filter.Criteria = {00000000}
         HideFocusRect = True
@@ -779,19 +763,6 @@ object frmHTScanner: TfrmHTScanner
         OptionsView = [edgoAutoWidth, edgoBandHeaderWidth, edgoInvertSelect, edgoUseBitmap]
         RegistryPath = '\Software\HTScanner\Talents'
         OnCustomDrawCell = dbgrdTalentsCustomDrawCell
-        Active = False
-        DoNotCopyList.Strings = (
-          'ID')
-        CursorIndicator = 1
-        NewSelectBehaviour = True
-        SDBG_Barmanager = dxBarManager1
-        SDBG_UseStandardPopup = True
-        SDBG_SequenceIncrement = 10
-        SDBG_SisObjectType = sobjGeenObject
-        SDBG_CreateSisObjectDynamicly = False
-        SDBG_Hint = False
-        SDBG_HintSleep = 0
-        ShowCustomPopupWhenEmpty = False
         object dxDBGridMaskColumn5: TdxDBGridMaskColumn
           Caption = 'ID'
           Sizing = False
@@ -959,7 +930,7 @@ object frmHTScanner: TfrmHTScanner
       object dxBarDockControl4: TdxBarDockControl
         Left = 0
         Top = 0
-        Width = 1425
+        Width = 881
         Height = 24
         Align = dalTop
         BarManager = dxBarManager1
@@ -967,13 +938,13 @@ object frmHTScanner: TfrmHTScanner
         UseOwnSunkenBorder = True
       end
     end
-    object tbTSI: TdxTabSheet
+    object tbTSI: TcxTabSheet
       Caption = 'TSI'
       object TSIBrowser: TEmbeddedWB
         Left = 0
         Top = 0
-        Width = 1424
-        Height = 758
+        Width = 881
+        Height = 519
         Align = alClient
         TabOrder = 0
         OnDownloadBegin = TSIBrowserDownloadBegin
@@ -982,15 +953,11 @@ object frmHTScanner: TfrmHTScanner
         DisableCtrlShortcuts = 'N'
         UserInterfaceOptions = [EnablesFormsAutoComplete, EnableThemes]
         About = ' EmbeddedWB http://bsalsa.com/'
-        PrintOptions.Margins.Left = 19.05
-        PrintOptions.Margins.Right = 19.05
-        PrintOptions.Margins.Top = 19.05
-        PrintOptions.Margins.Bottom = 19.05
-        PrintOptions.Header = '&w&bpagina &p van &P'
         PrintOptions.HTMLHeader.Strings = (
           '<HTML></HTML>')
-        PrintOptions.Footer = '&u&b&d'
         PrintOptions.Orientation = poPortrait
+        ExplicitWidth = 1424
+        ExplicitHeight = 758
         ControlData = {
           4C0000001B4A0000A43500000000000000000000000000000000000000000000
           000000004C000000000000000000000001000000E0D057007335CF11AE690800
@@ -999,13 +966,17 @@ object frmHTScanner: TfrmHTScanner
           00000000000000000100000000000000000000000000000000000000}
       end
     end
-    object tbFriendly: TdxTabSheet
+    object tbFriendly: TcxTabSheet
       Caption = 'Friendly'
+      ExplicitLeft = 0
+      ExplicitTop = 0
+      ExplicitWidth = 0
+      ExplicitHeight = 0
       object trlFriendly: TdxTreeList
         Left = 0
         Top = 0
-        Width = 1424
-        Height = 768
+        Width = 881
+        Height = 519
         Bands = <
           item
           end>
@@ -1051,8 +1022,12 @@ object frmHTScanner: TfrmHTScanner
         end
       end
     end
-    object tsBidwar: TdxTabSheet
+    object tsBidwar: TcxTabSheet
       Caption = 'Bidwar'
+      ExplicitLeft = 0
+      ExplicitTop = 0
+      ExplicitWidth = 0
+      ExplicitHeight = 0
       object lblSpelerID: TLabel
         Left = 16
         Top = 16
@@ -1127,12 +1102,12 @@ object frmHTScanner: TfrmHTScanner
         Height = 393
       end
     end
-    object tsJeugdScout: TdxTabSheet
+    object tsJeugdScout: TcxTabSheet
       Caption = 'Jeugdscout'
       object Panel2: TPanel
         Left = 0
         Top = 0
-        Width = 1424
+        Width = 881
         Height = 425
         Align = alTop
         Caption = 'Panel2'
@@ -1162,11 +1137,21 @@ object frmHTScanner: TfrmHTScanner
             TabOrder = 1
             OnClick = btnJeugdScoutScoutClick
           end
+          object vMemo: TcxMemo
+            Left = 1
+            Top = 112
+            Align = alBottom
+            Lines.Strings = (
+              'vMemo')
+            TabOrder = 2
+            Height = 310
+            Width = 804
+          end
         end
         object wbJeugdscout1: TEmbeddedWB
           Left = 807
           Top = 1
-          Width = 616
+          Width = 73
           Height = 423
           Align = alClient
           TabOrder = 1
@@ -1175,15 +1160,10 @@ object frmHTScanner: TfrmHTScanner
           DisableCtrlShortcuts = 'N'
           UserInterfaceOptions = [EnablesFormsAutoComplete, EnableThemes]
           About = ' EmbeddedWB http://bsalsa.com/'
-          PrintOptions.Margins.Left = 19.05
-          PrintOptions.Margins.Right = 19.05
-          PrintOptions.Margins.Top = 19.05
-          PrintOptions.Margins.Bottom = 19.05
-          PrintOptions.Header = '&w&bpagina &p van &P'
           PrintOptions.HTMLHeader.Strings = (
             '<HTML></HTML>')
-          PrintOptions.Footer = '&u&b&d'
           PrintOptions.Orientation = poPortrait
+          ExplicitWidth = 616
           ControlData = {
             4C0000001B4A0000A43500000000000000000000000000000000000000000000
             000000004C000000000000000000000001000000E0D057007335CF11AE690800
@@ -1196,7 +1176,7 @@ object frmHTScanner: TfrmHTScanner
         Left = 0
         Top = 425
         Width = 807
-        Height = 343
+        Height = 94
         Align = alLeft
         Caption = 'Panel3'
         TabOrder = 1
@@ -1204,7 +1184,7 @@ object frmHTScanner: TfrmHTScanner
           Left = 1
           Top = 1
           Width = 805
-          Height = 341
+          Height = 92
           Align = alClient
           TabOrder = 0
           Silent = False
@@ -1212,15 +1192,10 @@ object frmHTScanner: TfrmHTScanner
           DisableCtrlShortcuts = 'N'
           UserInterfaceOptions = [EnablesFormsAutoComplete, EnableThemes]
           About = ' EmbeddedWB http://bsalsa.com/'
-          PrintOptions.Margins.Left = 19.05
-          PrintOptions.Margins.Right = 19.05
-          PrintOptions.Margins.Top = 19.05
-          PrintOptions.Margins.Bottom = 19.05
-          PrintOptions.Header = '&w&bpagina &p van &P'
           PrintOptions.HTMLHeader.Strings = (
             '<HTML></HTML>')
-          PrintOptions.Footer = '&u&b&d'
           PrintOptions.Orientation = poPortrait
+          ExplicitHeight = 341
           ControlData = {
             4C0000001B4A0000A43500000000000000000000000000000000000000000000
             000000004C000000000000000000000001000000E0D057007335CF11AE690800
@@ -1232,8 +1207,8 @@ object frmHTScanner: TfrmHTScanner
       object wbJeugdscout3: TEmbeddedWB
         Left = 807
         Top = 425
-        Width = 617
-        Height = 343
+        Width = 74
+        Height = 94
         Align = alClient
         TabOrder = 2
         Silent = False
@@ -1241,15 +1216,11 @@ object frmHTScanner: TfrmHTScanner
         DisableCtrlShortcuts = 'N'
         UserInterfaceOptions = [EnablesFormsAutoComplete, EnableThemes]
         About = ' EmbeddedWB http://bsalsa.com/'
-        PrintOptions.Margins.Left = 19.05
-        PrintOptions.Margins.Right = 19.05
-        PrintOptions.Margins.Top = 19.05
-        PrintOptions.Margins.Bottom = 19.05
-        PrintOptions.Header = '&w&bpagina &p van &P'
         PrintOptions.HTMLHeader.Strings = (
           '<HTML></HTML>')
-        PrintOptions.Footer = '&u&b&d'
         PrintOptions.Orientation = poPortrait
+        ExplicitWidth = 617
+        ExplicitHeight = 343
         ControlData = {
           4C0000001B4A0000A43500000000000000000000000000000000000000000000
           000000004C000000000000000000000001000000E0D057007335CF11AE690800
@@ -1262,15 +1233,15 @@ object frmHTScanner: TfrmHTScanner
   object dxBarDockControl3: TdxBarDockControl
     Left = 0
     Top = 0
-    Width = 1425
+    Width = 889
     Height = 22
     Align = dalTop
     BarManager = dxBarManager1
   end
   object StatusBar1: TStatusBar
     Left = 0
-    Top = 804
-    Width = 1425
+    Top = 569
+    Width = 889
     Height = 19
     Panels = <
       item
@@ -1292,7 +1263,6 @@ object frmHTScanner: TfrmHTScanner
         Width = 50
       end>
     PopupMenu = pmStatusbar
-    SimplePanel = False
   end
   object ibdbHTInfo: TIBDatabase
     DatabaseName = 'D:\Projecten\Harry\Hattrick Scanner\DATA\HT_INFO.GDB'
@@ -1301,9 +1271,6 @@ object frmHTScanner: TfrmHTScanner
       'password=jrmkk95'
       'lc_ctype=ISO8859_1')
     LoginPrompt = False
-    IdleTimer = 0
-    SQLDialect = 3
-    TraceFlags = []
     AllowStreamedConnected = False
     Left = 88
     Top = 96
@@ -1315,8 +1282,6 @@ object frmHTScanner: TfrmHTScanner
   end
   object ibqrWaardes: TIBQuery
     Database = ibdbHTInfo
-    BufferChunks = 1000
-    CachedUpdates = False
     SQL.Strings = (
       'SELECT * FROM TRAINING_WINST(:ID)')
     Left = 312
@@ -1575,6 +1540,21 @@ object frmHTScanner: TfrmHTScanner
       ImageIndex = 33
       OnClick = btnCopyPlayerLinkClipboardClick
     end
+    object btnTransferprijsEvaluatie: TdxBarButton
+      Caption = 'Evalueer transferprijzen'
+      Category = 0
+      Hint = 'Evalueer transferprijzen'
+      Visible = ivAlways
+      ImageIndex = 73
+      OnClick = btnTransferprijsEvaluatieClick
+    end
+    object btnTest: TdxBarButton
+      Caption = 'Test'
+      Category = 0
+      Hint = 'Test'
+      Visible = ivAlways
+      OnClick = btnTestClick
+    end
     object btnVerversen: TdxBarButton
       Caption = 'Refresh'
       Category = 1
@@ -1583,6 +1563,13 @@ object frmHTScanner: TfrmHTScanner
       ImageIndex = 142
       OnClick = btnVerversenClick
     end
+    object btnAgeTest: TdxBarButton
+      Caption = 'Test'
+      Category = 1
+      Hint = 'Test'
+      Visible = ivAlways
+      OnClick = btnAgeTestClick
+    end
     object btnVerwijderScouting: TdxBarButton
       Caption = 'Delete'
       Category = 2
@@ -1590,6 +1577,39 @@ object frmHTScanner: TfrmHTScanner
       Visible = ivAlways
       ImageIndex = 56
       OnClick = btnVerwijderScoutingClick
+    end
+    object btnScoutingExportXLS: TdxBarButton
+      Caption = 'Export naar Excel'
+      Category = 2
+      Hint = 'Export naar Excel'
+      Visible = ivAlways
+      ImageIndex = 151
+      OnClick = btnScoutingExportXLSClick
+    end
+    object btnRefreshScouting: TdxBarButton
+      Caption = 'Refresh'
+      Category = 2
+      Hint = 'Refresh'
+      Visible = ivAlways
+      ImageIndex = 142
+      OnClick = btnRefreshScoutingClick
+    end
+    object btnAddScoutingToBot: TdxBarButton
+      Caption = 'Voeg speler toe aan biedbot'
+      Category = 2
+      Hint = 'Voeg speler toe aan biedbot'
+      Visible = ivAlways
+      ImageIndex = 172
+      OnClick = btnAddScoutingToBotClick
+    end
+    object btnStopScouting: TdxBarButton
+      Caption = 'Stop scouting!'
+      Category = 2
+      Hint = 'Stop scouting!'
+      Visible = ivNever
+      ButtonStyle = bsChecked
+      ImageIndex = 99
+      UnclickAfterDoing = False
     end
     object btnLogin: TdxBarButton
       Caption = 'Login'
@@ -1637,60 +1657,36 @@ object frmHTScanner: TfrmHTScanner
       Category = 3
       Hint = 'Min. age'
       Visible = ivNever
-      Text = '17'
       ShowCaption = True
       Width = 30
+      Text = '17'
     end
     object edMaxAge: TdxBarEdit
       Caption = 'Max. age'
       Category = 3
       Hint = 'Max. age'
       Visible = ivNever
-      Text = '32'
       ShowCaption = True
       Width = 30
+      Text = '32'
     end
     object btnEdPaginas: TdxBarEdit
       Caption = '/'
       Category = 3
       Hint = '/'
       Visible = ivNever
-      Text = '10'
       ShowCaption = True
       Width = 30
-    end
-    object btnScoutingExportXLS: TdxBarButton
-      Caption = 'Export naar Excel'
-      Category = 2
-      Hint = 'Export naar Excel'
-      Visible = ivAlways
-      ImageIndex = 151
-      OnClick = btnScoutingExportXLSClick
+      Text = '10'
     end
     object btnVanPagins: TdxBarEdit
       Caption = 'Pagina'#39's'
       Category = 3
       Hint = 'Pagina'#39's'
       Visible = ivNever
-      Text = '1'
       ShowCaption = True
       Width = 100
-    end
-    object btnTransferprijsEvaluatie: TdxBarButton
-      Caption = 'Evalueer transferprijzen'
-      Category = 0
-      Hint = 'Evalueer transferprijzen'
-      Visible = ivAlways
-      ImageIndex = 73
-      OnClick = btnTransferprijsEvaluatieClick
-    end
-    object btnRefreshScouting: TdxBarButton
-      Caption = 'Refresh'
-      Category = 2
-      Hint = 'Refresh'
-      Visible = ivAlways
-      ImageIndex = 142
-      OnClick = btnRefreshScoutingClick
+      Text = '1'
     end
     object btnUitdaging: TdxBarButton
       Caption = 'Regel uitdaging'
@@ -1723,31 +1719,6 @@ object frmHTScanner: TfrmHTScanner
         'U20-lijstjes'
         'NT-lijstjes')
     end
-    object btnRefreshTalents: TdxBarButton
-      Caption = 'Refresh'
-      Category = 4
-      Hint = 'Refresh'
-      Visible = ivAlways
-      ImageIndex = 142
-      OnClick = btnRefreshTalentsClick
-    end
-    object btnAddScoutingToBot: TdxBarButton
-      Caption = 'Voeg speler toe aan biedbot'
-      Category = 2
-      Hint = 'Voeg speler toe aan biedbot'
-      Visible = ivAlways
-      ImageIndex = 172
-      OnClick = btnAddScoutingToBotClick
-    end
-    object btnStopScouting: TdxBarButton
-      Caption = 'Stop scouting!'
-      Category = 2
-      Hint = 'Stop scouting!'
-      Visible = ivNever
-      ButtonStyle = bsChecked
-      ImageIndex = 99
-      UnclickAfterDoing = False
-    end
     object btnGetKarakter: TdxBarButton
       Caption = 'Karakter'
       Category = 3
@@ -1763,13 +1734,6 @@ object frmHTScanner: TfrmHTScanner
       Visible = ivAlways
       ImageIndex = 75
       OnClick = btnParseU17DocsClick
-    end
-    object btnTest: TdxBarButton
-      Caption = 'Test'
-      Category = 0
-      Hint = 'Test'
-      Visible = ivAlways
-      OnClick = btnTestClick
     end
     object btnBigScout: TdxBarButton
       Caption = 'BigScout!'
@@ -1794,13 +1758,6 @@ object frmHTScanner: TfrmHTScanner
       Visible = ivNever
       ImageIndex = 12
       OnClick = btnAddToKoopBotClick
-    end
-    object btnAgeTest: TdxBarButton
-      Caption = 'Test'
-      Category = 1
-      Hint = 'Test'
-      Visible = ivAlways
-      OnClick = btnAgeTestClick
     end
     object dxBarSubItem1: TdxBarSubItem
       Caption = 'Google Docs'
@@ -1847,6 +1804,14 @@ object frmHTScanner: TfrmHTScanner
       ImageIndex = 75
       OnClick = btnHTCYClick
     end
+    object btnRefreshTalents: TdxBarButton
+      Caption = 'Refresh'
+      Category = 4
+      Hint = 'Refresh'
+      Visible = ivAlways
+      ImageIndex = 142
+      OnClick = btnRefreshTalentsClick
+    end
   end
   object pmScouting: TdxBarPopupMenu
     BarManager = dxBarManager1
@@ -1881,7 +1846,7 @@ object frmHTScanner: TfrmHTScanner
     Left = 88
     Top = 280
     Bitmap = {
-      494C0101C500C700040010001000FFFFFFFFFF10FFFFFFFFFFFFFFFF424D3600
+      494C0101C500C700340010001000FFFFFFFFFF10FFFFFFFFFFFFFFFF424D3600
       0000000000003600000028000000400000002003000001002000000000000020
       0300000000000000000000000000000000000000000000000000000000000000
       0000000000000000000000000000000000000000000000000000000000000000
@@ -8497,8 +8462,6 @@ object frmHTScanner: TfrmHTScanner
   object ibqrScouting: TIBQuery
     Database = ibdbHTInfo
     AfterOpen = ibqrScoutingAfterOpen
-    BufferChunks = 1000
-    CachedUpdates = False
     SQL.Strings = (
       'SELECT '
       'SCOUTING.*,'
@@ -8525,8 +8488,6 @@ object frmHTScanner: TfrmHTScanner
   end
   object ibqrTransferprijzen: TIBQuery
     Database = ibdbHTInfo
-    BufferChunks = 1000
-    CachedUpdates = False
     SQL.Strings = (
       'SELECT * FROM GET_TRANSFERPRIJZEN(:ID)'
       'ORDER BY DATUM DESC')
@@ -8552,8 +8513,6 @@ object frmHTScanner: TfrmHTScanner
   end
   object ibqrTalents: TIBQuery
     Database = ibdbHTInfo
-    BufferChunks = 1000
-    CachedUpdates = False
     SQL.Strings = (
       'SELECT * FROM GET_TALENTS WHERE DATUM IS NOT NULL'
       'ORDER BY PLAYER_ID')
@@ -8581,6 +8540,10 @@ object frmHTScanner: TfrmHTScanner
     end
     object N1: TMenuItem
       Caption = '-'
+    end
+    object Ignoreerrors1: TMenuItem
+      Caption = 'Ignore errors'
+      OnClick = Ignoreerrors1Click
     end
     object Forcesave1: TMenuItem
       Caption = 'Force save'
@@ -9065,12 +9028,14 @@ object frmHTScanner: TfrmHTScanner
     Top = 173
   end
   object IEDownload1: TIEDownload
+    About = ' IEDownload http://bsalsa.com/'
     AdditionalHeader.Strings = (
       'Content-Type: application/x-www-form-urlencoded ')
     DefaultProtocol = 'http://'
     DefaultUrlFileName = 'index.html'
-    OnDownload = IEDownload1Download
-    OnDownloadComplete = IEDownload1DownloadComplete
+    OnBeforeDownload = IEDownload1BeforeDownload
+    OnComplete = IEDownload1Complete
+    TimeOut = 2147483647
     Left = 248
     Top = 293
   end
@@ -9087,5 +9052,12 @@ object frmHTScanner: TfrmHTScanner
     OnTimer = tmrActivityTimer
     Left = 752
     Top = 301
+  end
+  object JvMail1: TJvMail
+    BlindCopy = <>
+    CarbonCopy = <>
+    Recipient = <>
+    Left = 592
+    Top = 384
   end
 end

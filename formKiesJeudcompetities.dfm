@@ -1,9 +1,9 @@
 object frmKiesReeks: TfrmKiesReeks
   Left = 510
   Top = 233
-  Width = 528
-  Height = 391
   Caption = 'Kies competitiereeks'
+  ClientHeight = 353
+  ClientWidth = 512
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -12,6 +12,9 @@ object frmKiesReeks: TfrmKiesReeks
   Font.Style = []
   OldCreateOrder = False
   Position = poScreenCenter
+  DesignSize = (
+    512
+    353)
   PixelsPerInch = 96
   TextHeight = 13
   object dxdbgrdSISObjectInfo: TdxDBGrid
@@ -108,8 +111,6 @@ object frmKiesReeks: TfrmKiesReeks
   end
   object ibqrComps: TIBQuery
     Transaction = ibtrComp
-    BufferChunks = 1000
-    CachedUpdates = False
     SQL.Strings = (
       'SELECT'
       'JC.ID,'
@@ -134,8 +135,6 @@ object frmKiesReeks: TfrmKiesReeks
     Top = 48
   end
   object ibtrComp: TIBTransaction
-    Active = False
-    AutoStopAction = saNone
     Left = 224
     Top = 24
   end

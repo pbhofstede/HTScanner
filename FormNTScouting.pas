@@ -5,7 +5,7 @@ interface
 uses
   Windows, Messages, SysUtils, Classes, Graphics, Controls, Forms, Dialogs,
   Db, IBCustomDataSet, dxCntner, dxTL, dxDBCtrl, dxDBGrid, dxDBTLCl,
-  dxGrClms, IBDatabase, ComCtrls, StdCtrls, ExtCtrls;
+  dxGrClms, IBDatabase, ComCtrls, StdCtrls, ExtCtrls, dxExEdtr;
 
 type
   TNTPlayer = class
@@ -94,7 +94,7 @@ type
 implementation
 
 uses
-  FormMain, uBibRuntime, uBibDb, ShellApi, esbDates;
+  FormMain, uHTDb, ShellApi, esbDates;
 
 {$R *.DFM}
 
@@ -230,7 +230,7 @@ begin
   
     for i:=1 to Length(aLine) do
     begin
-      if aLine[i] in ['0'..'9'] then
+      if CharInSet(aLine[i],['0'..'9']) then
       begin
         sID := sID + aLine[i];
       end
@@ -264,13 +264,13 @@ begin
 
     if (vPlayerID > 0) then
     begin
-      vID := uBibDb.GetFieldValue(frmHTScanner.ibdbHTInfo,'NT_SCOUTING',['PLAYER_ID'],
+      vID := GetFieldValue(frmHTScanner.ibdbHTInfo,'NT_SCOUTING',['PLAYER_ID'],
         [vPlayerID],'ID',srtInteger);
 
       if (vID = 0) then
       begin
         // Komt niet in NT_SCOUTING VOOR
-        with uBibRuntime.CreateSQL(frmHTScanner.ibdbHTInfo,'SELECT * FROM SCOUTING WHERE PLAYER_ID = :ID') do
+        with uHTDB.CreateSQL(frmHTScanner.ibdbHTInfo,'SELECT * FROM SCOUTING WHERE PLAYER_ID = :ID') do
         begin
           try
             ParamByName('ID').asInteger := vPlayerID;
@@ -281,24 +281,24 @@ begin
               edResult.Lines.Add(Format('%d [onbekend]',[vPlayerID]));
             end;
           finally
-            uBibDb.CommitTransaction(Transaction,TRUE);
+            CommitTransaction(Transaction,dbaFree);
             Free;
           end;
         end;
       end
       else
       begin
-        vInDocs := uBibDb.GetFieldValue(frmHTScanner.ibdbHTInfo,'SCOUTING',['PLAYER_ID'],[vPlayerID],
+        vInDocs := GetFieldValue(frmHTScanner.ibdbHTInfo,'SCOUTING',['PLAYER_ID'],[vPlayerID],
             'IN_NT_DOCS',srtInteger) = -1;
 
         if (vInDocs) then
         begin
           vPlayer := GetUpdateDateFromString(vPlayerID,edBigScout.Lines[i]);
           try
-            vLastUpdate := uBibDb.GetFieldValue(frmHTScanner.ibdbHTInfo,'NT_SCOUTING',['PLAYER_ID'],[vPlayerID],
+            vLastUpdate := GetFieldValue(frmHTScanner.ibdbHTInfo,'NT_SCOUTING',['PLAYER_ID'],[vPlayerID],
               'LAST_UPDATE',srtDateTime);
 
-            with uBibRuntime.CreateSQL(frmHTScanner.ibdbHTInfo,'SELECT * FROM NT_SCOUTING WHERE PLAYER_ID = :ID') do
+            with uHTDb.CreateSQL(frmHTScanner.ibdbHTInfo,'SELECT * FROM NT_SCOUTING WHERE PLAYER_ID = :ID') do
             begin
               try
                 ParamByName('ID').asInteger := vPlayerID;
@@ -322,7 +322,7 @@ begin
                   end;
                 end;
               finally
-                uBibDb.CommitTransaction(Transaction,TRUE);
+                CommitTransaction(Transaction,dbaFree);
                 Free;
               end;
             end;

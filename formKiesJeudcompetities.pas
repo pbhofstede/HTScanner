@@ -5,7 +5,7 @@ interface
 uses
   Windows, Messages, SysUtils, Classes, Graphics, Controls, Forms, Dialogs,
   dxTL, dxDBCtrl, dxDBGrid, dxCntner, IBDatabase, Db, IBCustomDataSet,
-  IBQuery, dxDBTLCl, dxGrClms;
+  IBQuery, dxDBTLCl, dxGrClms, dxExEdtr;
 
 type
   TfrmKiesReeks = class(TForm)
@@ -43,7 +43,7 @@ function KiesCompetitieReeks(aDatabase:TIBDatabase;aIsBigScout:boolean;var aComp
 implementation
 
 uses
-  uBibGrid, uBibDB, esbDates;
+  uHTGrid, uHTDb, esbDates;
 
 {$R *.DFM}
 
@@ -133,10 +133,10 @@ var
 begin
   if (aNode <> nil) then
   begin
-    vDatum := uBibGrid.GetNodeValue(aNode,'LAATSTE_SCAN',srtDateTime);
-    vDag := uBibGrid.GetNodeValue(aNode,'TBS_DATUM',srtDateTime);
-    vToDo := uBibGrid.GetNodeValue(aNode,'PLAYERS_TODO',srtInteger);
-    vDone := uBibGrid.GetNodeValue(aNode,'PLAYERS_DONE',srtInteger);
+    vDatum := uHTGrid.GetNodeValue(aNode,'LAATSTE_SCAN',srtDateTime);
+    vDag := uHTGrid.GetNodeValue(aNode,'TBS_DATUM',srtDateTime);
+    vToDo := uHTGrid.GetNodeValue(aNode,'PLAYERS_TODO',srtInteger);
+    vDone := uHTGrid.GetNodeValue(aNode,'PLAYERS_DONE',srtInteger);
 
 
     if (vDag > 0) then
@@ -168,8 +168,8 @@ begin
     end
     else
     begin
-      vTotal :=  uBibGrid.GetNodeValue(aNode,'AANTAL_COMP',srtInteger);
-      vDone := uBibGrid.GetNodeValue(aNode,'AANTAL_GESCOUT',srtInteger);
+      vTotal :=  uHTGrid.GetNodeValue(aNode,'AANTAL_COMP',srtInteger);
+      vDone := uHTGrid.GetNodeValue(aNode,'AANTAL_GESCOUT',srtInteger);
 
       if (vDone < vTotal) then
       begin

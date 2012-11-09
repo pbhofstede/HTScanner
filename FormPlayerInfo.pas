@@ -6,9 +6,18 @@ uses
   Windows, Messages, SysUtils, Classes, Graphics, Controls, Forms, Dialogs,
   ExtCtrls, StdCtrls, IBSQL, dxCntner, dxTL, dxDBCtrl, dxDBGrid, Db,
   IBCustomDataSet, IBQuery, IBDatabase, dxEditor, dxEdLib, dxDBELib,
-  dxPageControl, dxExEdtr, DBCtrls, dxDBTLCl, dxGrClms, OleCtrls,
+  dxExEdtr, DBCtrls, dxDBTLCl, dxGrClms, OleCtrls,
   SHDocVw_EWB, EwbCore, EmbeddedWB, IBUpdateSQL, cxControls, cxContainer,
-  cxEdit, cxTextEdit;
+  cxEdit, cxTextEdit, dxSkinsCore, dxSkinBlack, dxSkinBlue, dxSkinCaramel,
+  dxSkinCoffee, dxSkinDarkRoom, dxSkinDarkSide, dxSkinFoggy, dxSkinGlassOceans,
+  dxSkiniMaginary, dxSkinLilian, dxSkinLiquidSky, dxSkinLondonLiquidSky,
+  dxSkinMcSkin, dxSkinMoneyTwins, dxSkinOffice2007Black, dxSkinOffice2007Blue,
+  dxSkinOffice2007Green, dxSkinOffice2007Pink, dxSkinOffice2007Silver,
+  dxSkinOffice2010Black, dxSkinOffice2010Blue, dxSkinOffice2010Silver,
+  dxSkinPumpkin, dxSkinSeven, dxSkinSharp, dxSkinSilver, dxSkinSpringTime,
+  dxSkinStardust, dxSkinSummer2008, dxSkinsDefaultPainters, dxSkinValentine,
+  dxSkinXmas2008Blue, dxSkinscxPCPainter, cxPCdxBarPopupMenu, cxGraphics,
+  cxLookAndFeels, cxLookAndFeelPainters, cxPC;
 
 type
   TSTdTekst = (stdInfo,stdUpdate,stdAfwijzing,stdPromotie);
@@ -19,9 +28,9 @@ type
     IBWriteTransaction: TIBTransaction;
     ibdtstManagerInfo: TIBDataSet;
     dsManagerInfo: TDataSource;
-    pcgControlInfo: TdxPageControl;
-    tbPlayerinfo: TdxTabSheet;
-    tbBericht: TdxTabSheet;
+    pcgControlInfo: TcxPageControl;
+    tbPlayerinfo: TcxTabSheet;
+    tbBericht: TcxTabSheet;
     Panel1: TPanel;
     Label1: TLabel;
     Label2: TLabel;
@@ -45,7 +54,7 @@ type
     Button2: TButton;
     btnInfo: TButton;
     Button4: TButton;
-    tbSTDBerichten: TdxTabSheet;
+    tbSTDBerichten: TcxTabSheet;
     DBNavigator1: TDBNavigator;
     Panel4: TPanel;
     dxDBMemo1: TdxDBMemo;
@@ -67,9 +76,9 @@ type
     chckInDocs: TCheckBox;
     chckbxExported: TCheckBox;
     lblDatum: TLabel;
-    dxPageControl1: TdxPageControl;
-    tbTeamSpelers: TdxTabSheet;
-    tbBatchlings: TdxTabSheet;
+    dxPageControl1: TcxPageControl;
+    tbTeamSpelers: TcxTabSheet;
+    tbBatchlings: TcxTabSheet;
     dxDBGrid1: TdxDBGrid;
     dxDBGrid1PLAYER_ID: TdxDBGridColumn;
     dxDBGrid1PLAYER_NAME: TdxDBGridMaskColumn;
@@ -83,17 +92,17 @@ type
     dxDBGrid1SCOREN: TdxDBGridMaskColumn;
     dxDBGrid1SPELHERVATTEN: TdxDBGridMaskColumn;
     dxDBGrid1VLEUGELSPEL: TdxDBGridMaskColumn;
-    dxDBGrid2: TdxDBGrid;
+    dbgrdBatchlings: TdxDBGrid;
     ibqrBatchlings: TIBQuery;
     dsBatchlings: TDataSource;
-    dxDBGrid2Column1: TdxDBGridColumn;
-    dxDBGrid2Column2: TdxDBGridColumn;
-    dxDBGrid2Column3: TdxDBGridColumn;
+    dbgrdBatchlingsColumn1: TdxDBGridColumn;
+    dbgrdBatchlingsColumn2: TdxDBGridColumn;
+    dbgrdBatchlingsColumn3: TdxDBGridColumn;
     dxDBGrid1TABSHEET: TdxDBGridColumn;
     dxDBGrid1GOOGLE_DOC: TdxDBGridColumn;
     dxDBGrid1SCOUT: TdxDBGridColumn;
     lblBlacklist: TLabel;
-    tbNTScouting: TdxTabSheet;
+    tbNTScouting: TcxTabSheet;
     Panel5: TPanel;
     dxDBGrid3: TdxDBGrid;
     ibdtstScouting: TIBDataSet;
@@ -111,11 +120,11 @@ type
     dxDBGrid3SPECIALITEIT: TdxDBGridMaskColumn;
     dxDBGrid3IN_NT_DOCS: TdxDBGridCheckColumn;
     chckKeeper: TCheckBox;
-    dxDBGrid2Column4: TdxDBGridColumn;
+    dbgrdBatchlingsColumn4: TdxDBGridColumn;
     dxDBGrid1GEBOORTEDATUM: TdxDBGridDateColumn;
-    dxDBGrid2Column5: TdxDBGridColumn;
-    dxDBGrid2Column6: TdxDBGridColumn;
-    tbPotentials: TdxTabSheet;
+    dbgrdBatchlingsColumn5: TdxDBGridColumn;
+    dbgrdBatchlingsColumn6: TdxDBGridColumn;
+    tbPotentials: TcxTabSheet;
     dxDBGrid4: TdxDBGrid;
     dsPotentials: TDataSource;
     ibqrPotentials: TIBQuery;
@@ -179,7 +188,7 @@ type
     chckNTTalented: TCheckBox;
     chckU20Talented: TCheckBox;
     Label25: TLabel;
-    dxTabSheet2: TdxTabSheet;
+    dxTabSheet2: TcxTabSheet;
     dxDBGrid6: TdxDBGrid;
     dxDBGridColumn1: TdxDBGridColumn;
     dxDBGridColumn2: TdxDBGridColumn;
@@ -242,9 +251,9 @@ type
     Button8: TButton;
     btnYouthplayerID: TButton;
     Button10: TButton;
-    dxDBGrid2Column7: TdxDBGridCheckColumn;
-    dxDBGrid2Column8: TdxDBGridCheckColumn;
-    tbPosTwins: TdxTabSheet;
+    dbgrdBatchlingsColumn7: TdxDBGridCheckColumn;
+    dbgrdBatchlingsColumn8: TdxDBGridCheckColumn;
+    tbPosTwins: TcxTabSheet;
     dxDBGrid7: TdxDBGrid;
     dxDBGridColumn7: TdxDBGridColumn;
     dxDBGridColumn8: TdxDBGridColumn;
@@ -257,7 +266,7 @@ type
     ibqrPosBatchlings: TIBQuery;
     dsPosBatchlings: TDataSource;
     dxDBGrid7Column9: TdxDBGridColumn;
-    dxDBGrid2Column9: TdxDBGridColumn;
+    dbgrdBatchlingsColumn9: TdxDBGridColumn;
     dxDBGrid7Column10: TdxDBGridColumn;
     dxDBGrid7Column11: TdxDBGridColumn;
     dxDBGrid7Column12: TdxDBGridColumn;
@@ -285,7 +294,7 @@ type
     lblU20SP: TLabel;
     cxedtManager: TcxTextEdit;
     IBReadTransaction: TIBTransaction;
-    dxDBGrid2Column10: TdxDBGridColumn;
+    dbgrdBatchlingsColumn10: TdxDBGridColumn;
     Label27: TLabel;
     chckPossible: TCheckBox;
     procedure FormKeyDown(Sender: TObject; var Key: Word;
@@ -314,7 +323,7 @@ type
       ASelected, AFocused, ANewItemRow: Boolean; var AText: String;
       var AColor: TColor; AFont: TFont; var AAlignment: TAlignment;
       var ADone: Boolean);
-    procedure dxDBGrid2CustomDrawCell(Sender: TObject; ACanvas: TCanvas;
+    procedure dbgrdBatchlingsCustomDrawCell(Sender: TObject; ACanvas: TCanvas;
       ARect: TRect; ANode: TdxTreeListNode; AColumn: TdxTreeListColumn;
       ASelected, AFocused, ANewItemRow: Boolean; var AText: String;
       var AColor: TColor; AFont: TFont; var AAlignment: TAlignment;
@@ -332,14 +341,14 @@ type
       var ADone: Boolean);
     procedure Button7Click(Sender: TObject);
     procedure lblGKClick(Sender: TObject);
-    procedure pcgControlInfoChanging(Sender: TObject; NewPage: TdxTabSheet;
-      var AllowChange: Boolean);
     procedure lblKeepenDblClick(Sender: TObject);
     procedure Button10Click(Sender: TObject);
     procedure ibdtstScoutingBeforeOpen(DataSet: TDataSet);
     procedure ibdtstScoutingAfterClose(DataSet: TDataSet);
     procedure cxedtManagerPropertiesEditValueChanged(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
+    procedure pcgControlInfoPageChanging(Sender: TObject; NewPage: TcxTabSheet;
+      var AllowChange: Boolean);
   private
     FCurPlayerID, FCurTeamID: integer;
     FLoaded: boolean;
@@ -355,8 +364,8 @@ type
     function GetCurU20Index(aPlayerID, aPosition: Integer;
       var aIndex: double): boolean;
   private
-    FSpelerSQL: TIBSQL;
     FReloadTwinsEtc, FNoChange: boolean;
+    FSpelerSQL: TIBSQL;
     { Private declarations }
     procedure ParsePlayerInfo(aSQL:TIBSQL);
     procedure Zoek;
@@ -365,6 +374,7 @@ type
       aHerhaling:boolean):boolean;
     function GetFieldName(aStart, aField: String): String;
     function ParseFields(aTekst: String): String;
+    function CreateSpelerSQL: TIBSQL;
   public
     { Public declarations }
     property CurPlayerID: integer read FCurPlayerID;
@@ -377,8 +387,7 @@ var
 implementation
 
 uses
-  ubibRuntime, FormMain, uBibDB, ClipBrd, FornNewName, uHattrick, uBibGrid,
-  uBibConv;
+  FormMain, uHTDB, ClipBrd, FornNewName, uHattrick, uHTGrid, uHTMisc;
 
 {$R *.DFM}
 
@@ -469,7 +478,7 @@ var
   vScoren, vSpelhervatten, vAfwijking:integer;
 begin
   //LoadPicture(aSQL.FieldByName('KARAKTER_ID').asInteger);
-  with uBibRuntime.CreateSQL(frmHTScanner.ibdbHTInfo,'SELECT * FROM GET_PROMOTED_STATS(:KARAKTERID)') do
+  with uHTDB.CreateSQL(frmHTScanner.ibdbHTInfo,'SELECT * FROM GET_PROMOTED_STATS(:KARAKTERID)') do
   begin
     try
       ParamByName('KARAKTERID').asInteger := aSQL.FieldByName('KARAKTER_ID').asInteger;
@@ -483,13 +492,13 @@ begin
       vScoren := FieldByName('SCOREN').asInteger;
       vSpelhervatten:= FieldByName('SPELHERVATTEN').asInteger;
     finally
-      uBibDb.CommitTransaction(Transaction, TRUE);
+      CommitTransaction(Transaction, dbaFree);
       Free;
     end;
   end;
 
 
-  with uBibRuntime.CreateSQL(frmHTScanner.ibdbHTInfo) do
+  with uHTDB.CreateSQL(frmHTScanner.ibdbHTInfo) do
   begin
     try
       with SQL do
@@ -512,12 +521,12 @@ begin
       ExecQuery;
       vAfwijking := FieldByName('AFWIJKING').asInteger;
     finally
-      uBibDb.CommitTransaction(Transaction, TRUE);
+      CommitTransaction(Transaction, dbaFree);
       Free;
     end;
   end;
 
-  vSQL := uBibRuntime.CreateSQL(frmHTScanner.ibdbHTInfo);
+  vSQL := uHTDB.CreateSQL(frmHTScanner.ibdbHTInfo);
 
   with vSQL.SQL do
   begin
@@ -593,7 +602,7 @@ begin
       CalcPotentials(FieldByName('PLAYER_ID').asInteger,  aSQL.FieldByName('KARAKTER_ID').asInteger);
     end;
   finally
-    uBibDb.CommitTransaction(vSQL.Transaction,TRUE);
+    CommitTransaction(vSQL.Transaction,dbaFree);
     vSQL.Free;
   end;
 end;
@@ -612,9 +621,9 @@ end;
 
 function TfrmPlayerInfo.GetCurU20Index(aPlayerID, aPosition:Integer; var aIndex:double):boolean;
 var
-  vValues: TFieldValues;
+  vValues: TDBFieldValues;
 begin
-  vValues := uBibDb.GetSPValues(frmHTScanner.ibdbHTInfo,'GET_U20_TALENT',
+  vValues := GetSPValues(frmHTScanner.ibdbHTInfo,'GET_U20_TALENT',
     [aPlayerId, aPosition],
     ['PLAYER_ID','CURRENT_INDEX','INDEX_BONUS'],[srtInteger,srtFloat,srtFloat]);
 
@@ -638,10 +647,10 @@ begin
 
   if (aPlayerID > 0) and (aKarakterID > 0) then
   begin
-    uBibDb.ExecSQL(frmHTScanner.ibdbHTInfo,'EXECUTE PROCEDURE SAVE_NT_U20_POTENTIAL(:KARAKTERID)',
+    ExecSQL(frmHTScanner.ibdbHTInfo,'EXECUTE PROCEDURE SAVE_NT_U20_POTENTIAL(:KARAKTERID)',
       ['KARAKTERID'],[aKarakterID]);
 
-    with uBibRuntime.CreateSQL(frmHTScanner.ibdbHTInfo) do
+    with uHTDB.CreateSQL(frmHTScanner.ibdbHTInfo) do
     begin
       try
         with SQL do
@@ -654,12 +663,12 @@ begin
         chckU20Talented.Checked := FieldByName('U20_TALENTED').asInteger = -1;
         chckPossible.Checked := FieldByName('POSSIBLE_TALENTED').asInteger = -1;
       finally
-        uBibdb.CommitTransaction(Transaction, TRUE);
+        CommitTransaction(Transaction, dbaFree);
         Free;
       end;
     end;
 
-    with uBibRuntime.CreateSQL(frmHTScanner.ibdbHTInfo) do
+    with uHTDb.CreateSQL(frmHTScanner.ibdbHTInfo) do
     begin
       try
         with SQL do
@@ -701,7 +710,7 @@ begin
         lblNTdFW.Caption := Format('%.2f',[FieldByName('DFW_INDEX').asFloat]);
         lblNTSP.Caption := Format('%.2f',[FieldByName('SP_DEF_INDEX').asFloat]);
       finally
-        uBibdb.CommitTransaction(Transaction, TRUE);
+        CommitTransaction(Transaction, dbaFree);
         Free;
       end;
     end;
@@ -709,7 +718,7 @@ begin
 
 
     // U20
-    with uBibRuntime.CreateSQL(frmHTScanner.ibdbHTInfo) do
+    with uHTDb.CreateSQL(frmHTScanner.ibdbHTInfo) do
     begin
       try
         with SQL do
@@ -778,7 +787,7 @@ begin
         end;
         lblU20SP.Caption := Format('%.2f',[FieldByName('SP_DEF_INDEX').asFloat]);
       finally
-        uBibdb.CommitTransaction(Transaction, TRUE);
+        CommitTransaction(Transaction, dbaFree);
         Free;
       end;
     end;
@@ -847,6 +856,16 @@ procedure TfrmPlayerInfo.Zoek;
 var
   vParam:String;
 begin
+  if (FSpelerSQL <> nil) then
+  begin
+    FSpelerSQL.Free;
+    FSpelerSQL := nil;
+  end;
+
+  IBReadTransaction.CommitRetaining;
+  FSpelerSQL := CreateSpelerSQL;
+
+
   FNoChange := TRUE;
   cxedtManager.Text := '';
   FCurPlayerID := -1;
@@ -879,7 +898,7 @@ begin
       with FSpelerSQL do
       begin
         Close;
-        ParamByName('ID').asString := vParam;
+        ParamByName('ID').AsString := vParam;
         ExecQuery;
         FCurTeamID := FieldByName('TEAM_ID').asInteger;
 
@@ -927,7 +946,7 @@ begin
     
     if (FCurTeamID > 0) then
     begin
-      lblBlacklist.Visible := (uBibDB.GetFieldValue(frmHTScanner.ibdbHTInfo,'BLACKLIST',
+      lblBlacklist.Visible := (GetFieldValue(frmHTScanner.ibdbHTInfo,'BLACKLIST',
           ['TEAM_ID'],[FCurTeamID],'ID',srtInteger,svtNormal, uHattrick.CreateReadTransAction(frmHTScanner.ibdbHTInfo))) > 0;
     end
     else
@@ -969,14 +988,6 @@ begin
 end;
 
 procedure TfrmPlayerInfo.FormCreate(Sender: TObject);
-const
-  cSQL_PLAYERID = 'SELECT J.PLAYER_ID,J.KARAKTER_ID,J.PLAYER_NAME,J.TABSHEET,J.GOOGLE_DOC,J.EXPORTED,J.SCAN_DATUM,J.TEAM_ID,J.KEEPEN,J.VERDEDIGEN,J.POSITIESPEL,J.PASSEN,'+#13+
-    'J.SCOREN,J.SPELHERVATTEN,J.VLEUGELSPEL,J.UPDATE_COUNT,J.IN_DOCS,D.SCOUT,L.LEEFTIJD,I.MANAGER_NAAM,U.U20 FROM JEUGDSPELERS J'+#13+
-    'LEFT JOIN GET_LEEFTIJD(J.GEBOORTE_DATUM,CURRENT_DATE) L ON (0=0)'+#13+
-    'LEFT JOIN MANAGER_INFO I ON (J.TEAM_ID = I.TEAM_ID)'+#13+
-    'LEFT JOIN GET_IS_U20(J.GEBOORTE_DATUM,1) U ON (0=0)'+#13+
-    'LEFT JOIN DOCS D ON (J.GOOGLE_DOC = D.DOC_NAME AND J.TABSHEET = D.SHEET_NAME)'+#13+
-    'WHERE J.PLAYER_ID = :ID';
 begin
   FReloadTwinsEtc := TRUE;
 
@@ -1000,11 +1011,23 @@ begin
   ibdtstManagerInfo.Transaction := IBWriteTransaction;
 
   IBReadTransaction.StartTransaction;
-  FSpelerSQL := uBibRuntime.CreateSQL(frmHTScanner.ibdbHTInfo,cSQL_PLAYERID,IBReadTransaction);
   CalcPotentials(0,0);
   FLoaded := TRUE;
   pcgControlInfo.ActivePage := tbPlayerinfo;
   dxPageControl1.ActivePage := tbBatchlings;
+end;
+
+function TfrmPlayerInfo.CreateSpelerSQL: TIBSQL;
+const
+  cSQL_PLAYERID = 'SELECT J.PLAYER_ID,J.KARAKTER_ID,J.PLAYER_NAME,J.TABSHEET,J.GOOGLE_DOC,J.EXPORTED,J.SCAN_DATUM,J.TEAM_ID,J.KEEPEN,J.VERDEDIGEN,J.POSITIESPEL,J.PASSEN,'+#13+
+    'J.SCOREN,J.SPELHERVATTEN,J.VLEUGELSPEL,J.UPDATE_COUNT,J.IN_DOCS,D.SCOUT,L.LEEFTIJD,I.MANAGER_NAAM,U.U20 FROM JEUGDSPELERS J'+#13+
+    'LEFT JOIN GET_LEEFTIJD(J.GEBOORTE_DATUM,CURRENT_DATE) L ON (0=0)'+#13+
+    'LEFT JOIN MANAGER_INFO I ON (J.TEAM_ID = I.TEAM_ID)'+#13+
+    'LEFT JOIN GET_IS_U20(J.GEBOORTE_DATUM,1) U ON (0=0)'+#13+
+    'LEFT JOIN DOCS D ON (J.GOOGLE_DOC = D.DOC_NAME AND J.TABSHEET = D.SHEET_NAME)'+#13+
+    'WHERE J.PLAYER_ID = :ID';
+begin
+  result := uHTDB.CreateSQL(frmHTScanner.ibdbHTInfo,cSQL_PLAYERID,IBReadTransaction);
 end;
 
 procedure TfrmPlayerInfo.FormDestroy(Sender: TObject);
@@ -1085,26 +1108,26 @@ begin
   case aType of
     stdInfo,stdAfwijzing,stdPromotie:
     begin
-      vCount := uBibDb.GetFieldValue(frmHTScanner.ibdbHTInfo,
+      vCount := GetFieldValue(frmHTScanner.ibdbHTInfo,
         'STD_BERICHTEN',['BERICHT_TYPE','U20','HERHALING'],[Ord(aType),
         Ord(chckU20.Checked) * -1,Ord(aHerhaling) * -1],'ID',srtInteger,svtCount);
 
       if (vCount = 1) then
       begin
-        vID := uBibDb.GetFieldValue(frmHTScanner.ibdbHTInfo,
+        vID := GetFieldValue(frmHTScanner.ibdbHTInfo,
         'STD_BERICHTEN',['BERICHT_TYPE','U20','HERHALING'],
         [Ord(aType),Ord(chckU20.Checked) * -1,Ord(aHerhaling) * -1],'ID',srtInteger);
       end;
     end;
     stdUpdate:
     begin
-      vCount := uBibDb.GetFieldValue(frmHTScanner.ibdbHTInfo,
+      vCount := GetFieldValue(frmHTScanner.ibdbHTInfo,
         'STD_BERICHTEN',['BERICHT_TYPE','UPDATE_COUNT','U20','HERHALING'],
           [Ord(aType), aCount,Ord(chckU20.Checked) * -1,Ord(aHerhaling) * -1],'ID',srtInteger,svtCount);
 
       if (vCount = 1) then
       begin
-        vID := uBibDb.GetFieldValue(frmHTScanner.ibdbHTInfo,
+        vID := GetFieldValue(frmHTScanner.ibdbHTInfo,
         'STD_BERICHTEN',['BERICHT_TYPE','UPDATE_COUNT','U20','HERHALING'],
         [Ord(aType), aCount,Ord(chckU20.Checked) * -1, Ord(aHerhaling) * -1],'ID',srtInteger);
       end;
@@ -1114,7 +1137,7 @@ begin
 
   if (vID > 0) then
   begin
-    result := uBibDb.GetFieldValue(frmHTScanner.ibdbHTInfo,
+    result := GetFieldValue(frmHTScanner.ibdbHTInfo,
       'STD_BERICHTEN',['ID'],[vID],'BERICHT',srtString);
   end
   else
@@ -1136,7 +1159,7 @@ begin
   begin
     vPlayerID := FSpelerSQL.FieldByName('PLAYER_ID').asInteger;
 
-    uBibDb.ExecSQL(frmHTScanner.ibdbHTInfo,'UPDATE JEUGDSPELERS SET UPDATE_COUNT = :COUNT WHERE PLAYER_ID = :ID',
+    ExecSQL(frmHTScanner.ibdbHTInfo,'UPDATE JEUGDSPELERS SET UPDATE_COUNT = :COUNT WHERE PLAYER_ID = :ID',
       ['ID','COUNT'],[FSpelerSQL.FieldByName('PLAYER_ID').asInteger,FSpelerSQL.FieldByName('UPDATE_COUNT').asInteger + 1]);
 
     FSpelerSQL.Close;
@@ -1147,8 +1170,19 @@ begin
 end;
 
 procedure TfrmPlayerInfo.Button4Click(Sender: TObject);
+var
+  vPlayerID: integer;
 begin
-  GenerateTekst(stdAfwijzing,-1,FALSE);
+  if (FSpelerSQL <> nil) and (FSpelerSQL.FieldByName('PLAYER_ID').asInteger > 0) and
+    (MessageBoxQuestion(Format('Weet je zeker dat je speler met ID %d wilt verwijderen?',
+      [FSpelerSQL.FieldByName('PLAYER_ID').asInteger]),'HTScanner')) then
+  begin
+    vPlayerID := FSpelerSQL.FieldByName('PLAYER_ID').asInteger;
+    ExecSQL(frmHTScanner.ibdbHTInfo, 'DELETE FROM JEUGDSPELERS WHERE PLAYER_ID = :ID',
+      ['ID'],[vPlayerID]);
+
+    edPlayerID.Text := IntToStr(vPlayerID);
+  end;
 end;
 
 procedure TfrmPlayerInfo.Button1Click(Sender: TObject);
@@ -1239,12 +1273,12 @@ begin
     begin
       frmHTScanner.CurScan := '[post=xxx]';
 
-      vTeamID := uBibDb.GetFieldValue(frmHTScanner.ibdbHTInfo,'JEUGDSPELERS',['PLAYER_ID'],[CurPlayerID],'TEAM_ID',srtInteger);
+      vTeamID := GetFieldValue(frmHTScanner.ibdbHTInfo,'JEUGDSPELERS',['PLAYER_ID'],[CurPlayerID],'TEAM_ID',srtInteger);
       if (vTeamID <= 0) then
       begin
         vTeamID := StrToInt(InputBox('HTScanner','Geef het TeamID...','0'));
 
-        uBibDb.ExecSQL(frmHTScanner.ibdbHTInfo,'UPDATE JEUGDSPELERS SET TEAM_ID = :TEAMID WHERE PLAYER_ID = :ID',
+        ExecSQL(frmHTScanner.ibdbHTInfo,'UPDATE JEUGDSPELERS SET TEAM_ID = :TEAMID WHERE PLAYER_ID = :ID',
           ['ID','TEAMID'],[CurPlayerID, vTeamID]);
       end;
 
@@ -1311,7 +1345,7 @@ begin
 
   if (ibdtstScouting.FieldByName('PLAYER_NAAM').asString <> '') and (ibdtstScouting.FieldByName('KARAKTER_PROFIEL_ID').asInteger > 0) then
   begin
-    with uBibRunTime.CreateSQL(frmHTScanner.ibdbHTInfo) do
+    with uHTDB.CreateSQL(frmHTScanner.ibdbHTInfo) do
     begin
       try
         with SQL do
@@ -1330,7 +1364,7 @@ begin
           Next;
         end;
       finally
-        uBibDB.CommitTransaction(Transaction,TRUE);
+        CommitTransaction(Transaction,dbaFree);
         Free;
       end;
     end;
@@ -1361,14 +1395,14 @@ procedure TfrmPlayerInfo.dxDBGrid1CustomDrawCell(Sender: TObject;
 var
   vGeboorteDatum: TDate;
 begin
-  vGeboorteDatum := uBibGrid.GetNodeValue(aNode,'GEBOORTE_DATUM',srtDate);
+  vGeboorteDatum := GetNodeValue(aNode,'GEBOORTE_DATUM',srtDate);
   if (vGeboorteDatum < (Date - 2 * 16 * 7)) then
   begin
     aFont.Color := clSilver;
   end;
 end;
 
-procedure TfrmPlayerInfo.dxDBGrid2CustomDrawCell(Sender: TObject;
+procedure TfrmPlayerInfo.dbgrdBatchlingsCustomDrawCell(Sender: TObject;
   ACanvas: TCanvas; ARect: TRect; ANode: TdxTreeListNode;
   AColumn: TdxTreeListColumn; ASelected, AFocused, ANewItemRow: Boolean;
   var AText: String; var AColor: TColor; AFont: TFont;
@@ -1376,21 +1410,21 @@ procedure TfrmPlayerInfo.dxDBGrid2CustomDrawCell(Sender: TObject;
 var
   vDeleted, vPromoted, vIsTrainer:boolean;
 begin
-  vDeleted := uBibGrid.GetNodeValue(aNode,'DELETED',srtInteger) = -1;
+  vDeleted := GetNodeValue(aNode,'DELETED',srtInteger) = -1;
   if (vDeleted) then
   begin
     aFont.Color := clRed;
   end
   else
   begin
-    vIsTrainer := uBibGrid.GetNodeValue(aNode,'IS_TRAINER',srtInteger) = -1;
+    vIsTrainer := (Sender = dbgrdBatchlings) and (GetNodeValue(aNode,'IS_TRAINER',srtInteger) = -1);
     if (vIsTrainer) then
     begin
       aFont.Color := clMaroon;
     end
     else
     begin
-      vPromoted := uBibGrid.GetNodeValue(aNode,'PROMOTED',srtInteger) = -1;
+      vPromoted := GetNodeValue(aNode,'PROMOTED',srtInteger) = -1;
       if (vPromoted) then
       begin
         aFont.Color := clBlue;
@@ -1412,7 +1446,7 @@ procedure TfrmPlayerInfo.dxDBGrid4GK_INDEXCustomDrawCell(Sender: TObject;
 var
   vValue:double;
 begin
-  vValue := uBibGrid.GetNodeValue(aNode,AColumn.Index,srtFloat);
+  vValue := GetNodeValue(aNode,AColumn.Index,srtFloat);
 
   if (vValue < -5) then
   begin
@@ -1440,13 +1474,13 @@ var
   vValue:String;
   vDatum:TDate;
 begin
-  vValue := uBibGrid.GetNodeValue(aNode,'HERKOMST',srtstring);
+  vValue := GetNodeValue(aNode,'HERKOMST',srtstring);
   if (vValue = 'Netherlands') then
   begin
     aFont.Style := aFont.Style + [fsBold];
   end;
 
-  vDatum := uBibGrid.GetNodeValue(aNode,'DATUM',srtDate);
+  vDatum := GetNodeValue(aNode,'DATUM',srtDate);
   if (vDatum = Date) then
   begin
     aFont.Color := clBlue;
@@ -1459,7 +1493,7 @@ end;
 
 procedure TfrmPlayerInfo.Button7Click(Sender: TObject);
 begin
-  with uBibRuntime.CreateSQL(frmHTScanner.ibdbHTInfo,'SELECT * FROM CALC_NT_POTENTIAL_OVERALL(:JAAR,:DAGEN,:KEEPEN'+
+  with uHTDB.CreateSQL(frmHTScanner.ibdbHTInfo,'SELECT * FROM CALC_NT_POTENTIAL_OVERALL(:JAAR,:DAGEN,:KEEPEN'+
     ',:VERDEDIGEN,:POSITIESPEL,:VLEUGELSPEL,:PASSEN,:SCOREN,:SPELHERVATTEN)') do
   begin
     try
@@ -1484,7 +1518,7 @@ begin
       lblDFW.Caption := Format('DFW %.2f',[FieldByName('DFW_INDEX').asFloat]);
       chckIsU20.Checked := FieldByName('IS_U20').asInteger = -1;
     finally
-      ubibDb.CommitTransaction(Transaction,TRUE);
+      CommitTransaction(Transaction,dbaFree);
       Free;
     end;
   end;
@@ -1548,8 +1582,8 @@ begin
   ToonNTTalenten(TLabel(Sender).Tag);
 end;
 
-procedure TfrmPlayerInfo.pcgControlInfoChanging(Sender: TObject;
-  NewPage: TdxTabSheet; var AllowChange: Boolean);
+procedure TfrmPlayerInfo.pcgControlInfoPageChanging(Sender: TObject;
+  NewPage: TcxTabSheet; var AllowChange: Boolean);
 begin
   if (FLoaded) then
   begin
@@ -1628,24 +1662,24 @@ begin
 
     if (vField <> '') then
     begin
-      vPot := uBibDb.GetFieldValue(frmHTScanner.ibdbHTInfo,'KARAKTER_PROFIEL',['ID'],[vKarakterId],vField,srtFloat);
+      vPot := GetFieldValue(frmHTScanner.ibdbHTInfo,'KARAKTER_PROFIEL',['ID'],[vKarakterId],vField,srtFloat);
 
       vResult := InputBox('KarakterProfiel','Geef de potentie',FloatToStr(vPot));
 
       try
         if Pos('*',vResult) > 0 then
         begin
-          uBibDb.ExecSQL(frmHTScanner.ibdbHTInfo,Format('UPDATE KARAKTER_PROFIEL SET %s = -1 WHERE ID = :ID',[vTop3Field]),
+          ExecSQL(frmHTScanner.ibdbHTInfo,Format('UPDATE KARAKTER_PROFIEL SET %s = -1 WHERE ID = :ID',[vTop3Field]),
             ['ID'],[vKarakterId]);
 
-          vPot := uBibConv.AnyStrToFloat(vResult);
+          vPot := AnyStrToFloat(vResult);
         end
         else if Pos('#',vResult) > 0 then
         begin
-          uBibDb.ExecSQL(frmHTScanner.ibdbHTInfo,Format('UPDATE KARAKTER_PROFIEL SET %s = 0 WHERE ID = :ID',[vTop3Field]),
+          ExecSQL(frmHTScanner.ibdbHTInfo,Format('UPDATE KARAKTER_PROFIEL SET %s = 0 WHERE ID = :ID',[vTop3Field]),
             ['ID'],[vKarakterId]);
 
-          vPot := uBibConv.AnyStrToFloat(vResult);
+          vPot := AnyStrToFloat(vResult);
         end
         else
         begin
@@ -1654,13 +1688,13 @@ begin
 
         if (vPot > 0) then
         begin
-          uBibDb.ExecSQL(frmHTScanner.ibdbHTInfo,
+          ExecSQL(frmHTScanner.ibdbHTInfo,
             Format('UPDATE KARAKTER_PROFIEL SET %s = :WAARDE WHERE ID = :ID',[vField]),
               ['ID','WAARDE'],[vKarakterID, vPot]);
         end
         else
         begin
-          uBibDb.ExecSQL(frmHTScanner.ibdbHTInfo,
+          ExecSQL(frmHTScanner.ibdbHTInfo,
             Format('UPDATE KARAKTER_PROFIEL SET %s = NULL WHERE ID = :ID',[vField]),
               ['ID'],[vKarakterID]);
         end;
@@ -1720,7 +1754,7 @@ begin
 
       vInfo.Add(Format('[b][playerid=%d] %s[/b]',[ibdtstScouting.FieldByName('PLAYER_ID').asInteger, ibdtstScouting.FieldByName('PLAYER_NAAM').asString]));
 
-      with uBibRuntime.CreateSQL(frmHTScanner.ibdbHTInfo) do
+      with uHTDB.CreateSQL(frmHTScanner.ibdbHTInfo) do
       begin
         try
           with SQL do
@@ -1744,14 +1778,14 @@ begin
             vInfo.Add(Format('Vaardigheden: %s',[vPotentie]));
           end;
         finally
-          uBibDb.CommitTransaction(Transaction,TRUE);
+          CommitTransaction(Transaction,dbaFree);
           Free;
         end;
       end;
 
       if not (vFound) and (vKarakterID > 0) then
       begin
-        with uBibRuntime.CreateSQL(frmHTScanner.ibdbHTInfo) do
+        with uHTDb.CreateSQL(frmHTScanner.ibdbHTInfo) do
         begin
           try
             with SQL do
@@ -1770,7 +1804,7 @@ begin
             vPotentie := AddPotentie(vPotentie,'SCO',FieldByName('POT_SCOREN').asInteger);
             vPotentie := AddPotentie(vPotentie,'SH',FieldByName('POT_SPELHERVATTEN').asInteger);
           finally
-            uBibDb.CommitTransaction(Transaction,TRUE);
+            CommitTransaction(Transaction,dbaFree);
             Free;
           end;
         end;
@@ -1783,7 +1817,7 @@ begin
         vCount := 0;
         vIndex := vInfo.Count;
 
-        with uBibRuntime.CreateSQL(frmHTScanner.ibdbHTInfo) do
+        with uHTDB.CreateSQL(frmHTScanner.ibdbHTInfo) do
         begin
           try
             with SQL do
@@ -1808,7 +1842,7 @@ begin
 
             while not EOF do
             begin
-              vLastUpdate := uBibDb.GetFieldValue(frmHTScanner.ibdbHTInfo,'JEUGDSPELERS',['PLAYER_ID'],
+              vLastUpdate := GetFieldValue(frmHTScanner.ibdbHTInfo,'JEUGDSPELERS',['PLAYER_ID'],
                 [FieldByName('JEUGDSPELER_ID').asInteger],'LAST_UPDATE',srtDateTime);
 
               if (vLastUpdate < Date) then
@@ -1819,7 +1853,7 @@ begin
               end;
 
               if ((FieldByName('VERDEDIGEN').asInteger > 0) or
-                (uBibDb.GetFieldValue(frmHTScanner.ibdbHTInfo,'JEUGDSPELERS',['PLAYER_ID'],
+                (GetFieldValue(frmHTScanner.ibdbHTInfo,'JEUGDSPELERS',['PLAYER_ID'],
                 [FieldByName('JEUGDSPELER_ID').asInteger],'DELETED',srtInteger) = 0)) then
               begin
                 inc(vCount);
@@ -1846,7 +1880,7 @@ begin
             end;
 
           finally
-            uBibDb.CommitTransaction(Transaction,TRUE);
+            CommitTransaction(Transaction,dbaFree);
             Free;
           end;
         end;

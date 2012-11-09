@@ -1,5 +1,7 @@
 program HTScanner;
 
+{$R *.dres}
+
 uses
   FastMM4,
   madExcept,
@@ -15,7 +17,14 @@ uses
   FormPlayerInfo in 'FormPlayerInfo.pas' {frmPlayerInfo},
   FornNewName in 'FornNewName.pas' {frmNewName},
   FormNTScouting in 'FormNTScouting.pas' {frmNTScouting},
-  FormKiesLichting in 'FormKiesLichting.pas' {frmKiesLichting};
+  FormKiesLichting in 'FormKiesLichting.pas' {frmKiesLichting},
+  FormVoortgang in 'FormVoortgang.pas',
+  uHTDb in 'uHTDb.pas',
+  uHTXLS in 'uHTXLS.pas',
+  uHTGrid in 'uHTGrid.pas',
+  uHTMisc in 'uHTMisc.pas',
+  OOoConstants in 'OOoConstants.pas',
+  OOoMessages in 'OOoMessages.pas';
 
 { *.RES}
 

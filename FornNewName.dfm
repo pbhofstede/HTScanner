@@ -1,9 +1,9 @@
 object frmNewName: TfrmNewName
   Left = 509
   Top = 340
-  Width = 402
-  Height = 130
   Caption = 'frmNewName'
+  ClientHeight = 92
+  ClientWidth = 386
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -57,8 +57,6 @@ object frmNewName: TfrmNewName
   object ibdtstPlayerName: TIBDataSet
     Database = frmHTScanner.ibdbHTInfo
     Transaction = IBTransaction1
-    BufferChunks = 1000
-    CachedUpdates = False
     DeleteSQL.Strings = (
       'delete from JEUGDSPELERS'
       'where'
@@ -139,13 +137,11 @@ object frmNewName: TfrmNewName
     Top = 32
   end
   object IBTransaction1: TIBTransaction
-    Active = True
     DefaultDatabase = frmHTScanner.ibdbHTInfo
     Params.Strings = (
       'read_committed'
       'rec_version'
       'nowait')
-    AutoStopAction = saNone
     Left = 296
     Top = 32
   end

@@ -1,10 +1,10 @@
 object frmPlayerInfo: TfrmPlayerInfo
   Left = 409
   Top = 141
-  Width = 1239
-  Height = 643
   ActiveControl = edPlayerID
   Caption = 'Speler/manager informatie'
+  ClientHeight = 605
+  ClientWidth = 1223
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -21,35 +21,32 @@ object frmPlayerInfo: TfrmPlayerInfo
   OnKeyDown = FormKeyDown
   PixelsPerInch = 96
   TextHeight = 13
-  object pcgControlInfo: TdxPageControl
+  object pcgControlInfo: TcxPageControl
     Left = 0
     Top = 0
     Width = 1223
     Height = 605
-    ActivePage = tbPlayerinfo
     Align = alClient
-    HideButtons = False
-    HotTrack = False
-    MultiLine = False
-    OwnerDraw = False
-    RaggedRight = False
-    ScrollOpposite = False
-    TabHeight = 0
     TabOrder = 0
-    TabPosition = dxtpTop
-    TabStop = True
-    TabWidth = 0
-    OnChanging = pcgControlInfoChanging
-    object tbPlayerinfo: TdxTabSheet
+    Properties.ActivePage = tbPlayerinfo
+    OnPageChanging = pcgControlInfoPageChanging
+    ClientRectBottom = 601
+    ClientRectLeft = 4
+    ClientRectRight = 1219
+    ClientRectTop = 24
+    object tbPlayerinfo: TcxTabSheet
       Caption = 'Info'
       object Panel1: TPanel
         Left = 0
         Top = 0
-        Width = 1223
+        Width = 1215
         Height = 58
         Align = alTop
         BevelOuter = bvNone
         TabOrder = 0
+        DesignSize = (
+          1215
+          58)
         object Label1: TLabel
           Left = 11
           Top = 12
@@ -113,11 +110,14 @@ object frmPlayerInfo: TfrmPlayerInfo
       object Panel3: TPanel
         Left = 0
         Top = 58
-        Width = 1223
+        Width = 1215
         Height = 212
         Align = alTop
         BevelOuter = bvNone
         TabOrder = 1
+        DesignSize = (
+          1215
+          212)
         object lblPlayerName: TLabel
           Left = 11
           Top = 12
@@ -265,7 +265,7 @@ object frmPlayerInfo: TfrmPlayerInfo
           Width = 115
           Height = 25
           Anchors = [akTop, akRight]
-          Caption = 'Afwijzing'
+          Caption = 'Verwijderen!'
           TabOrder = 2
           OnClick = Button4Click
         end
@@ -866,37 +866,31 @@ object frmPlayerInfo: TfrmPlayerInfo
       object Panel2: TPanel
         Left = 0
         Top = 270
-        Width = 1223
-        Height = 312
+        Width = 1215
+        Height = 307
         Align = alClient
         BevelOuter = bvNone
         Caption = 'Panel2'
         TabOrder = 2
-        object dxPageControl1: TdxPageControl
+        object dxPageControl1: TcxPageControl
           Left = 0
           Top = 0
-          Width = 1223
-          Height = 312
-          ActivePage = tbBatchlings
+          Width = 1215
+          Height = 307
           Align = alClient
-          HideButtons = False
-          HotTrack = False
-          MultiLine = False
-          OwnerDraw = False
-          RaggedRight = False
-          ScrollOpposite = False
-          TabHeight = 0
           TabOrder = 0
-          TabPosition = dxtpTop
-          TabStop = True
-          TabWidth = 0
-          object tbTeamSpelers: TdxTabSheet
+          Properties.ActivePage = tbBatchlings
+          ClientRectBottom = 303
+          ClientRectLeft = 4
+          ClientRectRight = 1211
+          ClientRectTop = 24
+          object tbTeamSpelers: TcxTabSheet
             Caption = 'Talenten'
             object dxDBGrid1: TdxDBGrid
               Left = 0
               Top = 0
-              Width = 1223
-              Height = 291
+              Width = 1207
+              Height = 279
               Bands = <
                 item
                 end>
@@ -1028,13 +1022,13 @@ object frmPlayerInfo: TfrmPlayerInfo
               end
             end
           end
-          object tbBatchlings: TdxTabSheet
+          object tbBatchlings: TcxTabSheet
             Caption = 'Batchlings'
-            object dxDBGrid2: TdxDBGrid
+            object dbgrdBatchlings: TdxDBGrid
               Left = 0
               Top = 0
-              Width = 1223
-              Height = 289
+              Width = 1207
+              Height = 279
               Bands = <
                 item
                 end>
@@ -1052,44 +1046,44 @@ object frmPlayerInfo: TfrmPlayerInfo
               OptionsDB = [edgoCancelOnExit, edgoCanDelete, edgoCanInsert, edgoCanNavigation, edgoConfirmDelete, edgoLoadAllRecords, edgoUseBookmarks]
               OptionsView = [edgoAutoWidth, edgoBandHeaderWidth, edgoUseBitmap]
               RegistryPath = '\Software\HTScanner\Batchlings'
-              OnCustomDrawCell = dxDBGrid2CustomDrawCell
-              object dxDBGrid2Column1: TdxDBGridColumn
+              OnCustomDrawCell = dbgrdBatchlingsCustomDrawCell
+              object dbgrdBatchlingsColumn1: TdxDBGridColumn
                 Caption = 'ID'
                 BandIndex = 0
                 RowIndex = 0
                 FieldName = 'PLAYER_ID'
               end
-              object dxDBGrid2Column2: TdxDBGridColumn
+              object dbgrdBatchlingsColumn2: TdxDBGridColumn
                 Caption = 'Naam'
                 BandIndex = 0
                 RowIndex = 0
                 FieldName = 'PLAYER_NAME'
               end
-              object dxDBGrid2Column3: TdxDBGridColumn
+              object dbgrdBatchlingsColumn3: TdxDBGridColumn
                 Caption = 'Leeftijd'
                 BandIndex = 0
                 RowIndex = 0
                 FieldName = 'LEEFTIJD'
               end
-              object dxDBGrid2Column4: TdxDBGridColumn
+              object dbgrdBatchlingsColumn4: TdxDBGridColumn
                 Caption = 'Nationaliteit'
                 BandIndex = 0
                 RowIndex = 0
                 FieldName = 'NATIONALITEIT'
               end
-              object dxDBGrid2Column5: TdxDBGridColumn
+              object dbgrdBatchlingsColumn5: TdxDBGridColumn
                 Visible = False
                 BandIndex = 0
                 RowIndex = 0
                 FieldName = 'DELETED'
               end
-              object dxDBGrid2Column6: TdxDBGridColumn
+              object dbgrdBatchlingsColumn6: TdxDBGridColumn
                 Visible = False
                 BandIndex = 0
                 RowIndex = 0
                 FieldName = 'PROMOTED'
               end
-              object dxDBGrid2Column7: TdxDBGridCheckColumn
+              object dbgrdBatchlingsColumn7: TdxDBGridCheckColumn
                 Width = 100
                 BandIndex = 0
                 RowIndex = 0
@@ -1099,7 +1093,7 @@ object frmPlayerInfo: TfrmPlayerInfo
                 DisplayChecked = '-1'
                 DisplayUnChecked = '0'
               end
-              object dxDBGrid2Column8: TdxDBGridCheckColumn
+              object dbgrdBatchlingsColumn8: TdxDBGridCheckColumn
                 Width = 100
                 BandIndex = 0
                 RowIndex = 0
@@ -1109,13 +1103,13 @@ object frmPlayerInfo: TfrmPlayerInfo
                 DisplayChecked = '-1'
                 DisplayUnChecked = '0'
               end
-              object dxDBGrid2Column9: TdxDBGridColumn
+              object dbgrdBatchlingsColumn9: TdxDBGridColumn
                 Caption = 'KarakterID'
                 BandIndex = 0
                 RowIndex = 0
                 FieldName = 'KARAKTER_ID'
               end
-              object dxDBGrid2Column10: TdxDBGridColumn
+              object dbgrdBatchlingsColumn10: TdxDBGridColumn
                 Visible = False
                 BandIndex = 0
                 RowIndex = 0
@@ -1123,13 +1117,13 @@ object frmPlayerInfo: TfrmPlayerInfo
               end
             end
           end
-          object tbPosTwins: TdxTabSheet
+          object tbPosTwins: TcxTabSheet
             Caption = 'Possible batchlings'
             object dxDBGrid7: TdxDBGrid
               Left = 0
               Top = 0
-              Width = 1348
-              Height = 302
+              Width = 1207
+              Height = 279
               Bands = <
                 item
                 end>
@@ -1147,7 +1141,7 @@ object frmPlayerInfo: TfrmPlayerInfo
               OptionsDB = [edgoCancelOnExit, edgoCanDelete, edgoCanInsert, edgoCanNavigation, edgoConfirmDelete, edgoLoadAllRecords, edgoUseBookmarks]
               OptionsView = [edgoAutoWidth, edgoBandHeaderWidth, edgoUseBitmap]
               RegistryPath = '\Software\HTScanner\PlayerInfo'
-              OnCustomDrawCell = dxDBGrid2CustomDrawCell
+              OnCustomDrawCell = dbgrdBatchlingsCustomDrawCell
               object dxDBGridColumn7: TdxDBGridColumn
                 Caption = 'ID'
                 BandIndex = 0
@@ -1284,13 +1278,13 @@ object frmPlayerInfo: TfrmPlayerInfo
               end
             end
           end
-          object dxTabSheet2: TdxTabSheet
+          object dxTabSheet2: TcxTabSheet
             Caption = 'Top prestaties'
             object dxDBGrid6: TdxDBGrid
               Left = 0
               Top = 0
-              Width = 1223
-              Height = 291
+              Width = 1207
+              Height = 279
               Bands = <
                 item
                 end>
@@ -1306,7 +1300,6 @@ object frmPlayerInfo: TfrmPlayerInfo
               LookAndFeel = lfUltraFlat
               OptionsDB = [edgoCancelOnExit, edgoCanDelete, edgoCanInsert, edgoCanNavigation, edgoConfirmDelete, edgoLoadAllRecords, edgoUseBookmarks]
               OptionsView = [edgoAutoWidth, edgoBandHeaderWidth, edgoUseBitmap]
-              OnCustomDrawCell = dxDBGrid2CustomDrawCell
               object dxDBGridColumn1: TdxDBGridColumn
                 Caption = 'ID'
                 Width = 67
@@ -1380,12 +1373,12 @@ object frmPlayerInfo: TfrmPlayerInfo
         end
       end
     end
-    object tbSTDBerichten: TdxTabSheet
+    object tbSTDBerichten: TcxTabSheet
       Caption = 'STD Berichten'
       object DBNavigator1: TDBNavigator
         Left = 0
-        Top = 557
-        Width = 1223
+        Top = 552
+        Width = 1215
         Height = 25
         DataSource = dsSTDBerichten
         Align = alBottom
@@ -1394,7 +1387,7 @@ object frmPlayerInfo: TfrmPlayerInfo
       object Panel4: TPanel
         Left = 0
         Top = 0
-        Width = 1223
+        Width = 1215
         Height = 105
         Align = alTop
         BevelOuter = bvNone
@@ -1491,32 +1484,32 @@ object frmPlayerInfo: TfrmPlayerInfo
       object dxDBMemo1: TdxDBMemo
         Left = 0
         Top = 105
-        Width = 1223
+        Width = 1215
         Align = alClient
         TabOrder = 2
         DataField = 'BERICHT'
         DataSource = dsSTDBerichten
-        Height = 452
+        Height = 447
       end
     end
-    object tbBericht: TdxTabSheet
+    object tbBericht: TcxTabSheet
       Caption = 'Bericht'
       object mBericht: TdxMemo
         Left = 0
         Top = 0
-        Width = 1348
+        Width = 1215
         Align = alClient
         TabOrder = 0
         OnExit = mBerichtExit
-        Height = 582
+        Height = 577
       end
     end
-    object tbNTScouting: TdxTabSheet
+    object tbNTScouting: TcxTabSheet
       Caption = 'NT Scouting'
       object Panel5: TPanel
         Left = 0
-        Top = 222
-        Width = 1223
+        Top = 217
+        Width = 1215
         Height = 360
         Align = alBottom
         Caption = 'Panel5'
@@ -1524,7 +1517,7 @@ object frmPlayerInfo: TfrmPlayerInfo
         object dxDBGrid3: TdxDBGrid
           Left = 1
           Top = 1
-          Width = 1221
+          Width = 1213
           Height = 358
           Bands = <
             item
@@ -1590,7 +1583,7 @@ object frmPlayerInfo: TfrmPlayerInfo
       object Panel7: TPanel
         Left = 0
         Top = 0
-        Width = 1223
+        Width = 1215
         Height = 222
         Align = alTop
         BevelOuter = bvNone
@@ -2022,7 +2015,7 @@ object frmPlayerInfo: TfrmPlayerInfo
               Top = 176
               Width = 41
               TabOrder = 7
-              Value = 17
+              Value = 17.000000000000000000
             end
             object spedDagen: TdxSpinEdit
               Left = 145
@@ -2066,7 +2059,7 @@ object frmPlayerInfo: TfrmPlayerInfo
         object Panel9: TPanel
           Left = 569
           Top = 0
-          Width = 654
+          Width = 646
           Height = 222
           Align = alClient
           BevelOuter = bvNone
@@ -2074,7 +2067,7 @@ object frmPlayerInfo: TfrmPlayerInfo
           object Panel10: TPanel
             Left = 0
             Top = 0
-            Width = 523
+            Width = 515
             Height = 222
             Align = alClient
             BevelOuter = bvNone
@@ -2083,7 +2076,7 @@ object frmPlayerInfo: TfrmPlayerInfo
             object GroupBox2: TGroupBox
               Left = 0
               Top = 0
-              Width = 523
+              Width = 515
               Height = 222
               Align = alClient
               Caption = ' Huidige talenten '
@@ -2091,7 +2084,7 @@ object frmPlayerInfo: TfrmPlayerInfo
               object dxDBGrid5: TdxDBGrid
                 Left = 2
                 Top = 15
-                Width = 519
+                Width = 511
                 Height = 205
                 Bands = <
                   item
@@ -2152,13 +2145,16 @@ object frmPlayerInfo: TfrmPlayerInfo
             end
           end
           object Panel11: TPanel
-            Left = 523
+            Left = 515
             Top = 0
             Width = 131
             Height = 222
             Align = alRight
             BevelOuter = bvNone
             TabOrder = 1
+            DesignSize = (
+              131
+              222)
             object btnNTScouting: TButton
               Left = 8
               Top = 24
@@ -2203,13 +2199,13 @@ object frmPlayerInfo: TfrmPlayerInfo
         end
       end
     end
-    object tbPotentials: TdxTabSheet
+    object tbPotentials: TcxTabSheet
       Caption = 'U20/NT-potentials'
       object dxDBGrid4: TdxDBGrid
         Left = 0
         Top = 0
-        Width = 1348
-        Height = 582
+        Width = 1215
+        Height = 577
         Bands = <
           item
           end>
@@ -2450,8 +2446,6 @@ object frmPlayerInfo: TfrmPlayerInfo
   end
   object ibqrTalenten: TIBQuery
     Transaction = IBReadTransaction
-    BufferChunks = 1000
-    CachedUpdates = False
     SQL.Strings = (
       
         'SELECT J.PLAYER_ID,J.PLAYER_NAME,L.LEEFTIJD,J.TABSHEET,J.GEBOORT' +
@@ -2482,12 +2476,10 @@ object frmPlayerInfo: TfrmPlayerInfo
       end>
   end
   object IBWriteTransaction: TIBTransaction
-    Active = False
     Params.Strings = (
       'read_committed'
       'rec_version'
       'nowait')
-    AutoStopAction = saNone
     Left = 424
     Top = 45
   end
@@ -2495,8 +2487,6 @@ object frmPlayerInfo: TfrmPlayerInfo
     Transaction = IBWriteTransaction
     AfterClose = ibdtstScoutingAfterClose
     BeforeOpen = ibdtstScoutingBeforeOpen
-    BufferChunks = 1000
-    CachedUpdates = False
     DeleteSQL.Strings = (
       'delete from MANAGER_INFO'
       'where'
@@ -2545,8 +2535,6 @@ object frmPlayerInfo: TfrmPlayerInfo
     AfterClose = ibdtstScoutingAfterClose
     AfterPost = ibdtstSTDBerichtenAfterPost
     BeforeOpen = ibdtstScoutingBeforeOpen
-    BufferChunks = 1000
-    CachedUpdates = False
     DeleteSQL.Strings = (
       'delete from STD_BERICHTEN'
       'where'
@@ -2593,8 +2581,6 @@ object frmPlayerInfo: TfrmPlayerInfo
   end
   object ibqrBatchlings: TIBQuery
     Transaction = IBReadTransaction
-    BufferChunks = 1000
-    CachedUpdates = False
     SQL.Strings = (
       'SELECT * FROM GET_BATCHLINGS_UNLIMITED(:KARAKTERID,1)'
       'ORDER BY LEEFTIJD')
@@ -2617,8 +2603,6 @@ object frmPlayerInfo: TfrmPlayerInfo
     AfterClose = ibdtstScoutingAfterClose
     AfterPost = ibdtstScoutingAfterPost
     BeforeOpen = ibdtstScoutingBeforeOpen
-    BufferChunks = 1000
-    CachedUpdates = False
     DeleteSQL.Strings = (
       'delete from SCOUTING'
       'where'
@@ -2731,8 +2715,6 @@ object frmPlayerInfo: TfrmPlayerInfo
   object ibqrPotentials: TIBQuery
     Transaction = IBReadTransaction
     BeforeOpen = ibqrPotentialsBeforeOpen
-    BufferChunks = 1000
-    CachedUpdates = False
     SQL.Strings = (
       
         'SELECT L.LEEFTIJD, U20.U20 IS_U20, S.PLAYER_ID, S.PLAYER_NAAM, S' +
@@ -2753,9 +2735,9 @@ object frmPlayerInfo: TfrmPlayerInfo
       'LEFT JOIN KARAKTER_PROFIEL K ON (J.KARAKTER_ID = K.ID)'
       'LEFT JOIN GET_LEEFTIJD(J.GEBOORTE_DATUM,CURRENT_DATE) L ON (0=0)'
       
-        'LEFT JOIN CALC_NT_POTENTIAL_OVERALL(L.AGE,L.DAYS,J.KARAKTER_ID,S' +
-        '.KEEPEN,S.VERDEDIGEN,S.POSITIESPEL,S.VLEUGELSPEL,S.PASSEN,S.SCOR' +
-        'EN,S.SPELHERVATTING) POT'
+        'LEFT JOIN CALC_NT_POTENTIAL_OVERALL(J.GEBOORTE_DATUM,L.AGE,L.DAY' +
+        'S,J.KARAKTER_ID,S.KEEPEN,S.VERDEDIGEN,S.POSITIESPEL,S.VLEUGELSPE' +
+        'L,S.PASSEN,S.SCOREN,S.SPELHERVATTING) POT'
       '  ON (0=0)'
       
         'LEFT JOIN GET_IS_U20(J.GEBOORTE_DATUM,CASE WHEN COALESCE(K.IS_KE' +
@@ -2826,8 +2808,6 @@ object frmPlayerInfo: TfrmPlayerInfo
   end
   object ibqrNTTalenten: TIBQuery
     Transaction = IBReadTransaction
-    BufferChunks = 1000
-    CachedUpdates = False
     SQL.Strings = (
       'SELECT'
       'PLAYER_ID,'
@@ -2846,8 +2826,6 @@ object frmPlayerInfo: TfrmPlayerInfo
   end
   object ibqrPrestaties: TIBQuery
     Transaction = IBReadTransaction
-    BufferChunks = 1000
-    CachedUpdates = False
     SQL.Strings = (
       'SELECT'
       '  P.STERREN,'
@@ -2878,8 +2856,6 @@ object frmPlayerInfo: TfrmPlayerInfo
   end
   object ibqrPosBatchlings: TIBQuery
     Transaction = IBReadTransaction
-    BufferChunks = 1000
-    CachedUpdates = False
     SQL.Strings = (
       'SELECT * FROM GET_BATCHLINGS_UNLIMITED(:KARAKTERID)'
       'ORDER BY LEEFTIJD')
@@ -2898,13 +2874,11 @@ object frmPlayerInfo: TfrmPlayerInfo
     Top = 463
   end
   object IBReadTransaction: TIBTransaction
-    Active = False
     Params.Strings = (
       'read'
       'read_committed'
       'rec_version'
       'nowait')
-    AutoStopAction = saNone
     Left = 296
     Top = 85
   end

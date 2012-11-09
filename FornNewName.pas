@@ -4,7 +4,7 @@ interface
 
 uses
   Windows, Messages, SysUtils, Classes, Graphics, Controls, Forms, Dialogs,
-  dxCntner, dxEditor, dxEdLib, StdCtrls, dxExEdtr, TntStdCtrls, Db,
+  dxCntner, dxEditor, dxEdLib, StdCtrls, dxExEdtr, Db,
   IBCustomDataSet, dxDBELib, IBDatabase;
 
 type
